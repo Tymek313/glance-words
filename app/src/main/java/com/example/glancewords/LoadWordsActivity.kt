@@ -8,11 +8,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.lifecycleScope
-import com.example.glancewords.repository.WordsRepository
+import com.example.glancewords.repository.CachingWordsRepository
 import com.example.glancewords.widget.WordsWidget
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.io.FileNotFoundException
 
 class LoadWordsActivity : AppCompatActivity() {
 
@@ -28,7 +27,7 @@ class LoadWordsActivity : AppCompatActivity() {
             Toast.makeText(this, "File not found", Toast.LENGTH_LONG).show()
         } else {
             lifecycleScope.launch {
-                if(WordsRepository.copyToLocalFile(this@LoadWordsActivity, fileUri)) {
+                if(CachingWordsRepository.copyToLocalFile(this@LoadWordsActivity, fileUri)) {
                     updateWidgets()
                     showMessage("File saved successfully")
                 } else {

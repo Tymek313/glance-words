@@ -30,7 +30,7 @@ import androidx.glance.layout.padding
 import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import com.example.glancewords.R
-import com.example.glancewords.repository.WordsRepository
+import com.example.glancewords.repository.CachingWordsRepository
 import com.example.glancewords.widget.WordsWidget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -67,8 +67,8 @@ fun WordsWidgetContent() {
 private fun loadWidgetState(context: Context): State<WidgetState> {
     return produceState<WidgetState>(initialValue = WidgetState.InProgress) {
         withContext(Dispatchers.IO) {
-            value = WordsRepository.getWords(context)
-                ?.let { WidgetState.Success(it) }
+            value = CachingWordsRepository.getWords(context)?.shuffled()
+                ?.let(WidgetState::Success)
                 ?: WidgetState.Failure
         }
     }

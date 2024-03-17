@@ -10,14 +10,21 @@ import java.io.FileNotFoundException
 
 private const val FILENAME = "words.csv"
 
-object WordsRepository {
+object CachingWordsRepository {
 
-    suspend fun getWords(context: Context): List<Pair<String, String>>? = withContext(Dispatchers.IO) {
-        if (File(context.filesDir, "words.csv").exists()) {
-            context.openFileInput("words.csv").bufferedReader().use { reader ->
-                reader.useLines { lines ->
-                    lines.map(::csvLineToLanguagePair).filterHashValues().toList()
+    private var words: List<Pair<String, String>>? = null
+
+    suspend fun getWords(context: Context): List<Pair<String, String>>? {
+        return if(words != null) {
+            words
+        } else if (File(context.filesDir, "words.csv").exists()) {
+            withContext(Dispatchers.IO) {
+                words = context.openFileInput("words.csv").bufferedReader().use { reader ->
+                    reader.useLines { lines ->
+                        lines.map(::csvLineToLanguagePair).filterHashValues().toList()
+                    }
                 }
+                words
             }
         } else {
             null
@@ -37,6 +44,7 @@ object WordsRepository {
                     sourceFile.copyTo(targetFile)
                 }
             }
+            words = null
             true
         } catch (e: FileNotFoundException) {
             Log.e(javaClass.name, "Could copy a file", e)
