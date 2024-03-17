@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.lifecycleScope
@@ -24,21 +25,21 @@ class LoadWordsActivity : AppCompatActivity() {
             intent.getParcelableExtra(Intent.EXTRA_STREAM) as Uri?
         }
         if (fileUri == null) {
-            Toast.makeText(this, "File not found", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.file_not_found, Toast.LENGTH_LONG).show()
         } else {
             lifecycleScope.launch {
                 if(CachingWordsRepository.copyToLocalFile(this@LoadWordsActivity, fileUri)) {
                     updateWidgets()
-                    showMessage("File saved successfully")
+                    showMessage(R.string.file_saved_successfully)
                 } else {
-                    showMessage("Failed to save file")
+                    showMessage(R.string.failed_to_save_file)
                 }
                 finish()
             }
         }
     }
 
-    private fun showMessage(message: String) {
+    private fun showMessage(@StringRes message: Int) {
         Toast.makeText(this@LoadWordsActivity, message, Toast.LENGTH_LONG).show()
     }
 

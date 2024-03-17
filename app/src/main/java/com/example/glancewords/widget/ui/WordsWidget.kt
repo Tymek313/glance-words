@@ -6,6 +6,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.glance.Button
 import androidx.glance.ColorFilter
@@ -52,7 +53,7 @@ fun WordsWidgetContent() {
         Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.fillMaxWidth().defaultWeight().padding(bottom = 8.dp)) {
             when (val state = widgetState) {
                 WidgetState.InProgress -> CircularProgressIndicator()
-                WidgetState.Failure -> WordsText("Words file not found")
+                WidgetState.Failure -> WordsText(LocalContext.current.getString(R.string.no_words_found_message))
                 is WidgetState.Success -> WordList(state.words)
             }
         }
