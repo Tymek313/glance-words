@@ -35,8 +35,7 @@ import androidx.glance.text.TextStyle
 import com.example.glancewords.R
 import com.example.glancewords.repository.CachingWordsRepository
 import com.example.glancewords.widget.WordsWidget
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 
 @Composable
 fun WordsWidget() {
@@ -47,7 +46,7 @@ fun WordsWidget() {
 
 @Composable
 fun WordsWidgetContent() {
-    val widgetState by loadWidgetState(LocalContext.current)
+    val widgetState by produceSelfRefreshingState(LocalContext.current)
 
     Column(GlanceModifier.fillMaxSize().appWidgetBackground().background(GlanceTheme.colors.widgetBackground).padding(8.dp)) {
         Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.fillMaxWidth().defaultWeight().padding(bottom = 8.dp)) {
@@ -65,13 +64,17 @@ fun WordsWidgetContent() {
     }
 }
 
+@Suppress("KotlinConstantConditions")
 @Composable
-private fun loadWidgetState(context: Context): State<WidgetState> {
+private fun produceSelfRefreshingState(context: Context): State<WidgetState> {
     return produceState<WidgetState>(initialValue = WidgetState.InProgress) {
-        withContext(Dispatchers.IO) {
-            value = CachingWordsRepository.getWords(context)?.shuffled()
-                ?.let(WidgetState::Success)
-                ?: WidgetState.Failure
+        CachingWordsRepository.getWords(context)?.let { words ->
+            do {
+                value = WidgetState.Success(words.shuffled())
+                delay(3_600_000)
+            } while (true)
+        } ?: run {
+            value = WidgetState.Failure
         }
     }
 }
