@@ -9,7 +9,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.lifecycleScope
-import com.example.glancewords.repository.CachingWordsRepository
+import com.example.glancewords.repository.WordsRepository
 import com.example.glancewords.widget.WordsWidget
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -28,7 +28,7 @@ class LoadWordsActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.file_not_found, Toast.LENGTH_LONG).show()
         } else {
             lifecycleScope.launch {
-                if(CachingWordsRepository.copyToLocalFile(this@LoadWordsActivity, fileUri)) {
+                if(WordsRepository.copyToLocalFile(this@LoadWordsActivity, fileUri)) {
                     updateWidgets()
                     showMessage(R.string.file_saved_successfully)
                 } else {

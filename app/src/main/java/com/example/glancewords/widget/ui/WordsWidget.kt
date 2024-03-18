@@ -4,21 +4,21 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.glance.Button
 import androidx.glance.ColorFilter
-import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
-import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.CircularProgressIndicator
-import androidx.glance.appwidget.action.ActionCallback
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
@@ -27,16 +27,20 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
+import androidx.glance.layout.width
 import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 import com.example.glancewords.R
-import com.example.glancewords.repository.CachingWordsRepository
-import com.example.glancewords.widget.WordsWidget
-import kotlinx.coroutines.delay
+import com.example.glancewords.repository.WordsRepository
+
+private val defaultTextStyle
+    @Composable
+    get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(20f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
 
 @Composable
 fun WordsWidget() {
@@ -47,7 +51,8 @@ fun WordsWidget() {
 
 @Composable
 fun WordsWidgetContent() {
-    val widgetState by produceSelfRefreshingState(LocalContext.current)
+    var stateReloadFlag by remember { mutableStateOf(false) }
+    val widgetState by produceSelfRefreshingState(LocalContext.current, stateReloadFlag)
 
     Column(GlanceModifier.fillMaxSize().appWidgetBackground().background(GlanceTheme.colors.widgetBackground).padding(8.dp)) {
         Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.fillMaxWidth().defaultWeight().padding(bottom = 8.dp)) {
@@ -59,24 +64,19 @@ fun WordsWidgetContent() {
         }
         Button(
             modifier = GlanceModifier.fillMaxWidth(),
-            text = "Update",
-            onClick = actionRunCallback<UpdateWidget>()
+            style = defaultTextStyle,
+            text = LocalContext.current.getString(R.string.reload),
+            onClick = { stateReloadFlag = !stateReloadFlag }
         )
     }
 }
 
-@Suppress("KotlinConstantConditions")
 @Composable
-private fun produceSelfRefreshingState(context: Context): State<WidgetState> {
-    return produceState<WidgetState>(initialValue = WidgetState.InProgress) {
-        CachingWordsRepository.getWords(context)?.let { words ->
-            do {
-                value = WidgetState.Success(words.shuffled())
-                delay(3_600_000)
-            } while (true)
-        } ?: run {
-            value = WidgetState.Failure
-        }
+private fun produceSelfRefreshingState(context: Context, reloadKey: Boolean): State<WidgetState> {
+    return produceState<WidgetState>(initialValue = WidgetState.InProgress, reloadKey) {
+        value = WordsRepository.get100RandomWords(context)?.let { words ->
+            WidgetState.Success(words)
+        } ?: WidgetState.Failure
     }
 }
 
@@ -88,15 +88,16 @@ private fun WordList(words: List<Pair<String, String>>, modifier: GlanceModifier
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .background(imageProvider = ImageProvider(R.drawable.rounded_background), colorFilter = ColorFilter.tint(GlanceTheme.colors.surface))
-                    .padding(12.dp),
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val rowModifier = GlanceModifier.defaultWeight()
                     // Without setting padding and background glance puts them on some items (bug)
                     .padding(0.dp)
                     .background(Color.Transparent)
-                val style = TextDefaults.defaultTextStyle.copy(color = GlanceTheme.colors.onSurface)
+                val style = defaultTextStyle.copy(color = GlanceTheme.colors.onSurface)
                 WordsText(text = englishWord, rowModifier, style)
+                Spacer(GlanceModifier.width(4.dp))
                 WordsText(text = polishWord, rowModifier, style)
             }
         }
@@ -110,12 +111,6 @@ private sealed interface WidgetState {
 }
 
 @Composable
-fun WordsText(text: String, modifier: GlanceModifier = GlanceModifier, style: TextStyle = TextDefaults.defaultTextStyle, maxLines: Int = Int.MAX_VALUE) {
-    Text(text, modifier, style = style.copy(color = GlanceTheme.colors.onBackground), maxLines)
-}
-
-class UpdateWidget : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        WordsWidget().update(context, glanceId)
-    }
+fun WordsText(text: String, modifier: GlanceModifier = GlanceModifier, style: TextStyle = defaultTextStyle, maxLines: Int = Int.MAX_VALUE) {
+    Text(text, modifier, style, maxLines)
 }
