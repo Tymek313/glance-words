@@ -12,12 +12,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.glance.Button
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.lazy.LazyColumn
@@ -25,7 +25,6 @@ import androidx.glance.appwidget.lazy.items
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
-import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
@@ -51,23 +50,22 @@ fun WordsWidget() {
 
 @Composable
 fun WordsWidgetContent() {
-    var stateReloadFlag by remember { mutableStateOf(false) }
-    val widgetState by produceSelfRefreshingState(LocalContext.current, stateReloadFlag)
+    var stateRefreshKey by remember { mutableStateOf(false) }
+    val widgetState by produceSelfRefreshingState(LocalContext.current, stateRefreshKey)
 
-    Column(GlanceModifier.fillMaxSize().appWidgetBackground().background(GlanceTheme.colors.widgetBackground).padding(8.dp)) {
-        Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.fillMaxWidth().defaultWeight().padding(bottom = 8.dp)) {
-            when (val state = widgetState) {
-                WidgetState.InProgress -> CircularProgressIndicator()
-                WidgetState.Failure -> WordsText(LocalContext.current.getString(R.string.no_words_found_message))
-                is WidgetState.Success -> WordList(state.words)
-            }
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .appWidgetBackground()
+            .background(GlanceTheme.colors.widgetBackground)
+            .padding(6.dp)
+    ) {
+        when (val state = widgetState) {
+            WidgetState.InProgress -> CircularProgressIndicator()
+            WidgetState.Failure -> WordsText(LocalContext.current.getString(R.string.no_words_found_message))
+            is WidgetState.Success -> WordList(state.words) { stateRefreshKey = !stateRefreshKey }
         }
-        Button(
-            modifier = GlanceModifier.fillMaxWidth(),
-            style = defaultTextStyle,
-            text = LocalContext.current.getString(R.string.reload),
-            onClick = { stateReloadFlag = !stateReloadFlag }
-        )
     }
 }
 
@@ -81,12 +79,13 @@ private fun produceSelfRefreshingState(context: Context, reloadKey: Boolean): St
 }
 
 @Composable
-private fun WordList(words: List<Pair<String, String>>, modifier: GlanceModifier = GlanceModifier) {
+private fun WordList(words: List<Pair<String, String>>, modifier: GlanceModifier = GlanceModifier, onItemClick: () -> Unit) {
     LazyColumn(modifier) {
         items(words) { (englishWord, polishWord) ->
             Row(
                 modifier = GlanceModifier
                     .fillMaxWidth()
+                    .clickable(R.drawable.no_ripple, onItemClick)
                     .background(imageProvider = ImageProvider(R.drawable.rounded_background), colorFilter = ColorFilter.tint(GlanceTheme.colors.surface))
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
