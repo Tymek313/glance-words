@@ -39,7 +39,7 @@ import com.example.glancewords.repository.WordsRepository
 
 private val defaultTextStyle
     @Composable
-    get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(20f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
+    get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(18f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
 
 @Composable
 fun WordsWidget() {
@@ -49,7 +49,7 @@ fun WordsWidget() {
 }
 
 @Composable
-fun WordsWidgetContent() {
+private fun WordsWidgetContent() {
     var stateRefreshKey by remember { mutableStateOf(false) }
     val widgetState by produceSelfRefreshingState(LocalContext.current, stateRefreshKey)
 
@@ -72,7 +72,8 @@ fun WordsWidgetContent() {
 @Composable
 private fun produceSelfRefreshingState(context: Context, reloadKey: Boolean): State<WidgetState> {
     return produceState<WidgetState>(initialValue = WidgetState.InProgress, reloadKey) {
-        value = WordsRepository.get100RandomWords(context)?.let { words ->
+        value = WidgetState.InProgress
+        value = WordsRepository.load100RandomFromRemote(context.assets.open("credentials.json"))?.let { words ->
             WidgetState.Success(words)
         } ?: WidgetState.Failure
     }

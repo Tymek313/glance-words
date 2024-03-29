@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.lifecycleScope
 import com.example.glancewords.repository.WordsRepository
-import com.example.glancewords.widget.WordsWidget
+import com.example.glancewords.widget.WordsGlanceWidget
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -43,5 +43,5 @@ class LoadWordsActivity : AppCompatActivity() {
         Toast.makeText(this@LoadWordsActivity, message, Toast.LENGTH_LONG).show()
     }
 
-    private fun updateWidgets() = runBlocking { WordsWidget().updateAll(this@LoadWordsActivity) }
+    private fun updateWidgets() = runBlocking { WordsGlanceWidget().updateAll(this@LoadWordsActivity) }
 }

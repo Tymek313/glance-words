@@ -3,25 +3,53 @@ package com.example.glancewords.repository
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
+import com.google.api.services.sheets.v4.Sheets
+import com.google.auth.http.HttpCredentialsAdapter
+import com.google.auth.oauth2.GoogleCredentials
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.InputStream
 
 private const val FILENAME = "words.csv"
 
 object WordsRepository {
 
-    suspend fun get100RandomWords(context: Context): List<Pair<String, String>>? = withContext(Dispatchers.IO) {
-        if (File(context.filesDir, FILENAME).exists()) {
-            context.openFileInput(FILENAME).bufferedReader().use { reader ->
-                reader.useLines { lines ->
-                    lines.map(::csvLineToLanguagePair).filterHashValues().shuffled().take(100).toList()
-                }
-            }
-        } else {
-            null
+    suspend fun load100RandomFromRemote(file: InputStream): List<Pair<String, String>>? = withContext(Dispatchers.IO) {
+        val credentials = file.use { stream -> HttpCredentialsAdapter(GoogleCredentials.fromStream(stream)) }
+        val sheetsClient = Sheets.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credentials).build()
+        val valueRange = try {
+            sheetsClient.spreadsheets().values().get("1-OKOwZKU7X_zs9Wr34dzd4ns2BKuIQBJUGx3m_0kspA", "B2!A:B").execute()
+        } catch (e: IOException) {
+            return@withContext null
         }
+//        val valueRange = client.spreadsheets().getByDataFilter(
+//            "1-OKOwZKU7X_zs9Wr34dzd4ns2BKuIQBJUGx3m_0kspA",
+//            GetSpreadsheetByDataFilterRequest().apply {
+//                includeGridData = true
+//                dataFilters = listOf(
+//                    DataFilter().apply {
+//                        gridRange = GridRange().apply {
+//                            sheetId = 1640466707
+//                            startRowIndex = 0
+//                            startColumnIndex = 0
+//                            endColumnIndex = 1
+//                            endRowIndex = 5
+//                        }
+//                    }
+//                )
+//            }
+//        ).execute()
+        println(valueRange)
+        listOf("1" to "1")
+        valueRange.getValues()
+            .shuffled()
+            .filter { values -> values.none { it == "#VALUE!" } }
+            .take(100)
+            .map { it.first().toString() to it[1].toString() }
     }
 
     private fun csvLineToLanguagePair(line: String): Pair<String, String> = line
