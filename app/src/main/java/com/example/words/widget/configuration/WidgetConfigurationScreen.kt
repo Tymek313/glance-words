@@ -1,4 +1,4 @@
-package com.example.glancewords.widget.configuration
+package com.example.words.widget.configuration
 
 import android.content.ClipboardManager
 import android.content.Context
@@ -37,14 +37,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.glancewords.ui.theme.GlanceWordsTheme
+import com.example.words.ui.theme.GlanceWordsTheme
 import kotlinx.coroutines.flow.filterNot
 
 private val SpreadsheetUrlRegex = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConfigureScreen(
+fun WidgetConfigurationScreen(
     state: ConfigureWidgetState,
     onCreateWidgetClick: () -> Unit,
     onDismiss: () -> Unit,
@@ -127,7 +127,7 @@ private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId:
 @Preview
 private fun ConfigureScreenPreview() {
     GlanceWordsTheme {
-        ConfigureScreen(
+        WidgetConfigurationScreen(
             state = ConfigureWidgetState(
                 sheets = listOf(
                     ConfigureWidgetState.Sheet(id = "1", name = "Sheet 1"),
@@ -146,7 +146,7 @@ private fun ConfigureScreenPreview() {
 @Preview
 private fun ConfigureScreenSelectedSheetPreview() {
     GlanceWordsTheme {
-        ConfigureScreen(
+        WidgetConfigurationScreen(
             state = ConfigureWidgetState(
                 sheets = listOf(
                     ConfigureWidgetState.Sheet(id = "1", name = "Sheet 1"),

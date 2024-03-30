@@ -1,4 +1,4 @@
-package com.example.glancewords.widget.configuration
+package com.example.words.widget.configuration
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
@@ -12,13 +12,13 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.lifecycleScope
-import com.example.glancewords.ui.theme.GlanceWordsTheme
-import com.example.glancewords.widget.WordsGlanceWidget
+import com.example.words.ui.theme.GlanceWordsTheme
+import com.example.words.widget.WordsGlanceWidget
 import kotlinx.coroutines.launch
 
-class WordsWidgetConfigureActivity : ComponentActivity() {
+class WidgetConfigurationScreenActivity : ComponentActivity() {
 
-    private val viewModel by viewModels<ConfigureViewModel>(factoryProducer = ConfigureViewModel::Factory)
+    private val viewModel by viewModels<WidgetConfigurationViewModel>(factoryProducer = WidgetConfigurationViewModel::Factory)
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))
@@ -29,7 +29,7 @@ class WordsWidgetConfigureActivity : ComponentActivity() {
 
         setContent {
             GlanceWordsTheme {
-                ConfigureScreen(
+                WidgetConfigurationScreen(
                     state = viewModel.state.collectAsState().value,
                     onCreateWidgetClick = {
                         lifecycleScope.launch {
@@ -47,8 +47,8 @@ class WordsWidgetConfigureActivity : ComponentActivity() {
     private fun getWidgetId(): Int? = intent.extras?.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, 0)?.takeIf { it != 0 }
 
     private suspend fun updateWidget(appWidgetId: Int) {
-        val widgetId = GlanceAppWidgetManager(this@WordsWidgetConfigureActivity).getGlanceIdBy(appWidgetId)
-        WordsGlanceWidget().update(this@WordsWidgetConfigureActivity, widgetId)
+        val widgetId = GlanceAppWidgetManager(this@WidgetConfigurationScreenActivity).getGlanceIdBy(appWidgetId)
+        WordsGlanceWidget().update(this@WidgetConfigurationScreenActivity, widgetId)
     }
 
     private fun finishSuccessfully(appWidgetId: Int) {

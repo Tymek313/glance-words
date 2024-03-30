@@ -1,9 +1,9 @@
-package com.example.glancewords
+package com.example.words
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
-import com.example.glancewords.repository.WordsRepository
+import com.example.words.repository.WordsRepository
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {

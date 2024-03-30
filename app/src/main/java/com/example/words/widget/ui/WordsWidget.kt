@@ -1,4 +1,4 @@
-package com.example.glancewords.widget.ui
+package com.example.words.widget.ui
 
 import android.content.Context
 import androidx.compose.runtime.Composable
@@ -35,36 +35,31 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 import com.example.glancewords.R
-import com.example.glancewords.repository.WordsRepository
+import com.example.words.repository.WordsRepository
 
 private val defaultTextStyle
     @Composable
     get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(18f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
 
 @Composable
-fun WordsWidget() {
+fun WordsWidgetContent() {
     GlanceTheme {
-        WordsWidgetContent()
-    }
-}
+        var stateRefreshKey by remember { mutableStateOf(false) }
+        val widgetState by produceSelfRefreshingState(LocalContext.current, stateRefreshKey)
 
-@Composable
-private fun WordsWidgetContent() {
-    var stateRefreshKey by remember { mutableStateOf(false) }
-    val widgetState by produceSelfRefreshingState(LocalContext.current, stateRefreshKey)
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .appWidgetBackground()
-            .background(GlanceTheme.colors.widgetBackground)
-            .padding(6.dp)
-    ) {
-        when (val state = widgetState) {
-            WidgetState.InProgress -> CircularProgressIndicator()
-            WidgetState.Failure -> WordsText(LocalContext.current.getString(R.string.no_words_found_message))
-            is WidgetState.Success -> WordList(state.words) { stateRefreshKey = !stateRefreshKey }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .appWidgetBackground()
+                .background(GlanceTheme.colors.widgetBackground)
+                .padding(6.dp)
+        ) {
+            when (val state = widgetState) {
+                WidgetState.InProgress -> CircularProgressIndicator()
+                WidgetState.Failure -> WordsText(LocalContext.current.getString(R.string.no_words_found_message))
+                is WidgetState.Success -> WordList(state.words) { stateRefreshKey = !stateRefreshKey }
+            }
         }
     }
 }

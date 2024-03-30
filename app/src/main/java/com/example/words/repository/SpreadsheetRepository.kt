@@ -1,4 +1,4 @@
-package com.example.glancewords.repository
+package com.example.words.repository
 
 object SpreadsheetRepository {
 

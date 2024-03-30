@@ -1,13 +1,13 @@
-package com.example.glancewords.widget.configuration
+package com.example.words.widget.configuration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.glancewords.repository.SpreadsheetRepository
+import com.example.words.repository.SpreadsheetRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
-class ConfigureViewModel(private val spreadsheetRepository: SpreadsheetRepository): ViewModel() {
+class WidgetConfigurationViewModel(private val spreadsheetRepository: SpreadsheetRepository): ViewModel() {
 
     private val _state = MutableStateFlow(ConfigureWidgetState.initial)
     val state: StateFlow<ConfigureWidgetState> = _state
@@ -23,7 +23,7 @@ class ConfigureViewModel(private val spreadsheetRepository: SpreadsheetRepositor
     companion object {
         val Factory = object: ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = ConfigureViewModel(SpreadsheetRepository) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = WidgetConfigurationViewModel(SpreadsheetRepository) as T
         }
     }
 }

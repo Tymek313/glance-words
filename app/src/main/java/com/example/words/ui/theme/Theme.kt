@@ -1,4 +1,4 @@
-package com.example.glancewords.ui.theme
+package com.example.words.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

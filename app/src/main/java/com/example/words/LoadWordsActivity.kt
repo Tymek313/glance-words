@@ -1,4 +1,4 @@
-package com.example.glancewords
+package com.example.words
 
 import android.content.Intent
 import android.net.Uri
@@ -9,8 +9,9 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.lifecycleScope
-import com.example.glancewords.repository.WordsRepository
-import com.example.glancewords.widget.WordsGlanceWidget
+import com.example.glancewords.R
+import com.example.words.repository.WordsRepository
+import com.example.words.widget.WordsGlanceWidget
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
