@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.glancewords.ui.theme.GlanceWordsTheme
 import kotlinx.coroutines.flow.filterNot
 
 private val SpreadsheetUrlRegex = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
@@ -85,7 +86,7 @@ fun ConfigureScreen(
                 }
                 Button(
                     onClick = onCreateWidgetClick,
-                    enabled = spreadsheetId.isNotBlank(),
+                    enabled = state.selectedSheetId != null,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(text = "Create widget")
@@ -125,16 +126,37 @@ private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId:
 @Composable
 @Preview
 private fun ConfigureScreenPreview() {
-    ConfigureScreen(
-        state = ConfigureWidgetState(
-            sheets = listOf(
-                ConfigureWidgetState.Sheet(id = "1", name = "Sheet 1"),
-                ConfigureWidgetState.Sheet(id = "2", name = "Sheet 2"),
+    GlanceWordsTheme {
+        ConfigureScreen(
+            state = ConfigureWidgetState(
+                sheets = listOf(
+                    ConfigureWidgetState.Sheet(id = "1", name = "Sheet 1"),
+                    ConfigureWidgetState.Sheet(id = "2", name = "Sheet 2"),
+                ),
+                selectedSheetId = null
             ),
-            selectedSheetId = "1"
-        ),
-        onCreateWidgetClick = {},
-        onDismiss = {},
-        onSheetSelect = {}
-    )
+            onCreateWidgetClick = {},
+            onDismiss = {},
+            onSheetSelect = {}
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun ConfigureScreenSelectedSheetPreview() {
+    GlanceWordsTheme {
+        ConfigureScreen(
+            state = ConfigureWidgetState(
+                sheets = listOf(
+                    ConfigureWidgetState.Sheet(id = "1", name = "Sheet 1"),
+                    ConfigureWidgetState.Sheet(id = "2", name = "Sheet 2"),
+                ),
+                selectedSheetId = "1"
+            ),
+            onCreateWidgetClick = {},
+            onDismiss = {},
+            onSheetSelect = {}
+        )
+    }
 }
