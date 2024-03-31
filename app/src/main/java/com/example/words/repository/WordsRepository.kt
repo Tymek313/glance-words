@@ -3,11 +3,7 @@ package com.example.words.repository
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.sheets.v4.Sheets
-import com.google.auth.http.HttpCredentialsAdapter
-import com.google.auth.oauth2.GoogleCredentials
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
@@ -16,13 +12,11 @@ import java.io.InputStream
 
 private const val FILENAME = "words.csv"
 
-object WordsRepository {
+class WordsRepository(private val sheets: Sheets) {
 
     suspend fun load100RandomFromRemote(file: InputStream): List<Pair<String, String>>? = withContext(Dispatchers.IO) {
-        val credentials = file.use { stream -> HttpCredentialsAdapter(GoogleCredentials.fromStream(stream)) }
-        val sheetsClient = Sheets.Builder(NetHttpTransport(), GsonFactory.getDefaultInstance(), credentials).build()
         val valueRange = try {
-            sheetsClient.spreadsheets().values().get("1-OKOwZKU7X_zs9Wr34dzd4ns2BKuIQBJUGx3m_0kspA", "B2!A:B").execute()
+            sheets.spreadsheets().values().get("1-OKOwZKU7X_zs9Wr34dzd4ns2BKuIQBJUGx3m_0kspA", "B2!A:B").execute()
         } catch (e: IOException) {
             return@withContext null
         }

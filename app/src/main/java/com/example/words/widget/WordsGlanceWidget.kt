@@ -13,7 +13,3 @@ class WordsGlanceWidget: GlanceAppWidget() {
         }
     }
 }
-/*
-1. Read remote spreadsheet, get all entries for two columns shuffle 100 entries and display them.
-2. Add new entry on button click
- */

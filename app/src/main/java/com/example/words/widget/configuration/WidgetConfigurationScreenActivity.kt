@@ -12,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.lifecycleScope
+import com.example.words.repository.SheetsProvider
 import com.example.words.ui.theme.GlanceWordsTheme
 import com.example.words.widget.WordsGlanceWidget
 import kotlinx.coroutines.launch
@@ -22,8 +23,10 @@ class WidgetConfigurationScreenActivity : ComponentActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))
-        super.onCreate(savedInstanceState)
         setResult(RESULT_CANCELED)
+        super.onCreate(savedInstanceState)
+
+        lifecycleScope.launch { SheetsProvider.initialize(assets::open) }
 
         val appWidgetId = getWidgetId() ?: run { finish(); return }
 
@@ -38,7 +41,8 @@ class WidgetConfigurationScreenActivity : ComponentActivity() {
                         }
                     },
                     onDismiss = ::finish,
-                    onSheetSelect = viewModel::onSheetSelect
+                    onSheetSelect = viewModel::onSheetSelect,
+                    onSpreadsheetIdChange = viewModel::loadSheetsForSpreadsheet
                 )
             }
         }

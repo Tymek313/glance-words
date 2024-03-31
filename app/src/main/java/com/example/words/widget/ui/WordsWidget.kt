@@ -35,7 +35,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 import com.example.glancewords.R
-import com.example.words.repository.WordsRepository
 
 private val defaultTextStyle
     @Composable
@@ -68,9 +67,9 @@ fun WordsWidgetContent() {
 private fun produceSelfRefreshingState(context: Context, reloadKey: Boolean): State<WidgetState> {
     return produceState<WidgetState>(initialValue = WidgetState.InProgress, reloadKey) {
         value = WidgetState.InProgress
-        value = WordsRepository.load100RandomFromRemote(context.assets.open("credentials.json"))?.let { words ->
-            WidgetState.Success(words)
-        } ?: WidgetState.Failure
+//        value = WordsRepository.load100RandomFromRemote(context.assets.open("credentials.json"))?.let { words ->
+//            WidgetState.Success(words)
+//        } ?: WidgetState.Failure
     }
 }
 

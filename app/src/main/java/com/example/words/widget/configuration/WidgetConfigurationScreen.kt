@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedTextField
@@ -48,15 +49,19 @@ fun WidgetConfigurationScreen(
     state: ConfigureWidgetState,
     onCreateWidgetClick: () -> Unit,
     onDismiss: () -> Unit,
-    onSheetSelect: (sheetId: String) -> Unit
+    onSheetSelect: (sheetId: Int) -> Unit,
+    onSpreadsheetIdChange: (sheetId: String) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     val context = LocalContext.current
     var spreadsheetId by remember {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        println(clipboard.primaryClip?.getItemAt(0)?.text)
         val spreadsheetIdOrClipboardUri = clipboard.primaryClip?.getItemAt(0)?.text?.toString()?.let { uriFromClipboard ->
             SpreadsheetUrlRegex.find(uriFromClipboard)?.groupValues?.get(1) ?: uriFromClipboard
         }
+        println(spreadsheetIdOrClipboardUri)
+
         mutableStateOf(spreadsheetIdOrClipboardUri.orEmpty())
     }
 
@@ -75,14 +80,21 @@ fun WidgetConfigurationScreen(
             ) {
                 OutlinedTextField(
                     value = spreadsheetId,
-                    onValueChange = { spreadsheetId = it },
+                    onValueChange = {
+                        spreadsheetId = it
+                        onSpreadsheetIdChange(it)
+                    },
+                    readOnly = state.isLoading,
                     label = { Text(text = "Spreadsheet ID") },
+                    trailingIcon = { if(state.isLoading) CircularProgressIndicator(Modifier.padding(8.dp))},
+                    isError = state.spreadsheetError != null,
+                    supportingText = state.spreadsheetError?.let { { Text(it) } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
                 )
                 AnimatedVisibility(visible = state.sheets != null) {
-                    SheetList(sheets = state.sheets!!, selectedSheetId = state.selectedSheetId, onSheetSelect = onSheetSelect)
+                    SheetList(sheets = state.sheets ?: emptyList(), selectedSheetId = state.selectedSheetId, onSheetSelect = onSheetSelect)
                 }
                 Button(
                     onClick = onCreateWidgetClick,
@@ -115,7 +127,7 @@ private fun rememberSheetState(onDismiss: () -> Unit): SheetState {
 }
 
 @Composable
-private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId: String?, onSheetSelect: (sheetId: String) -> Unit) {
+private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId: Int?, onSheetSelect: (sheetId: Int) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(state = rememberScrollState())) {
         sheets.forEach { sheet ->
             FilterChip(selected = sheet.id == selectedSheetId, onClick = { onSheetSelect(sheet.id) }, label = { Text(text = sheet.name) })
@@ -130,14 +142,17 @@ private fun ConfigureScreenPreview() {
         WidgetConfigurationScreen(
             state = ConfigureWidgetState(
                 sheets = listOf(
-                    ConfigureWidgetState.Sheet(id = "1", name = "Sheet 1"),
-                    ConfigureWidgetState.Sheet(id = "2", name = "Sheet 2"),
+                    ConfigureWidgetState.Sheet(id = 1, name = "Sheet 1"),
+                    ConfigureWidgetState.Sheet(id = 2, name = "Sheet 2"),
                 ),
-                selectedSheetId = null
+                selectedSheetId = null,
+                spreadsheetError = "Error",
+                isLoading = true
             ),
             onCreateWidgetClick = {},
             onDismiss = {},
-            onSheetSelect = {}
+            onSheetSelect = {},
+            onSpreadsheetIdChange = {}
         )
     }
 }
@@ -149,14 +164,17 @@ private fun ConfigureScreenSelectedSheetPreview() {
         WidgetConfigurationScreen(
             state = ConfigureWidgetState(
                 sheets = listOf(
-                    ConfigureWidgetState.Sheet(id = "1", name = "Sheet 1"),
-                    ConfigureWidgetState.Sheet(id = "2", name = "Sheet 2"),
+                    ConfigureWidgetState.Sheet(id = 1, name = "Sheet 1"),
+                    ConfigureWidgetState.Sheet(id = 2, name = "Sheet 2"),
                 ),
-                selectedSheetId = "1"
+                selectedSheetId = 1,
+                spreadsheetError = null,
+                isLoading = false
             ),
             onCreateWidgetClick = {},
             onDismiss = {},
-            onSheetSelect = {}
+            onSheetSelect = {},
+            onSpreadsheetIdChange = {}
         )
     }
 }
