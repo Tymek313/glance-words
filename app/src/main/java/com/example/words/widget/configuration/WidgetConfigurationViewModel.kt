@@ -1,8 +1,12 @@
 package com.example.words.widget.configuration
 
+import android.util.Log
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.words.Settings
+import com.example.words.Widget
 import com.example.words.repository.SheetsProvider
 import com.example.words.repository.SpreadsheetRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -13,46 +17,85 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class WidgetConfigurationViewModel(private val spreadsheetRepository: SpreadsheetRepository) : ViewModel() {
+class WidgetConfigurationViewModel(
+    private val spreadsheetRepository: SpreadsheetRepository,
+    private val dataStore: DataStore<Settings>
+) : ViewModel() {
 
     private val _state = MutableStateFlow(ConfigureWidgetState.initial)
     val state: StateFlow<ConfigureWidgetState> = _state
 
+    private val loadSheetsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(javaClass.name, null, throwable)
+        _state.update { it.copy(spreadsheetError = throwable.localizedMessage, isLoading = false) }
+    }
+
     private var loadSheetsJob: Job? = null
+
+    fun setInitialSpreadsheetId(clipboardText: CharSequence) {
+        _state.update { it.copy(spreadsheetId = SpreadsheetUrlRegex.find(clipboardText)?.groupValues?.get(1).orEmpty()) }
+    }
 
     fun loadSheetsForSpreadsheet(spreadsheetId: String) {
         loadSheetsJob?.cancel()
-        loadSheetsJob = viewModelScope.launch(
-            CoroutineExceptionHandler { _, throwable -> _state.update { it.copy(spreadsheetError = throwable.localizedMessage, isLoading = false) } }
-        ) {
+        _state.update { it.copy(spreadsheetId = spreadsheetId, spreadsheetError = null) }
+        if(spreadsheetId.isEmpty()) {
+            return
+        }
+
+        loadSheetsJob = viewModelScope.launch(loadSheetsExceptionHandler) {
             delay(2000)
-            _state.update { it.copy(isLoading = true, spreadsheetError = null, sheets = null, selectedSheetId = null) }
+            _state.update { it.copy(isLoading = true, sheets = null, selectedSheetId = null) }
             val sheets = spreadsheetRepository.fetchSpreadsheetSheets(spreadsheetId)
             _state.update { state -> state.copy(isLoading = false, sheets = sheets.map { ConfigureWidgetState.Sheet(it.id, it.name) }) }
         }
     }
 
+
     fun onSheetSelect(sheetId: Int) {
         _state.update { it.copy(selectedSheetId = sheetId) }
     }
 
+    suspend fun saveWidgetConfiguration(widgetId: Int) {
+        viewModelScope.launch {
+            dataStore.updateData { settings ->
+                settings.toBuilder().addWidgets(
+                    Widget.newBuilder()
+                        .setWidgetId(widgetId)
+                        .setSpreadsheetId(state.value.spreadsheetId)
+                        .setSheetId(state.value.selectedSheetId!!)
+                        .build()
+                ).build()
+            }
+        }.join()
+    }
+
     companion object {
-        val Factory = object : ViewModelProvider.Factory {
+        private val SpreadsheetUrlRegex = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
+        fun factory(dataStore: DataStore<Settings>) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = WidgetConfigurationViewModel(SpreadsheetRepository(SheetsProvider.sheets)) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                WidgetConfigurationViewModel(SpreadsheetRepository(SheetsProvider.sheets), dataStore) as T
         }
     }
 }
 
 data class ConfigureWidgetState(
+    val spreadsheetId: String,
     val isLoading: Boolean,
     val spreadsheetError: String?,
     val sheets: List<Sheet>?,
-    val selectedSheetId: Int?
+    val selectedSheetId: Int?,
 ) {
     class Sheet(val id: Int, val name: String)
 
     companion object {
-        val initial = ConfigureWidgetState(sheets = null, selectedSheetId = null, spreadsheetError = null, isLoading = false)
+        val initial = ConfigureWidgetState(
+            spreadsheetId = "",
+            sheets = null,
+            selectedSheetId = null,
+            spreadsheetError = null,
+            isLoading = false
+        )
     }
 }

@@ -1,6 +1,7 @@
 package com.example.words.widget.configuration
 
 import android.appwidget.AppWidgetManager
+import android.content.ClipboardManager
 import android.content.Intent
 import android.graphics.Color.TRANSPARENT
 import android.os.Bundle
@@ -13,13 +14,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.lifecycleScope
 import com.example.words.repository.SheetsProvider
+import com.example.words.settings.settingsSataStore
 import com.example.words.ui.theme.GlanceWordsTheme
 import com.example.words.widget.WordsGlanceWidget
 import kotlinx.coroutines.launch
 
 class WidgetConfigurationScreenActivity : ComponentActivity() {
 
-    private val viewModel by viewModels<WidgetConfigurationViewModel>(factoryProducer = WidgetConfigurationViewModel::Factory)
+    private val viewModel by viewModels<WidgetConfigurationViewModel>(factoryProducer = { WidgetConfigurationViewModel.factory(settingsSataStore) })
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))
@@ -30,12 +32,15 @@ class WidgetConfigurationScreenActivity : ComponentActivity() {
 
         val appWidgetId = getWidgetId() ?: run { finish(); return }
 
+        setInitialSpreadsheetIdFromClipboard()
+
         setContent {
             GlanceWordsTheme {
                 WidgetConfigurationScreen(
                     state = viewModel.state.collectAsState().value,
                     onCreateWidgetClick = {
                         lifecycleScope.launch {
+                            viewModel.saveWidgetConfiguration(appWidgetId)
                             updateWidget(appWidgetId)
                             finishSuccessfully(appWidgetId)
                         }
@@ -45,6 +50,13 @@ class WidgetConfigurationScreenActivity : ComponentActivity() {
                     onSpreadsheetIdChange = viewModel::loadSheetsForSpreadsheet
                 )
             }
+        }
+    }
+
+    private fun setInitialSpreadsheetIdFromClipboard() {
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.primaryClip?.getItemAt(0)?.text?.let {
+            viewModel.setInitialSpreadsheetId(clipboardText = it)
         }
     }
 

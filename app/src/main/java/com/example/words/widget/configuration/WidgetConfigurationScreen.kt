@@ -1,7 +1,5 @@
 package com.example.words.widget.configuration
 
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -25,23 +23,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.words.ui.theme.GlanceWordsTheme
 import kotlinx.coroutines.flow.filterNot
-
-private val SpreadsheetUrlRegex = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,17 +45,6 @@ fun WidgetConfigurationScreen(
     onSpreadsheetIdChange: (sheetId: String) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
-    val context = LocalContext.current
-    var spreadsheetId by remember {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        println(clipboard.primaryClip?.getItemAt(0)?.text)
-        val spreadsheetIdOrClipboardUri = clipboard.primaryClip?.getItemAt(0)?.text?.toString()?.let { uriFromClipboard ->
-            SpreadsheetUrlRegex.find(uriFromClipboard)?.groupValues?.get(1) ?: uriFromClipboard
-        }
-        println(spreadsheetIdOrClipboardUri)
-
-        mutableStateOf(spreadsheetIdOrClipboardUri.orEmpty())
-    }
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
@@ -79,11 +60,8 @@ fun WidgetConfigurationScreen(
                     .navigationBarsPadding()
             ) {
                 OutlinedTextField(
-                    value = spreadsheetId,
-                    onValueChange = {
-                        spreadsheetId = it
-                        onSpreadsheetIdChange(it)
-                    },
+                    value = state.spreadsheetId,
+                    onValueChange = onSpreadsheetIdChange,
                     readOnly = state.isLoading,
                     label = { Text(text = "Spreadsheet ID") },
                     trailingIcon = { if(state.isLoading) CircularProgressIndicator(Modifier.padding(8.dp))},
@@ -128,7 +106,7 @@ private fun rememberSheetState(onDismiss: () -> Unit): SheetState {
 
 @Composable
 private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId: Int?, onSheetSelect: (sheetId: Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(state = rememberScrollState())) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(state = rememberScrollState())) {
         sheets.forEach { sheet ->
             FilterChip(selected = sheet.id == selectedSheetId, onClick = { onSheetSelect(sheet.id) }, label = { Text(text = sheet.name) })
         }
@@ -141,6 +119,7 @@ private fun ConfigureScreenPreview() {
     GlanceWordsTheme {
         WidgetConfigurationScreen(
             state = ConfigureWidgetState(
+                spreadsheetId = "",
                 sheets = listOf(
                     ConfigureWidgetState.Sheet(id = 1, name = "Sheet 1"),
                     ConfigureWidgetState.Sheet(id = 2, name = "Sheet 2"),
@@ -163,6 +142,7 @@ private fun ConfigureScreenSelectedSheetPreview() {
     GlanceWordsTheme {
         WidgetConfigurationScreen(
             state = ConfigureWidgetState(
+                spreadsheetId = "",
                 sheets = listOf(
                     ConfigureWidgetState.Sheet(id = 1, name = "Sheet 1"),
                     ConfigureWidgetState.Sheet(id = 2, name = "Sheet 2"),

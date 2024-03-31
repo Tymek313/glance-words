@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.google.protobuf") version "0.9.4"
 }
 
 android {
@@ -48,6 +49,26 @@ android {
     }
 }
 
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.26.1"
+    }
+
+    // Generates the java Protobuf-lite code for the Protobufs in this project. See
+    // https://github.com/google/protobuf-gradle-plugin#customizing-protobuf-compilation
+    // for more information.
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
+}
+
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -67,6 +88,9 @@ dependencies {
     implementation("com.google.api-client:google-api-client:2.2.0")
     implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
     implementation("com.google.apis:google-api-services-sheets:v4-rev20240312-2.0.0")
+    implementation("androidx.datastore:datastore:1.0.0")
+    implementation("com.google.protobuf:protobuf-javalite:3.18.0")
+//    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
