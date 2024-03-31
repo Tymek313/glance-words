@@ -11,17 +11,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.lifecycleScope
 import com.example.words.repository.SheetsProvider
-import com.example.words.settings.settingsSataStore
+import com.example.words.settings.settingsDataStore
 import com.example.words.ui.theme.GlanceWordsTheme
-import com.example.words.widget.WordsGlanceWidget
 import kotlinx.coroutines.launch
 
-class WidgetConfigurationScreenActivity : ComponentActivity() {
+class WidgetConfigurationActivity : ComponentActivity() {
 
-    private val viewModel by viewModels<WidgetConfigurationViewModel>(factoryProducer = { WidgetConfigurationViewModel.factory(settingsSataStore) })
+    private val viewModel by viewModels<WidgetConfigurationViewModel>(factoryProducer = { WidgetConfigurationViewModel.factory(settingsDataStore) })
+    private var clipboardChecked = false
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))
@@ -32,8 +31,6 @@ class WidgetConfigurationScreenActivity : ComponentActivity() {
 
         val appWidgetId = getWidgetId() ?: run { finish(); return }
 
-        setInitialSpreadsheetIdFromClipboard()
-
         setContent {
             GlanceWordsTheme {
                 WidgetConfigurationScreen(
@@ -41,15 +38,23 @@ class WidgetConfigurationScreenActivity : ComponentActivity() {
                     onCreateWidgetClick = {
                         lifecycleScope.launch {
                             viewModel.saveWidgetConfiguration(appWidgetId)
-                            updateWidget(appWidgetId)
                             finishSuccessfully(appWidgetId)
                         }
                     },
                     onDismiss = ::finish,
                     onSheetSelect = viewModel::onSheetSelect,
-                    onSpreadsheetIdChange = viewModel::loadSheetsForSpreadsheet
+                    onSpreadsheetIdChange = viewModel::onSpreadsheetIdChanged
                 )
             }
+        }
+    }
+
+    // Clipboard is available only when app is focused
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if(hasFocus && !clipboardChecked) {
+            clipboardChecked = true
+            setInitialSpreadsheetIdFromClipboard()
         }
     }
 
@@ -61,11 +66,6 @@ class WidgetConfigurationScreenActivity : ComponentActivity() {
     }
 
     private fun getWidgetId(): Int? = intent.extras?.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, 0)?.takeIf { it != 0 }
-
-    private suspend fun updateWidget(appWidgetId: Int) {
-        val widgetId = GlanceAppWidgetManager(this@WidgetConfigurationScreenActivity).getGlanceIdBy(appWidgetId)
-        WordsGlanceWidget().update(this@WidgetConfigurationScreenActivity, widgetId)
-    }
 
     private fun finishSuccessfully(appWidgetId: Int) {
         val resultIntent = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)

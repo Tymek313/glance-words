@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.words.Settings
-import com.example.words.Widget
+import com.example.words.WidgetSettings
 import com.example.words.repository.SheetsProvider
 import com.example.words.repository.SpreadsheetRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -34,19 +34,22 @@ class WidgetConfigurationViewModel(
 
     fun setInitialSpreadsheetId(clipboardText: CharSequence) {
         _state.update { it.copy(spreadsheetId = SpreadsheetUrlRegex.find(clipboardText)?.groupValues?.get(1).orEmpty()) }
+        loadSheetsForSpreadsheet(withDebounce = false)
     }
 
-    fun loadSheetsForSpreadsheet(spreadsheetId: String) {
-        loadSheetsJob?.cancel()
+    fun onSpreadsheetIdChanged(spreadsheetId: String) {
         _state.update { it.copy(spreadsheetId = spreadsheetId, spreadsheetError = null) }
-        if(spreadsheetId.isEmpty()) {
-            return
+        if(spreadsheetId.isNotEmpty()) {
+            loadSheetsForSpreadsheet(withDebounce = true)
         }
+    }
 
+    private fun loadSheetsForSpreadsheet(withDebounce: Boolean) {
+        loadSheetsJob?.cancel()
         loadSheetsJob = viewModelScope.launch(loadSheetsExceptionHandler) {
-            delay(2000)
+            if(withDebounce) delay(2000)
             _state.update { it.copy(isLoading = true, sheets = null, selectedSheetId = null) }
-            val sheets = spreadsheetRepository.fetchSpreadsheetSheets(spreadsheetId)
+            val sheets = spreadsheetRepository.fetchSpreadsheetSheets(_state.value.spreadsheetId)
             _state.update { state -> state.copy(isLoading = false, sheets = sheets.map { ConfigureWidgetState.Sheet(it.id, it.name) }) }
         }
     }
@@ -60,7 +63,7 @@ class WidgetConfigurationViewModel(
         viewModelScope.launch {
             dataStore.updateData { settings ->
                 settings.toBuilder().addWidgets(
-                    Widget.newBuilder()
+                    WidgetSettings.newBuilder()
                         .setWidgetId(widgetId)
                         .setSpreadsheetId(state.value.spreadsheetId)
                         .setSheetId(state.value.selectedSheetId!!)

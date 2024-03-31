@@ -4,10 +4,10 @@ option java_package = "com.example.words";
 option java_multiple_files = true;
 
 message Settings {
-  repeated Widget widgets = 1;
+  repeated WidgetSettings widgets = 1;
 }
 
-message Widget {
+message WidgetSettings {
   int32 widgetId = 1;
   string spreadsheetId = 2;
   int32 sheetId = 3;

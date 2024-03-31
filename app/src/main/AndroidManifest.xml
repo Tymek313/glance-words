@@ -13,6 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GlanceWords"
+        android:name="com.example.words.App"
         tools:targetApi="31">
         <activity
             android:name="com.example.words.LoadWordsActivity"
@@ -40,7 +41,7 @@
         </receiver>
 
         <activity
-            android:name="com.example.words.widget.configuration.WidgetConfigurationScreenActivity"
+            android:name="com.example.words.widget.configuration.WidgetConfigurationActivity"
             android:theme="@style/Theme.Transparent"
             android:windowSoftInputMode="adjustResize|stateAlwaysVisible"
             android:exported="false">

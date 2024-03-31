@@ -1,13 +1,6 @@
 package com.example.words.widget.ui
 
-import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -35,17 +28,15 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 import com.example.glancewords.R
+import com.example.words.widget.WidgetState
 
 private val defaultTextStyle
     @Composable
     get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(18f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
 
 @Composable
-fun WordsWidgetContent() {
+fun WordsWidgetContent(widgetState: WidgetState, onWidgetClick: () -> Unit) {
     GlanceTheme {
-        var stateRefreshKey by remember { mutableStateOf(false) }
-        val widgetState by produceSelfRefreshingState(LocalContext.current, stateRefreshKey)
-
         Box(
             contentAlignment = Alignment.Center,
             modifier = GlanceModifier
@@ -54,22 +45,12 @@ fun WordsWidgetContent() {
                 .background(GlanceTheme.colors.widgetBackground)
                 .padding(6.dp)
         ) {
-            when (val state = widgetState) {
+            when (widgetState) {
                 WidgetState.InProgress -> CircularProgressIndicator()
                 WidgetState.Failure -> WordsText(LocalContext.current.getString(R.string.no_words_found_message))
-                is WidgetState.Success -> WordList(state.words) { stateRefreshKey = !stateRefreshKey }
+                is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onWidgetClick)
             }
         }
-    }
-}
-
-@Composable
-private fun produceSelfRefreshingState(context: Context, reloadKey: Boolean): State<WidgetState> {
-    return produceState<WidgetState>(initialValue = WidgetState.InProgress, reloadKey) {
-        value = WidgetState.InProgress
-//        value = WordsRepository.load100RandomFromRemote(context.assets.open("credentials.json"))?.let { words ->
-//            WidgetState.Success(words)
-//        } ?: WidgetState.Failure
     }
 }
 
@@ -96,12 +77,6 @@ private fun WordList(words: List<Pair<String, String>>, modifier: GlanceModifier
             }
         }
     }
-}
-
-private sealed interface WidgetState {
-    data object InProgress : WidgetState
-    data object Failure : WidgetState
-    class Success(val words: List<Pair<String, String>>) : WidgetState
 }
 
 @Composable

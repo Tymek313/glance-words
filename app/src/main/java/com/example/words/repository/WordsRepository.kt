@@ -4,47 +4,56 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.google.api.services.sheets.v4.Sheets
+import com.google.api.services.sheets.v4.model.DataFilter
+import com.google.api.services.sheets.v4.model.GetSpreadsheetByDataFilterRequest
+import com.google.api.services.sheets.v4.model.GridRange
+import com.google.api.services.sheets.v4.model.Spreadsheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.InputStream
 
 private const val FILENAME = "words.csv"
 
 class WordsRepository(private val sheets: Sheets) {
 
-    suspend fun load100RandomFromRemote(file: InputStream): List<Pair<String, String>>? = withContext(Dispatchers.IO) {
-        val valueRange = try {
-            sheets.spreadsheets().values().get("1-OKOwZKU7X_zs9Wr34dzd4ns2BKuIQBJUGx3m_0kspA", "B2!A:B").execute()
+    suspend fun load100RandomFromRemote(spreadsheetId: String, sheetId: Int): List<Pair<String, String>>? = withContext(Dispatchers.IO) {
+        val spreadsheet = try {
+            loadSpreadsheet(spreadsheetId, sheetId)
         } catch (e: IOException) {
             return@withContext null
         }
-//        val valueRange = client.spreadsheets().getByDataFilter(
-//            "1-OKOwZKU7X_zs9Wr34dzd4ns2BKuIQBJUGx3m_0kspA",
-//            GetSpreadsheetByDataFilterRequest().apply {
-//                includeGridData = true
-//                dataFilters = listOf(
-//                    DataFilter().apply {
-//                        gridRange = GridRange().apply {
-//                            sheetId = 1640466707
-//                            startRowIndex = 0
-//                            startColumnIndex = 0
-//                            endColumnIndex = 1
-//                            endRowIndex = 5
-//                        }
-//                    }
-//                )
-//            }
-//        ).execute()
-        println(valueRange)
-        listOf("1" to "1")
-        valueRange.getValues()
-            .shuffled()
-            .filter { values -> values.none { it == "#VALUE!" } }
-            .take(100)
-            .map { it.first().toString() to it[1].toString() }
+        println(spreadsheet)
+        spreadsheet?.sheets?.firstOrNull()?.data?.firstOrNull()?.rowData
+            ?.mapNotNull { row ->
+                val firstValue = row.getValues()?.get(0)?.effectiveValue?.stringValue
+                val secondValue = row.getValues()?.get(1)?.effectiveValue?.stringValue
+                if(firstValue != null && secondValue != null) {
+                    firstValue to secondValue
+                } else {
+                    null
+                }
+            }
+            ?.filter { it.first != "#VALUE!" && it.second != "#VALUE!" }
+            ?.shuffled()
+            ?.take(100)
     }
+
+    private fun loadSpreadsheet(spreadsheetId: String, sheetId: Int): Spreadsheet? = sheets.spreadsheets().getByDataFilter(
+        spreadsheetId,
+        GetSpreadsheetByDataFilterRequest().apply {
+            includeGridData = true
+            dataFilters = listOf(
+                DataFilter().apply {
+                    gridRange = GridRange().apply {
+                        this.sheetId = sheetId
+                        startColumnIndex = 0
+                        endColumnIndex = 2
+                    }
+                }
+            )
+        }
+    ).execute()
 
     private fun csvLineToLanguagePair(line: String): Pair<String, String> = line
         .split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*\$)".toRegex())
