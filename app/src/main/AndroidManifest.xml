@@ -15,18 +15,6 @@
         android:theme="@style/Theme.GlanceWords"
         android:name="com.example.words.App"
         tools:targetApi="31">
-        <activity
-            android:name="com.example.words.LoadWordsActivity"
-            android:theme="@style/Theme.Transparent"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-
-                <data android:mimeType="*/*" />
-            </intent-filter>
-        </activity>
 
         <receiver
             android:name="com.example.words.widget.WordsWidgetReceiver"
