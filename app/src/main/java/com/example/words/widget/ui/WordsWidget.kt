@@ -47,10 +47,18 @@ fun WordsWidgetContent(widgetState: WidgetState, onWidgetClick: () -> Unit) {
         ) {
             when (widgetState) {
                 WidgetState.InProgress -> CircularProgressIndicator()
-                WidgetState.Failure -> WordsText(LocalContext.current.getString(R.string.no_words_found_message))
+                WidgetState.Failure -> Error(onReload)
                 is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onWidgetClick)
             }
         }
+    }
+}
+
+@Composable
+private fun Error(onReload: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        WordsText(LocalContext.current.getString(R.string.could_not_load_words))
+        Button(text = "Reload", onClick = onReload, modifier = GlanceModifier.padding(top = 16.dp))
     }
 }
 
