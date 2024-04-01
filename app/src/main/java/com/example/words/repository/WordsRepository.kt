@@ -19,8 +19,8 @@ class WordsRepository(private val sheets: Sheets) {
         }
         spreadsheet?.sheets?.firstOrNull()?.data?.firstOrNull()?.rowData
             ?.mapNotNull { row ->
-                val firstValue = row.getValues()?.get(0)?.effectiveValue?.stringValue
-                val secondValue = row.getValues()?.get(1)?.effectiveValue?.stringValue
+                val firstValue = row.getValues()?.getOrNull(0)?.effectiveValue?.stringValue
+                val secondValue = row.getValues()?.getOrNull(1)?.effectiveValue?.stringValue
                 if(firstValue != null && secondValue != null) {
                     firstValue to secondValue
                 } else {
