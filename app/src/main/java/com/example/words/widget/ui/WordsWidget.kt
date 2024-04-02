@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.glance.Button
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -18,10 +19,12 @@ import androidx.glance.appwidget.lazy.items
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
+import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.text.Text
@@ -34,21 +37,29 @@ private val defaultTextStyle
     @Composable
     get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(18f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
 
+private val smallTextStyle
+    @Composable
+    get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(13f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
+
 @Composable
-fun WordsWidgetContent(widgetState: WidgetState, onWidgetClick: () -> Unit) {
+fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, onReload: () -> Unit) {
     GlanceTheme {
-        Box(
-            contentAlignment = Alignment.Center,
+        Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .appWidgetBackground()
                 .background(GlanceTheme.colors.widgetBackground)
                 .padding(6.dp)
         ) {
-            when (widgetState) {
-                WidgetState.InProgress -> CircularProgressIndicator()
-                WidgetState.Failure -> Error(onReload)
-                is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onWidgetClick)
+            Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.defaultWeight().fillMaxWidth()) {
+                when (widgetState) {
+                    WidgetState.InProgress -> CircularProgressIndicator()
+                    WidgetState.Failure -> Error(onReload)
+                    is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onReload)
+                }
+            }
+            Row(horizontalAlignment = Alignment.End, modifier = GlanceModifier.fillMaxWidth()) {
+                WordsText(text = sheetName, style = smallTextStyle)
             }
         }
     }
@@ -58,7 +69,8 @@ fun WordsWidgetContent(widgetState: WidgetState, onWidgetClick: () -> Unit) {
 private fun Error(onReload: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         WordsText(LocalContext.current.getString(R.string.could_not_load_words))
-        Button(text = "Reload", onClick = onReload, modifier = GlanceModifier.padding(top = 16.dp))
+        Spacer(GlanceModifier.height(16.dp))
+        Button(text = "Reload", onClick = onReload)
     }
 }
 

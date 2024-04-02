@@ -39,7 +39,7 @@ class WidgetConfigurationViewModel(
 
     fun onSpreadsheetIdChanged(spreadsheetId: String) {
         _state.update { it.copy(spreadsheetId = spreadsheetId, spreadsheetError = null) }
-        if(spreadsheetId.isNotEmpty()) {
+        if (spreadsheetId.isNotEmpty()) {
             loadSheetsForSpreadsheet(withDebounce = true)
         }
     }
@@ -47,7 +47,7 @@ class WidgetConfigurationViewModel(
     private fun loadSheetsForSpreadsheet(withDebounce: Boolean) {
         loadSheetsJob?.cancel()
         loadSheetsJob = viewModelScope.launch(loadSheetsExceptionHandler) {
-            if(withDebounce) delay(2000)
+            if (withDebounce) delay(2000)
             _state.update { it.copy(isLoading = true, sheets = null, selectedSheetId = null) }
             val sheets = spreadsheetRepository.fetchSpreadsheetSheets(_state.value.spreadsheetId)
             _state.update { state -> state.copy(isLoading = false, sheets = sheets.map { ConfigureWidgetState.Sheet(it.id, it.name) }) }
@@ -63,11 +63,14 @@ class WidgetConfigurationViewModel(
         viewModelScope.launch {
             dataStore.updateData { settings ->
                 settings.toBuilder().addWidgets(
-                    WidgetSettings.newBuilder()
-                        .setWidgetId(widgetId)
-                        .setSpreadsheetId(state.value.spreadsheetId)
-                        .setSheetId(state.value.selectedSheetId!!)
-                        .build()
+                    state.value.run {
+                        WidgetSettings.newBuilder()
+                            .setWidgetId(widgetId)
+                            .setSpreadsheetId(spreadsheetId)
+                            .setSheetId(selectedSheetId!!)
+                            .setSheetName(sheets?.first { it.id == selectedSheetId }?.name.orEmpty())
+                            .build()
+                    }
                 ).build()
             }
         }.join()

@@ -11,4 +11,5 @@ message WidgetSettings {
   int32 widgetId = 1;
   string spreadsheetId = 2;
   int32 sheetId = 3;
+  string sheetName = 4;
 }

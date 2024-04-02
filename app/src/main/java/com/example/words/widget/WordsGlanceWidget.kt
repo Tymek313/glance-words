@@ -6,7 +6,7 @@ import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.provideContent
-import com.example.words.Settings
+import com.example.words.WidgetSettings
 import com.example.words.repository.SheetsProvider
 import com.example.words.repository.WordsRepository
 import com.example.words.settings.settingsDataStore
@@ -22,15 +22,15 @@ class WordsGlanceWidget : GlanceAppWidget() {
     private val wordsRepository = WordsRepository(SheetsProvider.sheets)
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val (widgetState, shuffleWords) = createWidgetState(
-            settingsFlow = context.settingsDataStore.data,
-            appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-        )
+        val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
+        val widgetSettings = context.settingsDataStore.data.map { settings -> settings.widgetsList.find { it.widgetId == appWidgetId } }
+        val (widgetState, shuffleWords) = createWidgetState(widgetSettings)
 
         provideContent {
             WordsWidgetContent(
                 widgetState = widgetState.collectAsState(initial = WidgetState.InProgress).value,
-                onWidgetClick = shuffleWords
+                sheetName = widgetSettings.map { it?.sheetName.orEmpty() }.collectAsState(initial = "").value,
+                onReload = shuffleWords
             )
         }
     }
@@ -45,11 +45,10 @@ class WordsGlanceWidget : GlanceAppWidget() {
         }
     }
 
-    private fun createWidgetState(settingsFlow: Flow<Settings>, appWidgetId: Int): WidgetStateProvider {
+    private fun createWidgetState(widgetSettings: Flow<WidgetSettings?>): WidgetStateProvider {
         val shouldRefresh = MutableStateFlow(false)
         return WidgetStateProvider(
-            widgetState = settingsFlow
-                .map { settings -> settings.widgetsList.find { it.widgetId == appWidgetId } }
+            widgetState = widgetSettings
                 .filterNotNull()
                 .combine(shouldRefresh) { widget, _ -> wordsRepository.load100RandomFromRemote(widget.spreadsheetId, widget.sheetId) }
                 .map { words -> if (words == null) WidgetState.Failure else WidgetState.Success(words) },
