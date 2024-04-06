@@ -1,14 +1,14 @@
 package com.example.words.widget.configuration
 
 import android.util.Log
-import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.words.Settings
-import com.example.words.WidgetSettings
-import com.example.words.repository.SheetsProvider
+import com.example.words.DependencyContainer
 import com.example.words.repository.SpreadsheetRepository
+import com.example.words.repository.WidgetSettingsRepository
+import com.example.words.repository.WordsSynchronizer
+import com.example.words.settings.WidgetSettings
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,7 +19,8 @@ import kotlinx.coroutines.launch
 
 class WidgetConfigurationViewModel(
     private val spreadsheetRepository: SpreadsheetRepository,
-    private val dataStore: DataStore<Settings>
+    private val widgetSettingsRepository: WidgetSettingsRepository,
+    private val wordsSynchronizer: WordsSynchronizer
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ConfigureWidgetState.initial)
@@ -61,27 +62,28 @@ class WidgetConfigurationViewModel(
 
     suspend fun saveWidgetConfiguration(widgetId: Int) {
         viewModelScope.launch {
-            dataStore.updateData { settings ->
-                settings.toBuilder().addWidgets(
-                    state.value.run {
-                        WidgetSettings.newBuilder()
-                            .setWidgetId(widgetId)
-                            .setSpreadsheetId(spreadsheetId)
-                            .setSheetId(selectedSheetId!!)
-                            .setSheetName(sheets?.first { it.id == selectedSheetId }?.name.orEmpty())
-                            .build()
-                    }
-                ).build()
+            state.value.run {
+                widgetSettingsRepository.addWidget(
+                    WidgetSettings(
+                        widgetId = WidgetSettings.WidgetId(widgetId),
+                        spreadsheetId = spreadsheetId,
+                        sheetId = selectedSheetId!!,
+                        sheetName = sheets?.first { it.id == selectedSheetId }?.name.orEmpty(),
+                        lastUpdatedAt = null
+                    )
+                )
             }
+            wordsSynchronizer.synchronizeWords(widgetId)
         }.join()
     }
 
     companion object {
         private val SpreadsheetUrlRegex = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
-        fun factory(dataStore: DataStore<Settings>) = object : ViewModelProvider.Factory {
+        fun factory(diContainer: DependencyContainer) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                WidgetConfigurationViewModel(SpreadsheetRepository(SheetsProvider.sheets), dataStore) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = diContainer.run {
+                WidgetConfigurationViewModel(getSpreadsheetRepository(), getWidgetSettingsRepository(), getWordsSynchronizer()) as T
+            }
         }
     }
 }

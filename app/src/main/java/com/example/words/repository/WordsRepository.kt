@@ -1,53 +1,76 @@
 package com.example.words.repository
 
-import com.google.api.services.sheets.v4.Sheets
-import com.google.api.services.sheets.v4.model.DataFilter
-import com.google.api.services.sheets.v4.model.GetSpreadsheetByDataFilterRequest
-import com.google.api.services.sheets.v4.model.GridRange
-import com.google.api.services.sheets.v4.model.Spreadsheet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
-import java.io.IOException
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
 
-class WordsRepository(private val sheets: Sheets) {
+class WordsRepository(private val spreadsheetsDirectory: File) {
 
-    suspend fun load100RandomFromRemote(spreadsheetId: String, sheetId: Int): List<Pair<String, String>>? = withContext(Dispatchers.IO) {
-        val spreadsheet = try {
-            loadSpreadsheet(spreadsheetId, sheetId)
-        } catch (e: IOException) {
-            return@withContext null
+    private val newlySynchronizedWords = Channel<List<Pair<String, String>>>()
+
+    fun observeRandomWords(spreadsheetId: String, sheetId: Int): Flow<List<Pair<String, String>>?> = flow {
+        val cachedFile = getTargetFile(spreadsheetId, sheetId)
+        if (cachedFile.exists()) {
+            emit(linesToShuffledPairs(cachedFile.readLines()))
         }
-        spreadsheet?.sheets?.firstOrNull()?.data?.firstOrNull()?.rowData
-            ?.mapNotNull { row ->
-                val firstValue = row.getValues()?.getOrNull(0)?.effectiveValue?.stringValue
-                val secondValue = row.getValues()?.getOrNull(1)?.effectiveValue?.stringValue
-                if(firstValue != null && secondValue != null) {
-                    firstValue to secondValue
-                } else {
-                    null
-                }
-            }
-            ?.filter { it.first != "#VALUE!" && it.second != "#VALUE!" }
-            ?.shuffled()
-            ?.take(100)
+        for (words in newlySynchronizedWords) {
+            emit(words)
+        }
     }
 
-    private fun loadSpreadsheet(spreadsheetId: String, sheetId: Int): Spreadsheet? {
-        val filters = listOf(
-            DataFilter().apply {
-                gridRange = GridRange().apply {
-                    this.sheetId = sheetId
-                    startColumnIndex = 0
-                    endColumnIndex = 2
-                }
-            }
+    suspend fun synchronizeWords(spreadsheetId: String, sheetId: Int) {
+        newlySynchronizedWords.send(
+            linesToShuffledPairs(
+                downloadCachingWordsSpreadsheet(getTargetFile(spreadsheetId, sheetId), spreadsheetId, sheetId)
+            )
         )
-        return sheets.spreadsheets().getByDataFilter(
-            spreadsheetId,
-            GetSpreadsheetByDataFilterRequest().apply {
-                includeGridData = true
-                dataFilters = filters
-            }
-        ).execute()
     }
+
+    private fun getTargetFile(spreadsheetId: String, sheetId: Int) =
+        File(spreadsheetsDirectory, "spreadsheets${File.separatorChar}${spreadsheetId}_$sheetId.csv")
+
+    private fun linesToShuffledPairs(lines: List<String>): List<Pair<String, String>> = lines.map(::csvLineToLanguagePair).shuffled().take(50)
+
+    private suspend fun downloadCachingWordsSpreadsheet(targetFile: File, spreadsheetId: String, sheetId: Int): List<String> = withContext(Dispatchers.IO) {
+        val sourceCsv = URL("https://docs.google.com/spreadsheets/d/$spreadsheetId/export?format=csv&gid=$sheetId")
+            .openStream()
+            .bufferedReader()
+            .use { it.readLines() }
+            .toMutableList()
+            .apply { removeEmptyTrailingValues() }
+
+        targetFile.apply {
+            if (!exists()) {
+                parentFile?.mkdirs()
+                createNewFile()
+            }
+        }
+
+        FileOutputStream(targetFile)
+            .bufferedWriter()
+            .use { targetCsvStream -> sourceCsv.forEach(targetCsvStream::appendLine) }
+
+        sourceCsv
+    }
+
+    private fun MutableList<String>.removeEmptyTrailingValues() {
+        val iterator = listIterator(size)
+        while (iterator.hasPrevious()) {
+            val line = iterator.previous()
+            if (line.contains("#VALUE!")) {
+                iterator.remove()
+            } else {
+                break
+            }
+        }
+    }
+
+    private fun csvLineToLanguagePair(line: String): Pair<String, String> = line
+        .split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*\$)".toRegex())
+        .run { get(0) to getOrNull(1).orEmpty() }
 }

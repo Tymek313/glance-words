@@ -12,22 +12,21 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.lifecycleScope
-import com.example.words.repository.SheetsProvider
-import com.example.words.settings.settingsDataStore
+import com.example.words.DependencyContainer
 import com.example.words.ui.theme.GlanceWordsTheme
 import kotlinx.coroutines.launch
 
 class WidgetConfigurationActivity : ComponentActivity() {
 
-    private val viewModel by viewModels<WidgetConfigurationViewModel>(factoryProducer = { WidgetConfigurationViewModel.factory(settingsDataStore) })
+    private val viewModel by viewModels<WidgetConfigurationViewModel>(
+        factoryProducer = { WidgetConfigurationViewModel.factory(application as DependencyContainer) }
+    )
     private var clipboardChecked = false
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))
         setResult(RESULT_CANCELED)
         super.onCreate(savedInstanceState)
-
-        lifecycleScope.launch { SheetsProvider.initialize(assets::open) }
 
         val appWidgetId = getWidgetId() ?: run { finish(); return }
 
@@ -52,7 +51,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
     // Clipboard is available only when app is focused
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if(hasFocus && !clipboardChecked) {
+        if (hasFocus && !clipboardChecked) {
             clipboardChecked = true
             setInitialSpreadsheetIdFromClipboard()
         }

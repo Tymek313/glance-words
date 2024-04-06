@@ -42,7 +42,7 @@ private val smallTextStyle
     get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(13f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
 
 @Composable
-fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, onReload: () -> Unit) {
+fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, lastUpdatedAt: String, onReload: () -> Unit, onSynchronize: () -> Unit) {
     GlanceTheme {
         Column(
             modifier = GlanceModifier
@@ -58,8 +58,10 @@ fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, onReload: ()
                     is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onReload)
                 }
             }
-            Row(horizontalAlignment = Alignment.End, modifier = GlanceModifier.fillMaxWidth()) {
-                WordsText(text = sheetName, style = smallTextStyle)
+            Row(modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+                val modifier = GlanceModifier.defaultWeight()
+                Box(modifier, contentAlignment = Alignment.CenterStart) { WordsText(text = lastUpdatedAt, style = smallTextStyle) }
+                Box(modifier, contentAlignment = Alignment.CenterEnd) { WordsText(text = sheetName, style = smallTextStyle) }
             }
         }
     }
