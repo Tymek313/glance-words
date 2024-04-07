@@ -9,6 +9,7 @@ import androidx.glance.Button
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.action.clickable
@@ -26,7 +27,9 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
@@ -39,7 +42,11 @@ private val defaultTextStyle
 
 private val smallTextStyle
     @Composable
-    get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(13f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
+    get() = defaultTextStyle.copy(fontSize = TextUnit(13f, TextUnitType.Sp))
+
+private val smallBoldTextStyle
+    @Composable
+    get() = smallTextStyle.copy(fontWeight = FontWeight.Bold)
 
 @Composable
 fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, lastUpdatedAt: String, onReload: () -> Unit, onSynchronize: () -> Unit) {
@@ -49,7 +56,7 @@ fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, lastUpdatedA
                 .fillMaxSize()
                 .appWidgetBackground()
                 .background(GlanceTheme.colors.widgetBackground)
-                .padding(6.dp)
+                .padding(top = 6.dp, start = 6.dp, end = 6.dp, bottom = 2.dp)
         ) {
             Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.defaultWeight().fillMaxWidth()) {
                 when (widgetState) {
@@ -58,12 +65,20 @@ fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, lastUpdatedA
                     is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onReload)
                 }
             }
-            Row(modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                val modifier = GlanceModifier.defaultWeight()
-                Box(modifier, contentAlignment = Alignment.CenterStart) { WordsText(text = lastUpdatedAt, style = smallTextStyle) }
-                Box(modifier, contentAlignment = Alignment.CenterEnd) { WordsText(text = sheetName, style = smallTextStyle) }
-            }
+            Footer(sheetName, lastUpdatedAt, onSynchronize)
         }
+    }
+}
+
+@Composable
+private fun Footer(sheetName: String, lastUpdatedAt: String, onSynchronize: () -> Unit) {
+    Row(modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        val modifier = GlanceModifier.defaultWeight()
+        Row(horizontalAlignment = Alignment.Start, verticalAlignment = Alignment.CenterVertically, modifier = modifier.clickable(onSynchronize)) {
+            Image(provider = ImageProvider(R.drawable.ic_refresh), contentDescription = null, modifier = GlanceModifier.size(16.dp))
+            WordsText(text = lastUpdatedAt, style = smallTextStyle, maxLines = 1)
+        }
+        Box(modifier, contentAlignment = Alignment.CenterEnd) { WordsText(text = sheetName, style = smallBoldTextStyle) }
     }
 }
 
