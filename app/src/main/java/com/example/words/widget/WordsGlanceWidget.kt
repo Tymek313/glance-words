@@ -3,6 +3,7 @@ package com.example.words.widget
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
@@ -41,16 +42,16 @@ class WordsGlanceWidget : GlanceAppWidget() {
 
         provideContent {
             val scope = rememberCoroutineScope()
+            val widgetSettingsState by widgetSettings.collectAsState(initial = null)
+
             WordsWidgetContent(
                 widgetState = widgetState.collectAsState(initial = WidgetState.InProgress).value,
-                sheetName = widgetSettings.map { settings -> settings?.sheetName.orEmpty() }.collectAsState(initial = "").value,
-                lastUpdatedAt = widgetSettings.map { settings ->
-                    settings?.lastUpdatedAt?.let {
-                        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
-                            .withZone(ZoneId.systemDefault())
-                            .format(it)
-                    }.orEmpty()
-                }.collectAsState(initial = "").value,
+                sheetName = widgetSettingsState?.sheetName.orEmpty(),
+                lastUpdatedAt = widgetSettingsState?.lastUpdatedAt?.let {
+                    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+                        .withZone(ZoneId.systemDefault())
+                        .format(it)
+                }.orEmpty(),
                 onReload = shuffleWords,
                 onSynchronize = { scope.launch { wordsSynchronizer.synchronizeWords(appWidgetId) } }
             )
