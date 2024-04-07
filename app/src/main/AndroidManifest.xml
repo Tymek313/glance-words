@@ -32,6 +32,7 @@
             android:name="com.example.words.widget.configuration.WidgetConfigurationActivity"
             android:theme="@style/Theme.Transparent"
             android:windowSoftInputMode="adjustResize|stateAlwaysVisible"
+            android:excludeFromRecents="true"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
