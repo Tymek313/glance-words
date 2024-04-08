@@ -17,11 +17,15 @@ import com.example.words.widget.ui.WordsWidgetContent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -35,10 +39,9 @@ class WordsGlanceWidget : GlanceAppWidget() {
         val diContainer = context.applicationContext as DependencyContainer
         val widgetSettingsRepository = diContainer.getWidgetSettingsRepository()
         val widgetSettings = widgetSettingsRepository.observeSettings(appWidgetId)
-        val wordsRepository = diContainer.getWordsRepository()
         val wordsSynchronizer = diContainer.getWordsSynchronizer()
 
-        val (widgetState, shuffleWords) = createWidgetState(widgetSettings, wordsRepository)
+        val (widgetState, shuffleWords) = WidgetStateProvider(widgetSettings, diContainer.getWordsRepository())
 
         provideContent {
             val scope = rememberCoroutineScope()
@@ -67,23 +70,37 @@ class WordsGlanceWidget : GlanceAppWidget() {
                 .build()
         }
     }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun createWidgetState(widgetSettings: Flow<WidgetSettings?>, repository: WordsRepository): WidgetStateProvider {
-        val shouldRefresh = MutableStateFlow(false)
-        return WidgetStateProvider(
-            widgetState = widgetSettings
-                .filterNotNull()
-                .combine(shouldRefresh) { widget, _ -> widget }
-                .flatMapLatest { widget -> repository.observeRandomWords(widget.spreadsheetId, widget.sheetId) }
-                .catch { Log.e(javaClass.name, "", it); emit(null) }
-                .map { words -> if (words == null) WidgetState.Failure else WidgetState.Success(words) },
-            shuffleWords = { shouldRefresh.value = !shouldRefresh.value }
-        )
-    }
 }
 
-private class WidgetStateProvider(val widgetState: Flow<WidgetState>, val shuffleWords: () -> Unit) {
+private class WidgetStateProvider(widgetSettings: Flow<WidgetSettings?>, repository: WordsRepository) {
+    val shouldRefresh = MutableStateFlow(false)
+    val isLoading = MutableStateFlow(false)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val widgetState: StateFlow<WidgetState> = widgetSettings
+        .filterNotNull()
+        .combine(shouldRefresh) { widget, _ -> widget }
+        .flatMapLatest { widget ->
+            flow {
+                emit(WidgetState.InProgress)
+                emitAll(
+                    repository.observeRandomWords(widget.spreadsheetId, widget.sheetId).map { words ->
+                        if (words == null) WidgetState.Failure else WidgetState.Success(words)
+                    }
+                )
+            }
+        }
+        .catch { Log.e(javaClass.name, "", it); emit(WidgetState.Failure) }
+        .stateIn()
+
+    fun shuffleWords() {
+        shouldRefresh.value = !shouldRefresh.value
+    }
+
+    fun setIsLoading() {
+
+    }
+
     operator fun component1() = widgetState
     operator fun component2() = shuffleWords
 }
