@@ -8,6 +8,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import com.example.words.DependencyContainer
 import com.example.words.repository.WordsRepository
@@ -30,6 +31,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 class WordsGlanceWidget : GlanceAppWidget() {
+
+    override val sizeMode = SizeMode.Responsive(setOf(WordsWidgetSizes.SMALL, WordsWidgetSizes.LARGE))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
@@ -82,7 +85,7 @@ private class WidgetStateProvider(widgetSettings: Flow<WidgetSettings?>, reposit
     @OptIn(ExperimentalCoroutinesApi::class)
     val widgetState: Flow<WidgetState> = widgetSettings
         .filterNotNull()
-        .distinctUntilChanged { old, new -> old.spreadsheetId == new.spreadsheetId && old.sheetId == new.sheetId}
+        .distinctUntilChanged { old, new -> old.spreadsheetId == new.spreadsheetId && old.sheetId == new.sheetId }
         .combine(shouldRefresh) { widget, _ -> widget }
         .flatMapLatest { widget ->
             repository.observeRandomWords(widget.spreadsheetId, widget.sheetId)

@@ -12,6 +12,7 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
+import androidx.glance.LocalSize
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.appWidgetBackground
@@ -35,6 +36,7 @@ import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 import com.example.glancewords.R
 import com.example.words.widget.WidgetState
+import com.example.words.widget.WordsWidgetSizes
 
 private val defaultTextStyle
     @Composable
@@ -72,11 +74,16 @@ fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, lastUpdatedA
 
 @Composable
 private fun Footer(sheetName: String, lastUpdatedAt: String, onSynchronize: () -> Unit) {
-    Row(modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+    val isWidgetLarge = LocalSize.current == WordsWidgetSizes.LARGE
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
         val modifier = GlanceModifier.defaultWeight()
         Row(horizontalAlignment = Alignment.Start, verticalAlignment = Alignment.CenterVertically, modifier = modifier.clickable(onSynchronize)) {
             Image(provider = ImageProvider(R.drawable.ic_refresh), contentDescription = null, modifier = GlanceModifier.size(16.dp))
-            WordsText(text = lastUpdatedAt, style = smallTextStyle, maxLines = 1)
+            WordsText(
+                text = lastUpdatedAt,
+                style = smallTextStyle,
+                maxLines = 1,
+                modifier = GlanceModifier.padding(start = 2.dp).run { if (isWidgetLarge) padding(vertical = 4.dp) else this })
         }
         Box(modifier, contentAlignment = Alignment.CenterEnd) { WordsText(text = sheetName, style = smallBoldTextStyle) }
     }
