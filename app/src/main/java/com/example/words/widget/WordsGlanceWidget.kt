@@ -17,15 +17,13 @@ import com.example.words.widget.ui.WordsWidgetContent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -41,22 +39,27 @@ class WordsGlanceWidget : GlanceAppWidget() {
         val widgetSettings = widgetSettingsRepository.observeSettings(appWidgetId)
         val wordsSynchronizer = diContainer.getWordsSynchronizer()
 
-        val (widgetState, shuffleWords) = WidgetStateProvider(widgetSettings, diContainer.getWordsRepository())
+        val stateProvider = WidgetStateProvider(widgetSettings, diContainer.getWordsRepository())
 
         provideContent {
             val scope = rememberCoroutineScope()
             val widgetSettingsState by widgetSettings.collectAsState(initial = null)
 
             WordsWidgetContent(
-                widgetState = widgetState.collectAsState(initial = WidgetState.InProgress).value,
+                widgetState = stateProvider.widgetState.collectAsState(initial = WidgetState.InProgress).value,
                 sheetName = widgetSettingsState?.sheetName.orEmpty(),
                 lastUpdatedAt = widgetSettingsState?.lastUpdatedAt?.let {
                     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
                         .withZone(ZoneId.systemDefault())
                         .format(it)
                 }.orEmpty(),
-                onReload = shuffleWords,
-                onSynchronize = { scope.launch { wordsSynchronizer.synchronizeWords(appWidgetId) } }
+                onReload = stateProvider::shuffleWords,
+                onSynchronize = {
+                    scope.launch {
+                        stateProvider.setIsLoading()
+                        wordsSynchronizer.synchronizeWords(appWidgetId)
+                    }
+                }
             )
         }
     }
@@ -73,36 +76,35 @@ class WordsGlanceWidget : GlanceAppWidget() {
 }
 
 private class WidgetStateProvider(widgetSettings: Flow<WidgetSettings?>, repository: WordsRepository) {
-    val shouldRefresh = MutableStateFlow(false)
-    val isLoading = MutableStateFlow(false)
+    private val shouldRefresh = MutableStateFlow(false)
+    private val isLoadingFlow = MutableStateFlow(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val widgetState: StateFlow<WidgetState> = widgetSettings
+    val widgetState: Flow<WidgetState> = widgetSettings
         .filterNotNull()
+        .distinctUntilChanged { old, new -> old.spreadsheetId == new.spreadsheetId && old.sheetId == new.sheetId}
         .combine(shouldRefresh) { widget, _ -> widget }
         .flatMapLatest { widget ->
-            flow {
-                emit(WidgetState.InProgress)
-                emitAll(
-                    repository.observeRandomWords(widget.spreadsheetId, widget.sheetId).map { words ->
-                        if (words == null) WidgetState.Failure else WidgetState.Success(words)
-                    }
-                )
+            repository.observeRandomWords(widget.spreadsheetId, widget.sheetId)
+                .map { words -> if (words == null) WidgetState.Failure else WidgetState.Success(words) }
+                .onEach { isLoadingFlow.value = false }
+        }
+        .combine(isLoadingFlow) { widgetState, isLoading ->
+            if (isLoading) {
+                WidgetState.InProgress
+            } else {
+                widgetState
             }
         }
         .catch { Log.e(javaClass.name, "", it); emit(WidgetState.Failure) }
-        .stateIn()
 
     fun shuffleWords() {
         shouldRefresh.value = !shouldRefresh.value
     }
 
     fun setIsLoading() {
-
+        isLoadingFlow.value = true
     }
-
-    operator fun component1() = widgetState
-    operator fun component2() = shuffleWords
 }
 
 sealed interface WidgetState {
