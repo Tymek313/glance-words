@@ -83,7 +83,11 @@ private fun Footer(sheetName: String, lastUpdatedAt: String, onSynchronize: () -
                 text = lastUpdatedAt,
                 style = smallTextStyle,
                 maxLines = 1,
-                modifier = GlanceModifier.padding(start = 2.dp).run { if (isWidgetLarge) padding(vertical = 4.dp) else this })
+                modifier = GlanceModifier.run {
+                    val vertical = if(isWidgetLarge) 8.dp else 4.dp
+                    padding(start = 2.dp, top = vertical, bottom = vertical)
+                }
+            )
         }
         Box(modifier, contentAlignment = Alignment.CenterEnd) { WordsText(text = sheetName, style = smallBoldTextStyle) }
     }

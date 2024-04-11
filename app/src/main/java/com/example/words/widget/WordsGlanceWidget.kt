@@ -38,8 +38,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
 
         val diContainer = context.applicationContext as DependencyContainer
-        val widgetSettingsRepository = diContainer.getWidgetSettingsRepository()
-        val widgetSettings = widgetSettingsRepository.observeSettings(appWidgetId)
+        val widgetSettings = diContainer.getWidgetSettingsRepository().observeSettings(appWidgetId)
         val wordsSynchronizer = diContainer.getWordsSynchronizer()
 
         val stateProvider = WidgetStateProvider(widgetSettings, diContainer.getWordsRepository())
