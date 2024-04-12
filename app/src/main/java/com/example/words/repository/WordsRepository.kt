@@ -24,11 +24,13 @@ class WordsRepository(private val spreadsheetsDirectory: File) {
     }
 
     suspend fun synchronizeWords(spreadsheetId: String, sheetId: Int) {
-        newlySynchronizedWords.send(
-            linesToShuffledPairs(
-                downloadCachingWordsSpreadsheet(getTargetFile(spreadsheetId, sheetId), spreadsheetId, sheetId)
+        withContext(Dispatchers.Default) {
+            newlySynchronizedWords.send(
+                linesToShuffledPairs(
+                    downloadCachingWordsSpreadsheet(getTargetFile(spreadsheetId, sheetId), spreadsheetId, sheetId)
+                )
             )
-        )
+        }
     }
 
     private fun getTargetFile(spreadsheetId: String, sheetId: Int) =

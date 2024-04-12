@@ -3,6 +3,7 @@ package com.example.words.widget.configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,12 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
@@ -25,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -79,7 +83,16 @@ fun WidgetConfigurationScreen(
                     enabled = state.selectedSheetId != null,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = "Create widget")
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Text(text = "Create widget", modifier = Modifier.align(Alignment.Center))
+                        if(state.isSavingWidget) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(24.dp).align(Alignment.CenterEnd)
+                            )
+                        }
+                    }
                 }
             }
         },
@@ -106,7 +119,9 @@ private fun rememberSheetState(onDismiss: () -> Unit): SheetState {
 
 @Composable
 private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId: Int?, onSheetSelect: (sheetId: Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().horizontalScroll(state = rememberScrollState())) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
+        .fillMaxWidth()
+        .horizontalScroll(state = rememberScrollState())) {
         sheets.forEach { sheet ->
             FilterChip(selected = sheet.id == selectedSheetId, onClick = { onSheetSelect(sheet.id) }, label = { Text(text = sheet.name) })
         }
@@ -126,7 +141,8 @@ private fun ConfigureScreenPreview() {
                 ),
                 selectedSheetId = null,
                 spreadsheetError = "Error",
-                isLoading = true
+                isLoading = true,
+                isSavingWidget = true
             ),
             onCreateWidgetClick = {},
             onDismiss = {},
@@ -149,7 +165,8 @@ private fun ConfigureScreenSelectedSheetPreview() {
                 ),
                 selectedSheetId = 1,
                 spreadsheetError = null,
-                isLoading = false
+                isLoading = false,
+                isSavingWidget = true
             ),
             onCreateWidgetClick = {},
             onDismiss = {},

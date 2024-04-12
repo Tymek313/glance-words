@@ -61,6 +61,7 @@ class WidgetConfigurationViewModel(
     }
 
     suspend fun saveWidgetConfiguration(widgetId: Int) {
+        _state.update { it.copy(isSavingWidget = true) }
         viewModelScope.launch {
             state.value.run {
                 widgetSettingsRepository.addWidget(
@@ -91,6 +92,7 @@ class WidgetConfigurationViewModel(
 data class ConfigureWidgetState(
     val spreadsheetId: String,
     val isLoading: Boolean,
+    val isSavingWidget: Boolean,
     val spreadsheetError: String?,
     val sheets: List<Sheet>?,
     val selectedSheetId: Int?,
@@ -103,7 +105,8 @@ data class ConfigureWidgetState(
             sheets = null,
             selectedSheetId = null,
             spreadsheetError = null,
-            isLoading = false
+            isLoading = false,
+            isSavingWidget = false
         )
     }
 }

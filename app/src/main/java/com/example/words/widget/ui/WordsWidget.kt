@@ -35,7 +35,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 import com.example.glancewords.R
-import com.example.words.widget.WidgetState
 import com.example.words.widget.WordsWidgetSizes
 
 private val defaultTextStyle
