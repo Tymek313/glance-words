@@ -14,6 +14,7 @@ import com.example.words.DependencyContainer
 import com.example.words.repository.WordsRepository
 import com.example.words.settings.WidgetSettings
 import com.example.words.settings.settingsDataStore
+import com.example.words.widget.ui.WidgetState
 import com.example.words.widget.ui.WordsWidgetContent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -29,6 +30,7 @@ import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.time.Duration.Companion.seconds
 
 class WordsGlanceWidget : GlanceAppWidget() {
 
@@ -80,6 +82,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
 private class WidgetStateProvider(widgetSettings: Flow<WidgetSettings?>, repository: WordsRepository) {
     private val shouldRefresh = MutableStateFlow(false)
     private val isLoadingFlow = MutableStateFlow(false)
+    private var lastShuffleTimestamp: Long = 0
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val widgetState: Flow<WidgetState> = widgetSettings
@@ -101,16 +104,18 @@ private class WidgetStateProvider(widgetSettings: Flow<WidgetSettings?>, reposit
         .catch { Log.e(javaClass.name, "", it); emit(WidgetState.Failure) }
 
     fun shuffleWords() {
-        shouldRefresh.value = !shouldRefresh.value
+        // Debounce is necessary since Glance triggers click twice at once for some reason
+        if(System.currentTimeMillis() > lastShuffleTimestamp + DebounceTime) {
+            lastShuffleTimestamp = System.currentTimeMillis()
+            shouldRefresh.value = !shouldRefresh.value
+        }
     }
 
     fun setIsLoading() {
         isLoadingFlow.value = true
     }
-}
 
-sealed interface WidgetState {
-    data object InProgress : WidgetState
-    data object Failure : WidgetState
-    class Success(val words: List<Pair<String, String>>) : WidgetState
+    companion object {
+        private val DebounceTime = 5.seconds.inWholeMilliseconds
+    }
 }
