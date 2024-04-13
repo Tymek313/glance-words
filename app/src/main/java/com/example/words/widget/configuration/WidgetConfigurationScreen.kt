@@ -26,7 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +39,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.words.ui.theme.GlanceWordsTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNot
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,8 +52,14 @@ fun WidgetConfigurationScreen(
     onSpreadsheetIdChange: (sheetId: String) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
+    val currentState by rememberUpdatedState(state)
 
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    LaunchedEffect(Unit) {
+        delay(500)
+        if(currentState.spreadsheetId.isEmpty()) {
+            focusRequester.requestFocus()
+        }
+    }
 
     BottomSheetScaffold(
         scaffoldState = rememberBottomSheetScaffoldState(rememberSheetState(onDismiss)),
@@ -89,7 +98,9 @@ fun WidgetConfigurationScreen(
                             CircularProgressIndicator(
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 strokeWidth = 2.dp,
-                                modifier = Modifier.size(24.dp).align(Alignment.CenterEnd)
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .align(Alignment.CenterEnd)
                             )
                         }
                     }
@@ -142,7 +153,8 @@ private fun ConfigureScreenPreview() {
                 selectedSheetId = null,
                 spreadsheetError = "Error",
                 isLoading = true,
-                isSavingWidget = true
+                isSavingWidget = true,
+                widgetConfigurationSaved = false
             ),
             onCreateWidgetClick = {},
             onDismiss = {},
@@ -166,7 +178,8 @@ private fun ConfigureScreenSelectedSheetPreview() {
                 selectedSheetId = 1,
                 spreadsheetError = null,
                 isLoading = false,
-                isSavingWidget = true
+                isSavingWidget = true,
+                widgetConfigurationSaved = false
             ),
             onCreateWidgetClick = {},
             onDismiss = {},

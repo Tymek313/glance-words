@@ -33,14 +33,17 @@ class WidgetConfigurationViewModel(
 
     private var loadSheetsJob: Job? = null
 
-    fun setInitialSpreadsheetId(clipboardText: CharSequence) {
-        _state.update { it.copy(spreadsheetId = SpreadsheetUrlRegex.find(clipboardText)?.groupValues?.get(1).orEmpty()) }
-        loadSheetsForSpreadsheet(withDebounce = false)
+    fun setInitialSpreadsheetIdIfApplicable(clipboardText: CharSequence) {
+        val spreadsheetId = SpreadsheetUrlRegex.find(clipboardText)?.groupValues?.get(1)
+        if(spreadsheetId != null) {
+            _state.update { it.copy(spreadsheetId = spreadsheetId) }
+            loadSheetsForSpreadsheet(withDebounce = false)
+        }
     }
 
     fun onSpreadsheetIdChanged(spreadsheetId: String) {
         _state.update { it.copy(spreadsheetId = spreadsheetId, spreadsheetError = null) }
-        if (spreadsheetId.isNotEmpty()) {
+        if (spreadsheetId.isNotBlank()) {
             loadSheetsForSpreadsheet(withDebounce = true)
         }
     }
@@ -60,7 +63,7 @@ class WidgetConfigurationViewModel(
         _state.update { it.copy(selectedSheetId = sheetId) }
     }
 
-    suspend fun saveWidgetConfiguration(widgetId: Int) {
+    fun saveWidgetConfiguration(widgetId: Int) {
         _state.update { it.copy(isSavingWidget = true) }
         viewModelScope.launch {
             state.value.run {
@@ -75,7 +78,8 @@ class WidgetConfigurationViewModel(
                 )
             }
             wordsSynchronizer.synchronizeWords(widgetId)
-        }.join()
+            _state.update { it.copy(widgetConfigurationSaved = true) }
+        }
     }
 
     companion object {
@@ -96,6 +100,7 @@ data class ConfigureWidgetState(
     val spreadsheetError: String?,
     val sheets: List<Sheet>?,
     val selectedSheetId: Int?,
+    val widgetConfigurationSaved: Boolean
 ) {
     class Sheet(val id: Int, val name: String)
 
@@ -106,7 +111,8 @@ data class ConfigureWidgetState(
             selectedSheetId = null,
             spreadsheetError = null,
             isLoading = false,
-            isSavingWidget = false
+            isSavingWidget = false,
+            widgetConfigurationSaved = false
         )
     }
 }

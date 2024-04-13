@@ -14,7 +14,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.lifecycleScope
 import com.example.words.DependencyContainer
 import com.example.words.ui.theme.GlanceWordsTheme
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class WidgetConfigurationActivity : ComponentActivity() {
 
@@ -30,22 +32,26 @@ class WidgetConfigurationActivity : ComponentActivity() {
 
         val appWidgetId = getWidgetId() ?: run { finish(); return }
 
+        observeConfigurationFinish(appWidgetId)
+
         setContent {
             GlanceWordsTheme {
                 WidgetConfigurationScreen(
                     state = viewModel.state.collectAsState().value,
-                    onCreateWidgetClick = {
-                        lifecycleScope.launch {
-                            viewModel.saveWidgetConfiguration(appWidgetId)
-                            finishSuccessfully(appWidgetId)
-                        }
-                    },
+                    onCreateWidgetClick = { viewModel.saveWidgetConfiguration(appWidgetId) },
                     onDismiss = ::finish,
                     onSheetSelect = viewModel::onSheetSelect,
                     onSpreadsheetIdChange = viewModel::onSpreadsheetIdChanged
                 )
             }
         }
+    }
+
+    private fun observeConfigurationFinish(appWidgetId: Int) {
+        viewModel.state
+            .filter { it.widgetConfigurationSaved }
+            .onEach { finishSuccessfully(appWidgetId) }
+            .launchIn(lifecycleScope)
     }
 
     // Clipboard is available only when app is focused
@@ -60,7 +66,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
     private fun setInitialSpreadsheetIdFromClipboard() {
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.primaryClip?.getItemAt(0)?.text?.let {
-            viewModel.setInitialSpreadsheetId(clipboardText = it)
+            viewModel.setInitialSpreadsheetIdIfApplicable(clipboardText = it)
         }
     }
 
