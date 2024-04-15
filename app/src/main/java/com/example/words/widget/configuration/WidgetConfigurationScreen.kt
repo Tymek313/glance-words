@@ -56,7 +56,7 @@ fun WidgetConfigurationScreen(
 
     LaunchedEffect(Unit) {
         delay(500)
-        if(currentState.spreadsheetId.isEmpty()) {
+        if (currentState.spreadsheetId.isEmpty()) {
             focusRequester.requestFocus()
         }
     }
@@ -77,7 +77,7 @@ fun WidgetConfigurationScreen(
                     onValueChange = onSpreadsheetIdChange,
                     readOnly = state.isLoading,
                     label = { Text(text = "Spreadsheet ID") },
-                    trailingIcon = { if(state.isLoading) CircularProgressIndicator(Modifier.padding(8.dp))},
+                    trailingIcon = { if (state.isLoading) CircularProgressIndicator(Modifier.padding(8.dp)) },
                     isError = state.spreadsheetError != null,
                     supportingText = state.spreadsheetError?.let { { Text(it) } },
                     modifier = Modifier
@@ -87,14 +87,17 @@ fun WidgetConfigurationScreen(
                 AnimatedVisibility(visible = state.sheets != null) {
                     SheetList(sheets = state.sheets ?: emptyList(), selectedSheetId = state.selectedSheetId, onSheetSelect = onSheetSelect)
                 }
+                AnimatedVisibility(visible = state.generalError != null) {
+                    Text(text = state.generalError.orEmpty(), color = MaterialTheme.colorScheme.error)
+                }
                 Button(
                     onClick = onCreateWidgetClick,
-                    enabled = state.selectedSheetId != null,
+                    enabled = state.selectedSheetId != null && !state.isSavingWidget,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         Text(text = "Create widget", modifier = Modifier.align(Alignment.Center))
-                        if(state.isSavingWidget) {
+                        if (state.isSavingWidget) {
                             CircularProgressIndicator(
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 strokeWidth = 2.dp,
@@ -130,9 +133,11 @@ private fun rememberSheetState(onDismiss: () -> Unit): SheetState {
 
 @Composable
 private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId: Int?, onSheetSelect: (sheetId: Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
-        .fillMaxWidth()
-        .horizontalScroll(state = rememberScrollState())) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(state = rememberScrollState())
+    ) {
         sheets.forEach { sheet ->
             FilterChip(selected = sheet.id == selectedSheetId, onClick = { onSheetSelect(sheet.id) }, label = { Text(text = sheet.name) })
         }
@@ -154,7 +159,8 @@ private fun ConfigureScreenPreview() {
                 spreadsheetError = "Error",
                 isLoading = true,
                 isSavingWidget = true,
-                widgetConfigurationSaved = false
+                widgetConfigurationSaved = false,
+                generalError = "General error"
             ),
             onCreateWidgetClick = {},
             onDismiss = {},
@@ -179,7 +185,8 @@ private fun ConfigureScreenSelectedSheetPreview() {
                 spreadsheetError = null,
                 isLoading = false,
                 isSavingWidget = true,
-                widgetConfigurationSaved = false
+                widgetConfigurationSaved = false,
+                generalError = null
             ),
             onCreateWidgetClick = {},
             onDismiss = {},

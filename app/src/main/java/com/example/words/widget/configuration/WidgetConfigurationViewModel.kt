@@ -31,6 +31,10 @@ class WidgetConfigurationViewModel(
         _state.update { it.copy(spreadsheetError = throwable.localizedMessage, isLoading = false) }
     }
 
+    private val generalCoroutineHandler = CoroutineExceptionHandler { _, throwable ->
+        _state.update { it.copy(isSavingWidget = false, generalError = throwable.localizedMessage) }
+    }
+
     private var loadSheetsJob: Job? = null
 
     fun setInitialSpreadsheetIdIfApplicable(clipboardText: CharSequence) {
@@ -63,9 +67,10 @@ class WidgetConfigurationViewModel(
         _state.update { it.copy(selectedSheetId = sheetId) }
     }
 
+
     fun saveWidgetConfiguration(widgetId: Int) {
-        _state.update { it.copy(isSavingWidget = true) }
-        viewModelScope.launch {
+        _state.update { it.copy(isSavingWidget = true, generalError = null) }
+        viewModelScope.launch(generalCoroutineHandler) {
             state.value.run {
                 widgetSettingsRepository.addWidget(
                     WidgetSettings(
@@ -98,6 +103,7 @@ data class ConfigureWidgetState(
     val isLoading: Boolean,
     val isSavingWidget: Boolean,
     val spreadsheetError: String?,
+    val generalError: String?,
     val sheets: List<Sheet>?,
     val selectedSheetId: Int?,
     val widgetConfigurationSaved: Boolean
@@ -112,7 +118,8 @@ data class ConfigureWidgetState(
             spreadsheetError = null,
             isLoading = false,
             isSavingWidget = false,
-            widgetConfigurationSaved = false
+            widgetConfigurationSaved = false,
+            generalError = null
         )
     }
 }
