@@ -77,13 +77,18 @@ private fun Footer(sheetName: String, lastUpdatedAt: String, onSynchronize: () -
     Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
         val modifier = GlanceModifier.defaultWeight()
         Row(horizontalAlignment = Alignment.Start, verticalAlignment = Alignment.CenterVertically, modifier = modifier.clickable(onSynchronize)) {
-            Image(provider = ImageProvider(R.drawable.ic_refresh), contentDescription = null, modifier = GlanceModifier.size(16.dp))
+            Image(
+                provider = ImageProvider(R.drawable.ic_refresh),
+                contentDescription = null,
+                modifier = GlanceModifier.size(16.dp),
+                colorFilter = ColorFilter.tint(GlanceTheme.colors.onBackground)
+            )
             WordsText(
                 text = lastUpdatedAt,
                 style = smallTextStyle,
                 maxLines = 1,
                 modifier = GlanceModifier.run {
-                    val vertical = if(isWidgetLarge) 8.dp else 4.dp
+                    val vertical = if (isWidgetLarge) 8.dp else 4.dp
                     padding(start = 2.dp, top = vertical, bottom = vertical)
                 }
             )
