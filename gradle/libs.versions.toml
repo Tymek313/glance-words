@@ -28,6 +28,6 @@ google-api-services-sheets = { group = "com.google.apis", name = "google-api-ser
 google-auth-library-oauth2-http = { group = "com.google.auth", name = "google-auth-library-oauth2-http", version = "1.19.0" }
 
 [plugins]
-androidApplication = { id = "com.android.application", version = "8.3.1" }
+androidApplication = { id = "com.android.application", version = "8.3.2" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version = "1.9.0" }
 
