@@ -34,7 +34,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class WordsGlanceWidget : GlanceAppWidget() {
 
-    override val sizeMode = SizeMode.Responsive(setOf(WordsWidgetSizes.SMALL, WordsWidgetSizes.LARGE))
+    // Other modes have double click trigger bug https://issuetracker.google.com/issues/327475242
+    override val sizeMode = SizeMode.Single
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
@@ -82,7 +83,6 @@ class WordsGlanceWidget : GlanceAppWidget() {
 private class WidgetStateProvider(widgetSettings: Flow<WidgetSettings?>, repository: WordsRepository) {
     private val shouldRefresh = MutableStateFlow(false)
     private val isLoadingFlow = MutableStateFlow(false)
-    private var lastShuffleTimestamp: Long = 0
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val widgetState: Flow<WidgetState> = widgetSettings
@@ -104,18 +104,10 @@ private class WidgetStateProvider(widgetSettings: Flow<WidgetSettings?>, reposit
         .catch { Log.e(javaClass.name, "", it); emit(WidgetState.Failure) }
 
     fun shuffleWords() {
-        // Debounce is necessary since Glance triggers click twice at once for some reason
-        if(System.currentTimeMillis() > lastShuffleTimestamp + DebounceTime) {
-            lastShuffleTimestamp = System.currentTimeMillis()
-            shouldRefresh.value = !shouldRefresh.value
-        }
+        shouldRefresh.value = !shouldRefresh.value
     }
 
     fun setIsLoading() {
         isLoadingFlow.value = true
-    }
-
-    companion object {
-        private val DebounceTime = 5.seconds.inWholeMilliseconds
     }
 }
