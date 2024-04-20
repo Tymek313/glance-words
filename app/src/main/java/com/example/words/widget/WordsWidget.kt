@@ -1,4 +1,4 @@
-package com.example.words.widget.ui
+package com.example.words.widget
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -35,7 +35,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 import com.example.glancewords.R
-import com.example.words.widget.WordsWidgetSizes
 
 private val defaultTextStyle
     @Composable
@@ -50,7 +49,7 @@ private val smallBoldTextStyle
     get() = smallTextStyle.copy(fontWeight = FontWeight.Bold)
 
 @Composable
-fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, lastUpdatedAt: String, onReload: () -> Unit, onSynchronize: () -> Unit) {
+fun WordsWidgetContent(widgetState: WidgetState, widgetDetailsState: WidgetDetailsState, onReload: () -> Unit, onSynchronize: () -> Unit) {
     GlanceTheme {
         Column(
             modifier = GlanceModifier
@@ -66,13 +65,13 @@ fun WordsWidgetContent(widgetState: WidgetState, sheetName: String, lastUpdatedA
                     is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onReload)
                 }
             }
-            Footer(sheetName, lastUpdatedAt, onSynchronize)
+            Footer(widgetDetailsState, onSynchronize)
         }
     }
 }
 
 @Composable
-private fun Footer(sheetName: String, lastUpdatedAt: String, onSynchronize: () -> Unit) {
+private fun Footer(widgetDetailsState: WidgetDetailsState, onSynchronize: () -> Unit) {
     val isWidgetLarge = LocalSize.current == WordsWidgetSizes.LARGE
     Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
         val modifier = GlanceModifier.defaultWeight()
@@ -84,7 +83,7 @@ private fun Footer(sheetName: String, lastUpdatedAt: String, onSynchronize: () -
                 colorFilter = ColorFilter.tint(GlanceTheme.colors.onBackground)
             )
             WordsText(
-                text = lastUpdatedAt,
+                text = widgetDetailsState.lastUpdatedAt,
                 style = smallTextStyle,
                 maxLines = 1,
                 modifier = GlanceModifier.run {
@@ -93,7 +92,7 @@ private fun Footer(sheetName: String, lastUpdatedAt: String, onSynchronize: () -
                 }
             )
         }
-        Box(modifier, contentAlignment = Alignment.CenterEnd) { WordsText(text = sheetName, style = smallBoldTextStyle) }
+        Box(modifier, contentAlignment = Alignment.CenterEnd) { WordsText(text = widgetDetailsState.sheetName, style = smallBoldTextStyle) }
     }
 }
 

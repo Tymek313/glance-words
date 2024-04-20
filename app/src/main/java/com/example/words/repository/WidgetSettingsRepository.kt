@@ -10,12 +10,12 @@ import java.time.Instant
 
 class WidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) {
 
-    fun observeSettings(widgetId: Int): Flow<WidgetSettings?> {
+    fun observeSettings(appWidgetId: Int): Flow<WidgetSettings?> {
         return dataStore.data.map { settings ->
-            val protoWidgetSettings = settings.widgetsList.find { it.widgetId == widgetId }
+            val protoWidgetSettings = settings.widgetsList.find { it.widgetId == appWidgetId }
             protoWidgetSettings?.run {
                 WidgetSettings(
-                    widgetId = WidgetSettings.WidgetId(widgetId),
+                    widgetId = WidgetSettings.WidgetId(appWidgetId),
                     spreadsheetId = spreadsheetId,
                     sheetId = sheetId,
                     sheetName = sheetName,
@@ -42,6 +42,14 @@ class WidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) 
             val widget = protoSettings.getWidgets(widgetIndex)
             protoSettings.toBuilder()
                 .setWidgets(widgetIndex, widget.toBuilder().setLastUpdatedAt(lastUpdatedAt.epochSecond).build())
+                .build()
+        }
+    }
+
+    suspend fun deleteWidget(widgetId: WidgetSettings.WidgetId) {
+        dataStore.updateData { settings ->
+            settings.toBuilder()
+                .removeWidgets(settings.widgetsList.indexOfFirst { it.widgetId == widgetId.value })
                 .build()
         }
     }
