@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsRepository
 import com.example.words.repository.WordsSynchronizer
+import com.example.words.settings.WidgetSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +21,7 @@ import java.time.format.FormatStyle
 
 class WordsWidgetViewModel(
     private val appWidgetId: Int,
-    widgetSettingsRepository: WidgetSettingsRepository,
+    private val widgetSettingsRepository: WidgetSettingsRepository,
     private val wordsSynchronizer: WordsSynchronizer,
     private val wordsRepository: WordsRepository
 ) {
@@ -65,6 +66,10 @@ class WordsWidgetViewModel(
     suspend fun synchronizeWords() {
         isLoadingFlow.value = true
         wordsSynchronizer.synchronizeWords(appWidgetId)
+    }
+
+    suspend fun deleteWidget() {
+        widgetSettingsRepository.deleteWidget(WidgetSettings.WidgetId(appWidgetId))
     }
 }
 

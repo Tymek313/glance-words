@@ -9,7 +9,6 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import com.example.words.DependencyContainer
-import com.example.words.settings.WidgetSettings
 import kotlinx.coroutines.launch
 
 class WordsGlanceWidget : GlanceAppWidget() {
@@ -18,13 +17,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val diContainer = context.applicationContext as DependencyContainer
-        val viewModel = WordsWidgetViewModel(
-            GlanceAppWidgetManager(context).getAppWidgetId(id),
-            diContainer.getWidgetSettingsRepository(),
-            diContainer.getWordsSynchronizer(),
-            diContainer.getWordsRepository()
-        )
+        val viewModel = createViewModel(context, id, context.applicationContext as DependencyContainer)
 
         provideContent {
             val scope = rememberCoroutineScope()
@@ -39,8 +32,13 @@ class WordsGlanceWidget : GlanceAppWidget() {
 
     override suspend fun onDelete(context: Context, glanceId: GlanceId) {
         super.onDelete(context, glanceId)
-        val widgetId = WidgetSettings.WidgetId(GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
-        val diContainer = context.applicationContext as DependencyContainer
-        diContainer.getWidgetSettingsRepository().deleteWidget(widgetId)
+        createViewModel(context, glanceId, context.applicationContext as DependencyContainer).deleteWidget()
     }
+
+    private fun createViewModel(context: Context, widgetId: GlanceId, diContainer: DependencyContainer) = WordsWidgetViewModel(
+        GlanceAppWidgetManager(context).getAppWidgetId(widgetId),
+        diContainer.getWidgetSettingsRepository(),
+        diContainer.getWordsSynchronizer(),
+        diContainer.getWordsRepository()
+    )
 }
