@@ -8,9 +8,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 
-class WidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) {
+interface WidgetSettingsRepository {
+    fun observeSettings(appWidgetId: Int): Flow<WidgetSettings?>
 
-    fun observeSettings(appWidgetId: Int): Flow<WidgetSettings?> {
+    suspend fun addWidget(widget: WidgetSettings)
+
+    suspend fun updateLastUpdatedAt(widgetId: WidgetSettings.WidgetId, lastUpdatedAt: Instant)
+
+    suspend fun deleteWidget(widgetId: WidgetSettings.WidgetId)
+}
+
+class DefaultWidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) : WidgetSettingsRepository {
+
+    override fun observeSettings(appWidgetId: Int): Flow<WidgetSettings?> {
         return dataStore.data.map { settings ->
             val protoWidgetSettings = settings.widgetsList.find { it.widgetId == appWidgetId }
             protoWidgetSettings?.run {
@@ -25,7 +35,7 @@ class WidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) 
         }
     }
 
-    suspend fun addWidget(widget: WidgetSettings) {
+    override suspend fun addWidget(widget: WidgetSettings) {
         val updatedSettings = ProtoWidgetSettings.newBuilder()
             .setWidgetId(widget.widgetId.value)
             .setSpreadsheetId(widget.spreadsheetId)
@@ -36,7 +46,7 @@ class WidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) 
         dataStore.updateData { protoSettings -> protoSettings.toBuilder().addWidgets(updatedSettings).build() }
     }
 
-    suspend fun updateLastUpdatedAt(widgetId: WidgetSettings.WidgetId, lastUpdatedAt: Instant) {
+    override suspend fun updateLastUpdatedAt(widgetId: WidgetSettings.WidgetId, lastUpdatedAt: Instant) {
         dataStore.updateData { protoSettings ->
             val widgetIndex = protoSettings.widgetsList.indexOfFirst { it.widgetId == widgetId.value }
             val widget = protoSettings.getWidgets(widgetIndex)
@@ -46,7 +56,7 @@ class WidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) 
         }
     }
 
-    suspend fun deleteWidget(widgetId: WidgetSettings.WidgetId) {
+    override suspend fun deleteWidget(widgetId: WidgetSettings.WidgetId) {
         dataStore.updateData { settings ->
             settings.toBuilder()
                 .removeWidgets(settings.widgetsList.indexOfFirst { it.widgetId == widgetId.value })

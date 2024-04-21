@@ -1,10 +1,11 @@
 package com.example.words.widget.configuration
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.words.DependencyContainer
+import com.example.words.logging.Logger
+import com.example.words.logging.e
 import com.example.words.repository.SpreadsheetRepository
 import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsSynchronizer
@@ -20,14 +21,15 @@ import kotlinx.coroutines.launch
 class WidgetConfigurationViewModel(
     private val spreadsheetRepository: SpreadsheetRepository,
     private val widgetSettingsRepository: WidgetSettingsRepository,
-    private val wordsSynchronizer: WordsSynchronizer
+    private val wordsSynchronizer: WordsSynchronizer,
+    private val logger: Logger
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ConfigureWidgetState.initial)
     val state: StateFlow<ConfigureWidgetState> = _state
 
     private val loadSheetsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        Log.e(javaClass.name, null, throwable)
+        logger.e(javaClass.name, throwable)
         _state.update { it.copy(spreadsheetError = throwable.localizedMessage, isLoading = false) }
     }
 
@@ -92,7 +94,7 @@ class WidgetConfigurationViewModel(
         fun factory(diContainer: DependencyContainer) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T = diContainer.run {
-                WidgetConfigurationViewModel(getSpreadsheetRepository(), getWidgetSettingsRepository(), getWordsSynchronizer()) as T
+                WidgetConfigurationViewModel(getSpreadsheetRepository(), getWidgetSettingsRepository(), getWordsSynchronizer(), getLogger()) as T
             }
         }
     }

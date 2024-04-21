@@ -6,12 +6,16 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class SpreadsheetRepository(
+interface SpreadsheetRepository {
+    suspend fun fetchSpreadsheetSheets(spreadsheetId: String): List<SpreadsheetSheet>
+}
+
+class DefaultSpreadsheetRepository(
     private val sheets: Sheets,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) {
+) : SpreadsheetRepository {
 
-    suspend fun fetchSpreadsheetSheets(spreadsheetId: String): List<SpreadsheetSheet> = withContext(dispatcher) {
+    override suspend fun fetchSpreadsheetSheets(spreadsheetId: String): List<SpreadsheetSheet> = withContext(dispatcher) {
         sheets.spreadsheets().get(spreadsheetId).execute().sheets.map { sheet ->
             sheet.properties.run { SpreadsheetSheet(id = sheetId, name = title) }
         }

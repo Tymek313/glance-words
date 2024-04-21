@@ -9,11 +9,17 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
 
-class WordsRepository(private val spreadsheetsDirectory: File) {
+interface WordsRepository {
+    fun observeRandomWords(spreadsheetId: String, sheetId: Int): Flow<List<Pair<String, String>>?>
+
+    suspend fun synchronizeWords(spreadsheetId: String, sheetId: Int)
+}
+
+class DefaultWordsRepository(private val spreadsheetsDirectory: File) : WordsRepository {
 
     private val newlySynchronizedWords = Channel<List<Pair<String, String>>>()
 
-    fun observeRandomWords(spreadsheetId: String, sheetId: Int): Flow<List<Pair<String, String>>?> = flow {
+    override fun observeRandomWords(spreadsheetId: String, sheetId: Int): Flow<List<Pair<String, String>>?> = flow {
         val cachedFile = getTargetFile(spreadsheetId, sheetId)
         if (cachedFile.exists()) {
             emit(linesToShuffledPairs(cachedFile.readLines()))
@@ -23,7 +29,7 @@ class WordsRepository(private val spreadsheetsDirectory: File) {
         }
     }
 
-    suspend fun synchronizeWords(spreadsheetId: String, sheetId: Int) {
+    override suspend fun synchronizeWords(spreadsheetId: String, sheetId: Int) {
         withContext(Dispatchers.Default) {
             newlySynchronizedWords.send(
                 linesToShuffledPairs(

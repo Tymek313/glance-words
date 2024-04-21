@@ -10,6 +10,8 @@ import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import com.example.words.DependencyContainer
 import kotlinx.coroutines.launch
+import java.time.ZoneId
+import java.util.Locale
 
 class WordsGlanceWidget : GlanceAppWidget() {
 
@@ -24,7 +26,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
             WordsWidgetContent(
                 widgetState = viewModel.wordsState.collectAsState(WidgetState.InProgress).value,
                 widgetDetailsState = viewModel.widgetDetailsState.collectAsState(WidgetDetailsState.Empty).value,
-                onReload = viewModel::reloadWords,
+                onReload = viewModel::reshuffleWords,
                 onSynchronize = { scope.launch { viewModel.synchronizeWords() } }
             )
         }
@@ -39,6 +41,9 @@ class WordsGlanceWidget : GlanceAppWidget() {
         GlanceAppWidgetManager(context).getAppWidgetId(widgetId),
         diContainer.getWidgetSettingsRepository(),
         diContainer.getWordsSynchronizer(),
-        diContainer.getWordsRepository()
+        diContainer.getWordsRepository(),
+        diContainer.getLogger(),
+        Locale.getDefault(),
+        ZoneId.systemDefault()
     )
 }

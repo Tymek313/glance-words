@@ -1,6 +1,7 @@
 package com.example.words.widget
 
-import android.util.Log
+import com.example.words.logging.Logger
+import com.example.words.logging.e
 import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsRepository
 import com.example.words.repository.WordsSynchronizer
@@ -18,12 +19,16 @@ import kotlinx.coroutines.flow.onEach
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 
 class WordsWidgetViewModel(
     private val appWidgetId: Int,
     private val widgetSettingsRepository: WidgetSettingsRepository,
     private val wordsSynchronizer: WordsSynchronizer,
-    private val wordsRepository: WordsRepository
+    private val wordsRepository: WordsRepository,
+    private val logger: Logger,
+    private val locale: Locale,
+    private val zoneId: ZoneId
 ) {
     private val shouldReload = MutableStateFlow(false)
     private val isLoadingFlow = MutableStateFlow(false)
@@ -34,7 +39,8 @@ class WordsWidgetViewModel(
             sheetName = widgetSettings.sheetName,
             lastUpdatedAt = widgetSettings.lastUpdatedAt?.let { lastUpdatedAt ->
                 DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
-                    .withZone(ZoneId.systemDefault())
+                    .withLocale(locale)
+                    .withZone(zoneId)
                     .format(lastUpdatedAt)
             }.orEmpty()
         )
@@ -42,7 +48,6 @@ class WordsWidgetViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val wordsState: Flow<WidgetState> = widgetSettings
-        .filterNotNull()
         .distinctUntilChanged { old, new -> old.spreadsheetId == new.spreadsheetId && old.sheetId == new.sheetId }
         .combine(shouldReload) { widget, _ -> widget }
         .flatMapLatest { widget ->
@@ -50,16 +55,13 @@ class WordsWidgetViewModel(
                 .map { words -> if (words == null) WidgetState.Failure else WidgetState.Success(words) }
                 .onEach { isLoadingFlow.value = false }
         }
-        .combine(isLoadingFlow) { widgetState, isLoading ->
-            if (isLoading) {
-                WidgetState.InProgress
-            } else {
-                widgetState
-            }
+        .combine(isLoadingFlow) { widgetState, isLoading -> if (isLoading) WidgetState.InProgress else widgetState }
+        .catch { error ->
+            logger.e(javaClass.name, error)
+            emit(WidgetState.Failure)
         }
-        .catch { Log.e(javaClass.name, "", it); emit(WidgetState.Failure) }
 
-    fun reloadWords() {
+    fun reshuffleWords() {
         shouldReload.value = !shouldReload.value
     }
 
@@ -85,5 +87,5 @@ data class WidgetDetailsState(
 sealed interface WidgetState {
     data object InProgress : WidgetState
     data object Failure : WidgetState
-    class Success(val words: List<Pair<String, String>>) : WidgetState
+    data class Success(val words: List<Pair<String, String>>) : WidgetState
 }
