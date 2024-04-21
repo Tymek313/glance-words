@@ -99,7 +99,7 @@ fun WidgetConfigurationScreen(
                         Text(text = "Create widget", modifier = Modifier.align(Alignment.Center))
                         if (state.isSavingWidget) {
                             CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.onPrimary,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 strokeWidth = 2.dp,
                                 modifier = Modifier
                                     .size(24.dp)
