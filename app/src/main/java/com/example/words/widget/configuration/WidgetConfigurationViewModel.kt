@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.words.DependencyContainer
 import com.example.words.logging.Logger
 import com.example.words.logging.e
+import com.example.words.model.Widget
 import com.example.words.repository.SpreadsheetRepository
 import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsSynchronizer
-import com.example.words.settings.WidgetSettings
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -75,8 +75,8 @@ class WidgetConfigurationViewModel(
         viewModelScope.launch(generalCoroutineHandler) {
             state.value.run {
                 widgetSettingsRepository.addWidget(
-                    WidgetSettings(
-                        widgetId = WidgetSettings.WidgetId(widgetId),
+                    Widget(
+                        id = Widget.WidgetId(widgetId),
                         spreadsheetId = spreadsheetId,
                         sheetId = selectedSheetId!!,
                         sheetName = sheets?.first { it.id == selectedSheetId }?.name.orEmpty(),
@@ -84,7 +84,7 @@ class WidgetConfigurationViewModel(
                     )
                 )
             }
-            wordsSynchronizer.synchronizeWords(widgetId)
+            wordsSynchronizer.synchronizeWords(Widget.WidgetId(widgetId))
             _state.update { it.copy(widgetConfigurationSaved = true) }
         }
     }

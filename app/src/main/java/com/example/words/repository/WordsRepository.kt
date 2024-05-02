@@ -1,46 +1,51 @@
 package com.example.words.repository
 
+import com.example.words.model.Widget
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
 
 interface WordsRepository {
-    fun observeRandomWords(spreadsheetId: String, sheetId: Int): Flow<List<Pair<String, String>>?>
+    fun observeRandomWords(widgetId: Widget.WidgetId): Flow<List<Pair<String, String>>?>
+    suspend fun synchronizeWords(request: SynchronizationRequest)
 
-    suspend fun synchronizeWords(spreadsheetId: String, sheetId: Int)
+    class SynchronizationRequest(val widgetId: Widget.WidgetId, val spreadsheetId: String, val sheetId: Int)
 }
 
 class DefaultWordsRepository(private val spreadsheetsDirectory: File) : WordsRepository {
 
-    private val newlySynchronizedWords = Channel<List<Pair<String, String>>>()
+    private val synchronizationUpdates = MutableSharedFlow<SpreadsheetUpdate>()
 
-    override fun observeRandomWords(spreadsheetId: String, sheetId: Int): Flow<List<Pair<String, String>>?> = flow {
-        val cachedFile = getTargetFile(spreadsheetId, sheetId)
+    override fun observeRandomWords(widgetId: Widget.WidgetId): Flow<List<Pair<String, String>>?> = flow {
+        val cachedFile = getTargetFile(widgetId)
         if (cachedFile.exists()) {
             emit(linesToShuffledPairs(cachedFile.readLines()))
         }
-        for (words in newlySynchronizedWords) {
-            emit(words)
-        }
+        emitAll(synchronizationUpdates.filter { it.widgetId == widgetId }.map { it.words })
     }
 
-    override suspend fun synchronizeWords(spreadsheetId: String, sheetId: Int) {
+    override suspend fun synchronizeWords(request: WordsRepository.SynchronizationRequest) {
         withContext(Dispatchers.Default) {
-            newlySynchronizedWords.send(
-                linesToShuffledPairs(
-                    downloadCachingWordsSpreadsheet(getTargetFile(spreadsheetId, sheetId), spreadsheetId, sheetId)
+            synchronizationUpdates.emit(
+                SpreadsheetUpdate(
+                    widgetId = request.widgetId,
+                    words = linesToShuffledPairs(
+                        downloadCachingWordsSpreadsheet(getTargetFile(request.widgetId), request.spreadsheetId, request.sheetId)
+                    )
                 )
             )
         }
     }
 
-    private fun getTargetFile(spreadsheetId: String, sheetId: Int) =
-        File(spreadsheetsDirectory, "spreadsheets${File.separatorChar}${spreadsheetId}_$sheetId.csv")
+    private fun getTargetFile(widgetId: Widget.WidgetId) = File(spreadsheetsDirectory, "spreadsheets${File.separatorChar}$widgetId.csv")
 
     private fun linesToShuffledPairs(lines: List<String>): List<Pair<String, String>> = lines.map(::csvLineToLanguagePair).shuffled().take(50)
 
@@ -81,4 +86,6 @@ class DefaultWordsRepository(private val spreadsheetsDirectory: File) : WordsRep
     private fun csvLineToLanguagePair(line: String): Pair<String, String> = line
         .split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*\$)".toRegex())
         .run { get(0) to getOrNull(1).orEmpty() }
+
+    private class SpreadsheetUpdate(val widgetId: Widget.WidgetId, val words: List<Pair<String, String>>)
 }

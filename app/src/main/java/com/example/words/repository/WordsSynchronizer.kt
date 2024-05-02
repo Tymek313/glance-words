@@ -1,10 +1,11 @@
 package com.example.words.repository
 
+import com.example.words.model.Widget
 import kotlinx.coroutines.flow.first
 import java.time.Instant
 
 interface WordsSynchronizer {
-    suspend fun synchronizeWords(widgetId: Int)
+    suspend fun synchronizeWords(widgetId: Widget.WidgetId)
 }
 
 class DefaultWordsSynchronizer(
@@ -12,9 +13,15 @@ class DefaultWordsSynchronizer(
     private val widgetSettingsRepository: WidgetSettingsRepository
 ) : WordsSynchronizer {
 
-    override suspend fun synchronizeWords(widgetId: Int) {
+    override suspend fun synchronizeWords(widgetId: Widget.WidgetId) {
         val widgetSettings = widgetSettingsRepository.observeSettings(widgetId).first().let(::checkNotNull)
-        wordsRepository.synchronizeWords(widgetSettings.spreadsheetId, widgetSettings.sheetId)
-        widgetSettingsRepository.updateLastUpdatedAt(widgetSettings.widgetId, Instant.now())
+        wordsRepository.synchronizeWords(
+            WordsRepository.SynchronizationRequest(
+                widgetId = widgetSettings.id,
+                spreadsheetId = widgetSettings.spreadsheetId,
+                sheetId = widgetSettings.sheetId
+            )
+        )
+        widgetSettingsRepository.updateLastUpdatedAt(widgetSettings.id, Instant.now())
     }
 }

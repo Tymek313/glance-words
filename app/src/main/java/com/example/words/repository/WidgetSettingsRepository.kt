@@ -2,30 +2,30 @@ package com.example.words.repository
 
 import androidx.datastore.core.DataStore
 import com.example.words.ProtoSettings
-import com.example.words.ProtoWidgetSettings
-import com.example.words.settings.WidgetSettings
+import com.example.words.ProtoWidget
+import com.example.words.model.Widget
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 
 interface WidgetSettingsRepository {
-    fun observeSettings(appWidgetId: Int): Flow<WidgetSettings?>
+    fun observeSettings(widgetId: Widget.WidgetId): Flow<Widget?>
 
-    suspend fun addWidget(widget: WidgetSettings)
+    suspend fun addWidget(widget: Widget)
 
-    suspend fun updateLastUpdatedAt(widgetId: WidgetSettings.WidgetId, lastUpdatedAt: Instant)
+    suspend fun updateLastUpdatedAt(widgetId: Widget.WidgetId, lastUpdatedAt: Instant)
 
-    suspend fun deleteWidget(widgetId: WidgetSettings.WidgetId)
+    suspend fun deleteWidget(widgetId: Widget.WidgetId)
 }
 
 class DefaultWidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) : WidgetSettingsRepository {
 
-    override fun observeSettings(appWidgetId: Int): Flow<WidgetSettings?> {
+    override fun observeSettings(widgetId: Widget.WidgetId): Flow<Widget?> {
         return dataStore.data.map { settings ->
-            val protoWidgetSettings = settings.widgetsList.find { it.widgetId == appWidgetId }
+            val protoWidgetSettings = settings.widgetsList.find { it.id == widgetId.value }
             protoWidgetSettings?.run {
-                WidgetSettings(
-                    widgetId = WidgetSettings.WidgetId(appWidgetId),
+                Widget(
+                    id = Widget.WidgetId(id),
                     spreadsheetId = spreadsheetId,
                     sheetId = sheetId,
                     sheetName = sheetName,
@@ -35,9 +35,9 @@ class DefaultWidgetSettingsRepository(private val dataStore: DataStore<ProtoSett
         }
     }
 
-    override suspend fun addWidget(widget: WidgetSettings) {
-        val updatedSettings = ProtoWidgetSettings.newBuilder()
-            .setWidgetId(widget.widgetId.value)
+    override suspend fun addWidget(widget: Widget) {
+        val updatedSettings = ProtoWidget.newBuilder()
+            .setId(widget.id.value)
             .setSpreadsheetId(widget.spreadsheetId)
             .setSheetId(widget.sheetId)
             .setSheetName(widget.sheetName)
@@ -46,9 +46,9 @@ class DefaultWidgetSettingsRepository(private val dataStore: DataStore<ProtoSett
         dataStore.updateData { protoSettings -> protoSettings.toBuilder().addWidgets(updatedSettings).build() }
     }
 
-    override suspend fun updateLastUpdatedAt(widgetId: WidgetSettings.WidgetId, lastUpdatedAt: Instant) {
+    override suspend fun updateLastUpdatedAt(widgetId: Widget.WidgetId, lastUpdatedAt: Instant) {
         dataStore.updateData { protoSettings ->
-            val widgetIndex = protoSettings.widgetsList.indexOfFirst { it.widgetId == widgetId.value }
+            val widgetIndex = protoSettings.widgetsList.indexOfFirst { it.id == widgetId.value }
             val widget = protoSettings.getWidgets(widgetIndex)
             protoSettings.toBuilder()
                 .setWidgets(widgetIndex, widget.toBuilder().setLastUpdatedAt(lastUpdatedAt.epochSecond).build())
@@ -56,10 +56,10 @@ class DefaultWidgetSettingsRepository(private val dataStore: DataStore<ProtoSett
         }
     }
 
-    override suspend fun deleteWidget(widgetId: WidgetSettings.WidgetId) {
+    override suspend fun deleteWidget(widgetId: Widget.WidgetId) {
         dataStore.updateData { settings ->
             settings.toBuilder()
-                .removeWidgets(settings.widgetsList.indexOfFirst { it.widgetId == widgetId.value })
+                .removeWidgets(settings.widgetsList.indexOfFirst { it.id == widgetId.value })
                 .build()
         }
     }

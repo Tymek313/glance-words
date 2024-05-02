@@ -1,10 +1,10 @@
 package com.example.words.widget
 
 import com.example.words.logging.Logger
+import com.example.words.model.Widget
 import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsRepository
 import com.example.words.repository.WordsSynchronizer
-import com.example.words.settings.WidgetSettings
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -28,8 +28,8 @@ import org.junit.Test
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
-import java.util.Random
 import java.util.UUID
+import kotlin.random.Random
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,24 +48,24 @@ class WordsWidgetViewModelTest {
         mockWordsSynchronizer = mockk()
         mockWordsRepository = mockk()
         mockLogger = mockk()
-        every { mockWidgetSettingsRepository.observeSettings(0) } returns flowOf(widgetSettingsFixture)
-        every { mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture) } returns flowOf(wordsFixture)
+        every { mockWidgetSettingsRepository.observeSettings(widgetFixture.id) } returns flowOf(widgetFixture)
+        every { mockWordsRepository.observeRandomWords(widgetFixture.id) } returns flowOf(wordsFixture)
     }
 
     @Test
     fun `given the widget has been updated_when view model is widget details state should contain correct state with filled last update date`() =
         runTest(UnconfinedTestDispatcher()) {
-            every { mockWidgetSettingsRepository.observeSettings(appWidgetId = 0) } returns flowOf(
-                widgetSettingsFixture.copy(lastUpdatedAt = Instant.parse("2024-04-21T19:00:00.00Z"))
+            every { mockWidgetSettingsRepository.observeSettings(widgetId = widgetFixture.id) } returns flowOf(
+                widgetFixture.copy(lastUpdatedAt = Instant.parse("2024-04-21T19:00:00.00Z"))
             )
             viewModel = createViewModel()
 
             assertEquals(
-                expected = WidgetDetailsState(sheetName = sheetNameFixture, lastUpdatedAt = "Apr 21, 2024, 7:00 PM"),
+                expected = WidgetDetailsState(sheetName = widgetFixture.sheetName, lastUpdatedAt = "Apr 21, 2024, 7:00 PM"),
                 actual = viewModel.widgetDetailsState.first()
             )
             verifyAll {
-                mockWidgetSettingsRepository.observeSettings(appWidgetId = 0)
+                mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
             }
         }
 
@@ -74,9 +74,9 @@ class WordsWidgetViewModelTest {
         runTest(UnconfinedTestDispatcher()) {
             viewModel = createViewModel()
 
-            assertEquals(expected = WidgetDetailsState(sheetName = sheetNameFixture, lastUpdatedAt = ""), actual = viewModel.widgetDetailsState.first())
+            assertEquals(expected = WidgetDetailsState(sheetName = widgetFixture.sheetName, lastUpdatedAt = ""), actual = viewModel.widgetDetailsState.first())
             verifyAll {
-                mockWidgetSettingsRepository.observeSettings(appWidgetId = 0)
+                mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
             }
         }
 
@@ -88,14 +88,14 @@ class WordsWidgetViewModelTest {
 
         assertEquals(expected = WidgetState.Success(wordsFixture), actual = states.last())
         verifyAll {
-            mockWidgetSettingsRepository.observeSettings(appWidgetId = 0)
-            mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture)
+            mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
+            mockWordsRepository.observeRandomWords(widgetFixture.id)
         }
     }
 
     @Test
     fun `given observing words fails_when view model is created_words state should contain failed state`() = runTest(UnconfinedTestDispatcher()) {
-        every { mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture) } throws Exception("Boom!")
+        every { mockWordsRepository.observeRandomWords(widgetFixture.id) } throws Exception("Boom!")
         every { mockLogger.e(any(), any(), any()) } just runs
         viewModel = createViewModel()
 
@@ -103,29 +103,29 @@ class WordsWidgetViewModelTest {
 
         assertEquals(expected = WidgetState.Failure, actual = states.last())
         verifyAll {
-            mockWidgetSettingsRepository.observeSettings(appWidgetId = 0)
-            mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture)
+            mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
+            mockWordsRepository.observeRandomWords(widgetFixture.id)
         }
     }
 
     @Test
     fun `given there are no words_when view model is created_words state should contain failed state`() = runTest(UnconfinedTestDispatcher()) {
-        every { mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture) } returns flowOf(null)
+        every { mockWordsRepository.observeRandomWords(widgetFixture.id) } returns flowOf(null)
         viewModel = createViewModel()
 
         val states = collectWordsStates()
 
         assertEquals(expected = WidgetState.Failure, actual = states.last())
         verifyAll {
-            mockWidgetSettingsRepository.observeSettings(appWidgetId = 0)
-            mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture)
+            mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
+            mockWordsRepository.observeRandomWords(widgetFixture.id)
         }
     }
 
     @Test
     fun `when reshuffling words_words state should contain new set of words`() = runTest(UnconfinedTestDispatcher()) {
         var firstRun = true
-        every { mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture) } answers {
+        every { mockWordsRepository.observeRandomWords(widgetFixture.id) } answers {
             flowOf(
                 if (firstRun) {
                     firstRun = false
@@ -142,36 +142,36 @@ class WordsWidgetViewModelTest {
 
         assertEquals(expected = WidgetState.Success(otherWordsFixture), actual = states.last())
         verifyOrder {
-            mockWidgetSettingsRepository.observeSettings(appWidgetId = 0)
-            mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture)
+            mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
+            mockWordsRepository.observeRandomWords(widgetFixture.id)
         }
-        verify(exactly = 2) { mockWordsRepository.observeRandomWords(spreadsheetIdFixture, sheetIdFixture) }
+        verify(exactly = 2) { mockWordsRepository.observeRandomWords(widgetFixture.id) }
     }
 
     @Test
     fun `when synchronizing words_words state should be in progress`() = runTest(UnconfinedTestDispatcher()) {
-        coEvery { mockWordsSynchronizer.synchronizeWords(widgetId = 0) } just runs
+        coEvery { mockWordsSynchronizer.synchronizeWords(widgetFixture.id) } just runs
         viewModel = createViewModel()
 
         val states = collectWordsStates()
         viewModel.synchronizeWords()
 
         assertEquals(expected = WidgetState.InProgress, actual = states.last())
-        coVerify { mockWordsSynchronizer.synchronizeWords(widgetId = 0) }
+        coVerify { mockWordsSynchronizer.synchronizeWords(widgetFixture.id) }
     }
 
     @Test
     fun `when widget is deleted_its settings should be deleted`() = runTest(UnconfinedTestDispatcher()) {
-        coEvery { mockWidgetSettingsRepository.deleteWidget(WidgetSettings.WidgetId(0)) } just runs
+        coEvery { mockWidgetSettingsRepository.deleteWidget(widgetFixture.id) } just runs
         viewModel = createViewModel()
 
         viewModel.deleteWidget()
 
-        coVerify { mockWidgetSettingsRepository.deleteWidget(widgetId = WidgetSettings.WidgetId(0)) }
+        coVerify { mockWidgetSettingsRepository.deleteWidget(widgetFixture.id) }
     }
 
     private fun createViewModel() = WordsWidgetViewModel(
-        appWidgetId = 0,
+        widgetId = widgetFixture.id,
         widgetSettingsRepository = mockWidgetSettingsRepository,
         wordsSynchronizer = mockWordsSynchronizer,
         wordsRepository = mockWordsRepository,
@@ -187,22 +187,15 @@ class WordsWidgetViewModelTest {
     }
 
     private companion object {
-        val widgetIdFixture = Random().nextInt()
-        val spreadsheetIdFixture = UUID.randomUUID().toString()
-        val sheetIdFixture = Random().nextInt()
-        val sheetNameFixture = UUID.randomUUID().toString()
-        val wordsFixture = listOf("1" to "1")
-        val otherWordsFixture = listOf("1" to "2")
-        val widgetSettingsFixture = WidgetSettings(
-            widgetId = WidgetSettings.WidgetId(widgetIdFixture),
-            spreadsheetId = spreadsheetIdFixture,
-            sheetId = sheetIdFixture,
-            sheetName = sheetNameFixture,
+        val wordsFixture = listOf(UUID.randomUUID().toString() to UUID.randomUUID().toString())
+        val otherWordsFixture = listOf(UUID.randomUUID().toString() to UUID.randomUUID().toString())
+        val widgetFixture = Widget(
+            id = getRandomWidgetId(),
+            spreadsheetId = UUID.randomUUID().toString(),
+            sheetId = Random.nextInt(),
+            sheetName = UUID.randomUUID().toString(),
             lastUpdatedAt = null
         )
+        fun getRandomWidgetId() = Widget.WidgetId(Random.nextInt())
     }
-//
-//    @Test
-//    fun `` () {
-//    }
 }

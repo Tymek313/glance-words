@@ -2,10 +2,10 @@ package com.example.words.widget
 
 import com.example.words.logging.Logger
 import com.example.words.logging.e
+import com.example.words.model.Widget
 import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsRepository
 import com.example.words.repository.WordsSynchronizer
-import com.example.words.settings.WidgetSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +22,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 class WordsWidgetViewModel(
-    private val appWidgetId: Int,
+    private val widgetId: Widget.WidgetId,
     private val widgetSettingsRepository: WidgetSettingsRepository,
     private val wordsSynchronizer: WordsSynchronizer,
     private val wordsRepository: WordsRepository,
@@ -32,7 +32,7 @@ class WordsWidgetViewModel(
 ) {
     private val shouldReload = MutableStateFlow(false)
     private val isLoadingFlow = MutableStateFlow(false)
-    private val widgetSettings = widgetSettingsRepository.observeSettings(appWidgetId).filterNotNull()
+    private val widgetSettings = widgetSettingsRepository.observeSettings(widgetId).filterNotNull()
 
     val widgetDetailsState: Flow<WidgetDetailsState> = widgetSettings.map { widgetSettings ->
         WidgetDetailsState(
@@ -51,7 +51,7 @@ class WordsWidgetViewModel(
         .distinctUntilChanged { old, new -> old.spreadsheetId == new.spreadsheetId && old.sheetId == new.sheetId }
         .combine(shouldReload) { widget, _ -> widget }
         .flatMapLatest { widget ->
-            wordsRepository.observeRandomWords(widget.spreadsheetId, widget.sheetId)
+            wordsRepository.observeRandomWords(widget.id)
                 .map { words -> if (words == null) WidgetState.Failure else WidgetState.Success(words) }
                 .onEach { isLoadingFlow.value = false }
         }
@@ -67,11 +67,11 @@ class WordsWidgetViewModel(
 
     suspend fun synchronizeWords() {
         isLoadingFlow.value = true
-        wordsSynchronizer.synchronizeWords(appWidgetId)
+        wordsSynchronizer.synchronizeWords(widgetId)
     }
 
     suspend fun deleteWidget() {
-        widgetSettingsRepository.deleteWidget(WidgetSettings.WidgetId(appWidgetId))
+        widgetSettingsRepository.deleteWidget(widgetId)
     }
 }
 

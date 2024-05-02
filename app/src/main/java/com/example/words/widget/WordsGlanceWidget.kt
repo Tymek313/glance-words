@@ -9,6 +9,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import com.example.words.DependencyContainer
+import com.example.words.model.Widget
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.util.Locale
@@ -38,7 +39,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
     }
 
     private fun createViewModel(context: Context, widgetId: GlanceId, diContainer: DependencyContainer) = WordsWidgetViewModel(
-        GlanceAppWidgetManager(context).getAppWidgetId(widgetId),
+        Widget.WidgetId(GlanceAppWidgetManager(context).getAppWidgetId(widgetId)),
         diContainer.getWidgetSettingsRepository(),
         diContainer.getWordsSynchronizer(),
         diContainer.getWordsRepository(),

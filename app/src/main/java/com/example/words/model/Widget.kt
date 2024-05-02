@@ -1,9 +1,9 @@
-package com.example.words.settings
+package com.example.words.model
 
 import java.time.Instant
 
-data class WidgetSettings(
-    val widgetId: WidgetId,
+data class Widget(
+    val id: WidgetId,
     val spreadsheetId: String,
     val sheetId: Int,
     val sheetName: String,
