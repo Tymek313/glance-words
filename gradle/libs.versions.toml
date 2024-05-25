@@ -1,6 +1,8 @@
 [versions]
 kotlinxCoroutines = "1.8.0"
 kotlin = "1.9.23"
+okio = "3.9.0"
+ktor = "2.3.10"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.13.0" }
@@ -24,6 +26,9 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 material = { group = "com.google.android.material", name = "material", version = "1.11.0" }
 androidx-activity = { group = "androidx.activity", name = "activity", version = "1.9.0" }
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version = "1.1.0" }
@@ -32,6 +37,8 @@ google-api-client = { group = "com.google.api-client", name = "google-api-client
 google-api-services-sheets = { group = "com.google.apis", name = "google-api-services-sheets", version = "v4-rev20240312-2.0.0" }
 google-auth-library-oauth2-http = { group = "com.google.auth", name = "google-auth-library-oauth2-http", version = "1.19.0" }
 mockk = { module = "io.mockk:mockk", version = "1.13.10" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version = "8.3.2" }

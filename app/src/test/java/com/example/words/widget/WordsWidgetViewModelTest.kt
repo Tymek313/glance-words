@@ -1,5 +1,7 @@
 package com.example.words.widget
 
+import com.example.words.getRandomWidgetId
+import com.example.words.getRandomWordPair
 import com.example.words.logging.Logger
 import com.example.words.model.Widget
 import com.example.words.repository.WidgetSettingsRepository
@@ -49,7 +51,7 @@ class WordsWidgetViewModelTest {
         mockWordsRepository = mockk()
         mockLogger = mockk()
         every { mockWidgetSettingsRepository.observeSettings(widgetFixture.id) } returns flowOf(widgetFixture)
-        every { mockWordsRepository.observeRandomWords(widgetFixture.id) } returns flowOf(wordsFixture)
+        every { mockWordsRepository.observeWords(widgetFixture.id) } returns flowOf(wordsFixture)
     }
 
     @Test
@@ -89,13 +91,13 @@ class WordsWidgetViewModelTest {
         assertEquals(expected = WidgetState.Success(wordsFixture), actual = states.last())
         verifyAll {
             mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
-            mockWordsRepository.observeRandomWords(widgetFixture.id)
+            mockWordsRepository.observeWords(widgetFixture.id)
         }
     }
 
     @Test
     fun `given observing words fails_when view model is created_words state should contain failed state`() = runTest(UnconfinedTestDispatcher()) {
-        every { mockWordsRepository.observeRandomWords(widgetFixture.id) } throws Exception("Boom!")
+        every { mockWordsRepository.observeWords(widgetFixture.id) } throws Exception("Boom!")
         every { mockLogger.e(any(), any(), any()) } just runs
         viewModel = createViewModel()
 
@@ -104,13 +106,13 @@ class WordsWidgetViewModelTest {
         assertEquals(expected = WidgetState.Failure, actual = states.last())
         verifyAll {
             mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
-            mockWordsRepository.observeRandomWords(widgetFixture.id)
+            mockWordsRepository.observeWords(widgetFixture.id)
         }
     }
 
     @Test
     fun `given there are no words_when view model is created_words state should contain failed state`() = runTest(UnconfinedTestDispatcher()) {
-        every { mockWordsRepository.observeRandomWords(widgetFixture.id) } returns flowOf(null)
+        every { mockWordsRepository.observeWords(widgetFixture.id) } returns flowOf(null)
         viewModel = createViewModel()
 
         val states = collectWordsStates()
@@ -118,14 +120,14 @@ class WordsWidgetViewModelTest {
         assertEquals(expected = WidgetState.Failure, actual = states.last())
         verifyAll {
             mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
-            mockWordsRepository.observeRandomWords(widgetFixture.id)
+            mockWordsRepository.observeWords(widgetFixture.id)
         }
     }
 
     @Test
     fun `when reshuffling words_words state should contain new set of words`() = runTest(UnconfinedTestDispatcher()) {
         var firstRun = true
-        every { mockWordsRepository.observeRandomWords(widgetFixture.id) } answers {
+        every { mockWordsRepository.observeWords(widgetFixture.id) } answers {
             flowOf(
                 if (firstRun) {
                     firstRun = false
@@ -143,9 +145,9 @@ class WordsWidgetViewModelTest {
         assertEquals(expected = WidgetState.Success(otherWordsFixture), actual = states.last())
         verifyOrder {
             mockWidgetSettingsRepository.observeSettings(widgetFixture.id)
-            mockWordsRepository.observeRandomWords(widgetFixture.id)
+            mockWordsRepository.observeWords(widgetFixture.id)
         }
-        verify(exactly = 2) { mockWordsRepository.observeRandomWords(widgetFixture.id) }
+        verify(exactly = 2) { mockWordsRepository.observeWords(widgetFixture.id) }
     }
 
     @Test
@@ -187,8 +189,8 @@ class WordsWidgetViewModelTest {
     }
 
     private companion object {
-        val wordsFixture = listOf(UUID.randomUUID().toString() to UUID.randomUUID().toString())
-        val otherWordsFixture = listOf(UUID.randomUUID().toString() to UUID.randomUUID().toString())
+        val wordsFixture = listOf(getRandomWordPair())
+        val otherWordsFixture = listOf(getRandomWordPair())
         val widgetFixture = Widget(
             id = getRandomWidgetId(),
             spreadsheetId = UUID.randomUUID().toString(),
@@ -196,6 +198,5 @@ class WordsWidgetViewModelTest {
             sheetName = UUID.randomUUID().toString(),
             lastUpdatedAt = null
         )
-        fun getRandomWidgetId() = Widget.WidgetId(Random.nextInt())
     }
 }

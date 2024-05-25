@@ -3,6 +3,7 @@ package com.example.words.widget
 import com.example.words.logging.Logger
 import com.example.words.logging.e
 import com.example.words.model.Widget
+import com.example.words.model.WordPair
 import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsRepository
 import com.example.words.repository.WordsSynchronizer
@@ -51,7 +52,8 @@ class WordsWidgetViewModel(
         .distinctUntilChanged { old, new -> old.spreadsheetId == new.spreadsheetId && old.sheetId == new.sheetId }
         .combine(shouldReload) { widget, _ -> widget }
         .flatMapLatest { widget ->
-            wordsRepository.observeRandomWords(widget.id)
+            wordsRepository.observeWords(widget.id)
+                .map { it?.shuffled()?.take(50) }
                 .map { words -> if (words == null) WidgetState.Failure else WidgetState.Success(words) }
                 .onEach { isLoadingFlow.value = false }
         }
@@ -80,12 +82,12 @@ data class WidgetDetailsState(
     val lastUpdatedAt: String,
 ) {
     companion object {
-        val Empty = WidgetDetailsState(sheetName = "", lastUpdatedAt = "")
+        val EMPTY = WidgetDetailsState(sheetName = "", lastUpdatedAt = "")
     }
 }
 
 sealed interface WidgetState {
     data object InProgress : WidgetState
     data object Failure : WidgetState
-    data class Success(val words: List<Pair<String, String>>) : WidgetState
+    data class Success(val words: List<WordPair>) : WidgetState
 }

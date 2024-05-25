@@ -35,6 +35,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 import com.example.glancewords.R
+import com.example.words.model.WordPair
 
 private val defaultTextStyle
     @Composable
@@ -106,7 +107,7 @@ private fun Error(onReload: () -> Unit) {
 }
 
 @Composable
-private fun WordList(words: List<Pair<String, String>>, modifier: GlanceModifier = GlanceModifier, onItemClick: () -> Unit) {
+private fun WordList(words: List<WordPair>, modifier: GlanceModifier = GlanceModifier, onItemClick: () -> Unit) {
     LazyColumn(modifier) {
         items(words) { (englishWord, polishWord) ->
             Row(

@@ -25,7 +25,7 @@ class WidgetConfigurationViewModel(
     private val logger: Logger
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ConfigureWidgetState.initial)
+    private val _state = MutableStateFlow(ConfigureWidgetState.INITIAL)
     val state: StateFlow<ConfigureWidgetState> = _state
 
     private val loadSheetsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -40,7 +40,7 @@ class WidgetConfigurationViewModel(
     private var loadSheetsJob: Job? = null
 
     fun setInitialSpreadsheetIdIfApplicable(clipboardText: CharSequence) {
-        val spreadsheetId = SpreadsheetUrlRegex.find(clipboardText)?.groupValues?.get(1)
+        val spreadsheetId = SPREADSHEET_URL_REGEX.find(clipboardText)?.groupValues?.get(1)
         if(spreadsheetId != null) {
             _state.update { it.copy(spreadsheetId = spreadsheetId) }
             loadSheetsForSpreadsheet(withDebounce = false)
@@ -90,11 +90,11 @@ class WidgetConfigurationViewModel(
     }
 
     companion object {
-        private val SpreadsheetUrlRegex = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
+        private val SPREADSHEET_URL_REGEX = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
         fun factory(diContainer: DependencyContainer) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T = diContainer.run {
-                WidgetConfigurationViewModel(getSpreadsheetRepository(), getWidgetSettingsRepository(), getWordsSynchronizer(), getLogger()) as T
+                WidgetConfigurationViewModel(spreadsheetRepository, widgetSettingsRepository, wordsSynchronizer, logger) as T
             }
         }
     }
@@ -113,7 +113,7 @@ data class ConfigureWidgetState(
     class Sheet(val id: Int, val name: String)
 
     companion object {
-        val initial = ConfigureWidgetState(
+        val INITIAL = ConfigureWidgetState(
             spreadsheetId = "",
             sheets = null,
             selectedSheetId = null,

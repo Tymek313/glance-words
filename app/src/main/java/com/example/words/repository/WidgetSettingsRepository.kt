@@ -1,9 +1,9 @@
 package com.example.words.repository
 
-import androidx.datastore.core.DataStore
 import com.example.words.ProtoSettings
 import com.example.words.ProtoWidget
 import com.example.words.model.Widget
+import com.example.words.persistence.Persistence
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
@@ -18,10 +18,10 @@ interface WidgetSettingsRepository {
     suspend fun deleteWidget(widgetId: Widget.WidgetId)
 }
 
-class DefaultWidgetSettingsRepository(private val dataStore: DataStore<ProtoSettings>) : WidgetSettingsRepository {
+class DefaultWidgetSettingsRepository(private val persistence: Persistence<ProtoSettings>) : WidgetSettingsRepository {
 
     override fun observeSettings(widgetId: Widget.WidgetId): Flow<Widget?> {
-        return dataStore.data.map { settings ->
+        return persistence.data.map { settings ->
             val protoWidgetSettings = settings.widgetsList.find { it.id == widgetId.value }
             protoWidgetSettings?.run {
                 Widget(
@@ -43,12 +43,16 @@ class DefaultWidgetSettingsRepository(private val dataStore: DataStore<ProtoSett
             .setSheetName(widget.sheetName)
             .build()
 
-        dataStore.updateData { protoSettings -> protoSettings.toBuilder().addWidgets(updatedSettings).build() }
+        persistence.updateData { protoSettings -> protoSettings.toBuilder().addWidgets(updatedSettings).build() }
     }
 
     override suspend fun updateLastUpdatedAt(widgetId: Widget.WidgetId, lastUpdatedAt: Instant) {
-        dataStore.updateData { protoSettings ->
-            val widgetIndex = protoSettings.widgetsList.indexOfFirst { it.id == widgetId.value }
+        persistence.updateData { protoSettings ->
+            val widgetIndex = protoSettings.widgetsList
+                .indexOfFirst { it.id == widgetId.value }
+                .takeIf { it > -1 }
+                ?: throw WidgetDoesNotExistException(widgetId)
+
             val widget = protoSettings.getWidgets(widgetIndex)
             protoSettings.toBuilder()
                 .setWidgets(widgetIndex, widget.toBuilder().setLastUpdatedAt(lastUpdatedAt.epochSecond).build())
@@ -57,10 +61,12 @@ class DefaultWidgetSettingsRepository(private val dataStore: DataStore<ProtoSett
     }
 
     override suspend fun deleteWidget(widgetId: Widget.WidgetId) {
-        dataStore.updateData { settings ->
+        persistence.updateData { settings ->
             settings.toBuilder()
                 .removeWidgets(settings.widgetsList.indexOfFirst { it.id == widgetId.value })
                 .build()
         }
     }
+
+    class WidgetDoesNotExistException(widgetId: Widget.WidgetId): Exception("Widget ${widgetId.value} does not exist")
 }

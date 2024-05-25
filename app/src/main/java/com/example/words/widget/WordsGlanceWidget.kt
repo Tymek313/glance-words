@@ -26,7 +26,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
             val scope = rememberCoroutineScope()
             WordsWidgetContent(
                 widgetState = viewModel.wordsState.collectAsState(WidgetState.InProgress).value,
-                widgetDetailsState = viewModel.widgetDetailsState.collectAsState(WidgetDetailsState.Empty).value,
+                widgetDetailsState = viewModel.widgetDetailsState.collectAsState(WidgetDetailsState.EMPTY).value,
                 onReload = viewModel::reshuffleWords,
                 onSynchronize = { scope.launch { viewModel.synchronizeWords() } }
             )
@@ -40,10 +40,10 @@ class WordsGlanceWidget : GlanceAppWidget() {
 
     private fun createViewModel(context: Context, widgetId: GlanceId, diContainer: DependencyContainer) = WordsWidgetViewModel(
         Widget.WidgetId(GlanceAppWidgetManager(context).getAppWidgetId(widgetId)),
-        diContainer.getWidgetSettingsRepository(),
-        diContainer.getWordsSynchronizer(),
-        diContainer.getWordsRepository(),
-        diContainer.getLogger(),
+        diContainer.widgetSettingsRepository,
+        diContainer.wordsSynchronizer,
+        diContainer.wordsRepository,
+        diContainer.logger,
         Locale.getDefault(),
         ZoneId.systemDefault()
     )

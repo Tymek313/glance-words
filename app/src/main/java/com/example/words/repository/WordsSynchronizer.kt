@@ -10,7 +10,8 @@ interface WordsSynchronizer {
 
 class DefaultWordsSynchronizer(
     private val wordsRepository: WordsRepository,
-    private val widgetSettingsRepository: WidgetSettingsRepository
+    private val widgetSettingsRepository: WidgetSettingsRepository,
+    private val getNowInstant: () -> Instant
 ) : WordsSynchronizer {
 
     override suspend fun synchronizeWords(widgetId: Widget.WidgetId) {
@@ -22,6 +23,6 @@ class DefaultWordsSynchronizer(
                 sheetId = widgetSettings.sheetId
             )
         )
-        widgetSettingsRepository.updateLastUpdatedAt(widgetSettings.id, Instant.now())
+        widgetSettingsRepository.updateLastUpdatedAt(widgetSettings.id, getNowInstant())
     }
 }

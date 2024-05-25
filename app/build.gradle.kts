@@ -93,7 +93,11 @@ dependencies {
     implementation(libs.google.api.services.sheets)
     implementation(libs.androidx.datastore)
     implementation(libs.google.protobuf.javalite)
-
+    implementation(libs.okio)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.android)
+    testImplementation(libs.okio.fakefilesystem)
+    testImplementation(libs.ktor.client.mock)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlin.test)

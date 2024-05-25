@@ -10,7 +10,7 @@ interface SpreadsheetRepository {
     suspend fun fetchSpreadsheetSheets(spreadsheetId: String): List<SpreadsheetSheet>
 }
 
-class DefaultSpreadsheetRepository(
+class GoogleSpreadsheetRepository(
     private val sheets: Sheets,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : SpreadsheetRepository {
