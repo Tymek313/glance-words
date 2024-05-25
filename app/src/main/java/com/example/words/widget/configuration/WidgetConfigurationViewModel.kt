@@ -60,7 +60,7 @@ class WidgetConfigurationViewModel(
             if (withDebounce) delay(2000)
             _state.update { it.copy(isLoading = true, sheets = null, selectedSheetId = null) }
             val sheets = spreadsheetRepository.fetchSpreadsheetSheets(_state.value.spreadsheetId)
-            _state.update { state -> state.copy(isLoading = false, sheets = sheets.map { ConfigureWidgetState.Sheet(it.id, it.name) }) }
+            _state.update { state -> state.copy(isLoading = false, sheets = sheets?.map { ConfigureWidgetState.Sheet(it.id, it.name) }) }
         }
     }
 

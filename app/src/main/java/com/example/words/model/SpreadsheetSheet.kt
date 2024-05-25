@@ -1,3 +1,3 @@
 package com.example.words.model
 
-class SpreadsheetSheet(val id: Int, val name: String)
+data class SpreadsheetSheet(val id: Int, val name: String)
