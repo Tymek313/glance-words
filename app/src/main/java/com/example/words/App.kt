@@ -50,6 +50,7 @@ class App : Application(), DependencyContainer {
         spreadsheetRepository = GoogleSpreadsheetRepository(
             DefaultGoogleSpreadsheetDataSource(
                 CachingGoogleSheetsProvider(Dispatchers.IO) { resources.openRawResource(R.raw.google_sheets_credentials) },
+                Dispatchers.IO
             )
         )
         logger = DefaultLogger()

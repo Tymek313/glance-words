@@ -15,7 +15,7 @@ interface GoogleSheetsProvider {
 
 class CachingGoogleSheetsProvider(
     private val ioDispatcher: CoroutineDispatcher,
-    private val getCredentialsBytes: suspend () -> InputStream
+    private val credentialsStreamProvider: suspend () -> InputStream
 ) : GoogleSheetsProvider {
     private var sheets: Sheets? = null
 
@@ -23,7 +23,7 @@ class CachingGoogleSheetsProvider(
         Sheets.Builder(
             NetHttpTransport(),
             GsonFactory.getDefaultInstance(),
-            HttpCredentialsAdapter(GoogleCredentials.fromStream(getCredentialsBytes()))
+            HttpCredentialsAdapter(GoogleCredentials.fromStream(credentialsStreamProvider()))
         ).build().also { sheets = it }
     }
 }
