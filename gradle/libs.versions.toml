@@ -23,6 +23,7 @@ androidx-material = { group = "androidx.compose.material3", name = "material3" }
 androidx-glance = { group = "androidx.glance", name = "glance-appwidget", version = "1.1.0-beta02"}
 androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version = "1.1.0-beta02" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.6.1" }
+androidx-work = { module = "androidx.work:work-runtime-ktx", version = "2.9.0" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

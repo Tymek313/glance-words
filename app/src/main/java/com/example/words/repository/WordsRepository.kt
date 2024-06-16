@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
 
 interface WordsRepository {
     fun observeWords(widgetId: Widget.WidgetId): Flow<List<WordPair>?>
+    fun observeWordsUpdates(widgetId: Widget.WidgetId): Flow<List<WordPair>?>
     suspend fun synchronizeWords(request: SynchronizationRequest)
 
     data class SynchronizationRequest(val widgetId: Widget.WidgetId, val spreadsheetId: String, val sheetId: Int)
@@ -31,8 +32,11 @@ class DefaultWordsRepository(
         localDataSource.getWords(widgetId)?.let { words ->
             emit(words.map(wordPairMapper::map))
         }
-        emitAll(synchronizationUpdates.filter { it.widgetId == widgetId }.map { it.words })
+        emitAll(observeWordsUpdates(widgetId))
     }
+
+    override fun observeWordsUpdates(widgetId: Widget.WidgetId): Flow<List<WordPair>?> =
+        synchronizationUpdates.filter { it.widgetId == widgetId }.map { it.words }
 
     override suspend fun synchronizeWords(request: WordsRepository.SynchronizationRequest) {
         val remoteCSV = remoteDataSource.getWords(request.spreadsheetId, request.sheetId)

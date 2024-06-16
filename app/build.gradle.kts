@@ -34,6 +34,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs = listOf("-Xdebug")
     }
     buildFeatures {
         compose = true
@@ -86,6 +87,7 @@ dependencies {
     implementation(libs.androidx.glance)
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.work)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.google.api.client)

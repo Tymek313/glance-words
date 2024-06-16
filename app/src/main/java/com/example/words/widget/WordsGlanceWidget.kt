@@ -2,7 +2,6 @@ package com.example.words.widget
 
 import android.content.Context
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -10,7 +9,6 @@ import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import com.example.words.DependencyContainer
 import com.example.words.model.Widget
-import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.util.Locale
 
@@ -23,12 +21,10 @@ class WordsGlanceWidget : GlanceAppWidget() {
         val viewModel = createViewModel(context, id, context.applicationContext as DependencyContainer)
 
         provideContent {
-            val scope = rememberCoroutineScope()
             WordsWidgetContent(
                 widgetState = viewModel.wordsState.collectAsState(WidgetState.InProgress).value,
                 widgetDetailsState = viewModel.widgetDetailsState.collectAsState(WidgetDetailsState.EMPTY).value,
                 onReload = viewModel::reshuffleWords,
-                onSynchronize = { scope.launch { viewModel.synchronizeWords() } }
             )
         }
     }
@@ -41,8 +37,8 @@ class WordsGlanceWidget : GlanceAppWidget() {
     private fun createViewModel(context: Context, widgetId: GlanceId, diContainer: DependencyContainer) = WordsWidgetViewModel(
         Widget.WidgetId(GlanceAppWidgetManager(context).getAppWidgetId(widgetId)),
         diContainer.widgetSettingsRepository,
-        diContainer.wordsSynchronizer,
         diContainer.wordsRepository,
+        diContainer.widgetLoadingStateSynchronizer,
         diContainer.logger,
         Locale.getDefault(),
         ZoneId.systemDefault()

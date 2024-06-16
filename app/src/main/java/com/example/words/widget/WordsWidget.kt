@@ -15,6 +15,7 @@ import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.CircularProgressIndicator
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
@@ -50,7 +51,7 @@ private val smallBoldTextStyle
     get() = smallTextStyle.copy(fontWeight = FontWeight.Bold)
 
 @Composable
-fun WordsWidgetContent(widgetState: WidgetState, widgetDetailsState: WidgetDetailsState, onReload: () -> Unit, onSynchronize: () -> Unit) {
+fun WordsWidgetContent(widgetState: WidgetState, widgetDetailsState: WidgetDetailsState, onReload: () -> Unit) {
     GlanceTheme {
         Column(
             modifier = GlanceModifier
@@ -66,17 +67,21 @@ fun WordsWidgetContent(widgetState: WidgetState, widgetDetailsState: WidgetDetai
                     is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onReload)
                 }
             }
-            Footer(widgetDetailsState, onSynchronize)
+            Footer(widgetDetailsState)
         }
     }
 }
 
 @Composable
-private fun Footer(widgetDetailsState: WidgetDetailsState, onSynchronize: () -> Unit) {
+private fun Footer(widgetDetailsState: WidgetDetailsState) {
     val isWidgetLarge = LocalSize.current == WordsWidgetSizes.LARGE
     Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
         val modifier = GlanceModifier.defaultWeight()
-        Row(horizontalAlignment = Alignment.Start, verticalAlignment = Alignment.CenterVertically, modifier = modifier.clickable(onSynchronize)) {
+        Row(
+            horizontalAlignment = Alignment.Start,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier.clickable(actionRunCallback<LaunchWidgetSynchronizationWorkAction>())
+        ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_refresh),
                 contentDescription = null,
