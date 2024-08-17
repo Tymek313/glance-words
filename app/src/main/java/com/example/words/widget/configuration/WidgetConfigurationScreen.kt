@@ -84,8 +84,8 @@ fun WidgetConfigurationScreen(
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
                 )
-                AnimatedVisibility(visible = state.sheets != null) {
-                    SheetList(sheets = state.sheets ?: emptyList(), selectedSheetId = state.selectedSheetId, onSheetSelect = onSheetSelect)
+                AnimatedVisibility(visible = state.sheets.isNotEmpty()) {
+                    SheetList(sheets = state.sheets, selectedSheetId = state.selectedSheetId, onSheetSelect = onSheetSelect)
                 }
                 AnimatedVisibility(visible = state.generalError != null) {
                     Text(text = state.generalError.orEmpty(), color = MaterialTheme.colorScheme.error)

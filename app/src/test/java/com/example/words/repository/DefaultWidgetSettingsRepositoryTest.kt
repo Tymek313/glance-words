@@ -2,9 +2,11 @@ package com.example.words.repository
 
 import com.example.words.ProtoSettings
 import com.example.words.ProtoWidget
-import com.example.words.getRandomWidgetId
 import com.example.words.model.Widget
 import com.example.words.persistence.Persistence
+import com.example.words.randomInt
+import com.example.words.randomString
+import com.example.words.randomWidgetId
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -14,12 +16,9 @@ import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
-
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
-import java.util.UUID
-import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -41,7 +40,7 @@ class DefaultWidgetSettingsRepositoryTest {
         every { fakePersistence.data } returns flowOf(ProtoSettings.newBuilder().build())
 
         val settings = mutableListOf<Widget?>()
-        repository.observeSettings(getRandomWidgetId()).toList(settings)
+        repository.observeSettings(randomWidgetId()).toList(settings)
 
         assertNull(settings.single())
         verify { fakePersistence.data }
@@ -49,10 +48,10 @@ class DefaultWidgetSettingsRepositoryTest {
 
     @Test
     fun `when settings are observed_given widget has ever been updated_settings for the requested widget are returned`() = runTest {
-        val widgetId = getRandomWidgetId()
-        val spreadsheetId = UUID.randomUUID().toString()
-        val sheetId = Random.nextInt()
-        val sheetName = UUID.randomUUID().toString()
+        val widgetId = randomWidgetId()
+        val spreadsheetId = randomString()
+        val sheetId = randomInt()
+        val sheetName = randomString()
         val lastUpdatedAt = Instant.parse("2007-12-03T10:15:30Z")
         every { fakePersistence.data } returns flowOf(
             ProtoSettings.newBuilder()
@@ -85,10 +84,10 @@ class DefaultWidgetSettingsRepositoryTest {
 
     @Test
     fun `when settings are observed_given widget has never been updated_settings for the requested widget are returned`() = runTest {
-        val widgetId = getRandomWidgetId()
-        val spreadsheetId = UUID.randomUUID().toString()
-        val sheetId = Random.nextInt()
-        val sheetName = UUID.randomUUID().toString()
+        val widgetId = randomWidgetId()
+        val spreadsheetId = randomString()
+        val sheetId = randomInt()
+        val sheetName = randomString()
         every { fakePersistence.data } returns flowOf(
             ProtoSettings.newBuilder()
                 .addWidgets(
@@ -121,7 +120,7 @@ class DefaultWidgetSettingsRepositoryTest {
     @Test
     fun `when widget is added_it is persisted`() = runTest {
         val widget = getRandomWidget()
-        val otherWidgetId = getRandomWidgetId()
+        val otherWidgetId = randomWidgetId()
         val expectedProtoSettings = ProtoSettings.newBuilder()
             .addWidgets(ProtoWidget.newBuilder().setId(otherWidgetId.value).build())
             .addWidgets(
@@ -198,7 +197,7 @@ class DefaultWidgetSettingsRepositoryTest {
         var exceptionThrown = false
 
         try {
-            repository.updateLastUpdatedAt(getRandomWidgetId(), Instant.now())
+            repository.updateLastUpdatedAt(randomWidgetId(), Instant.now())
         } catch (e: DefaultWidgetSettingsRepository.WidgetDoesNotExistException) {
             exceptionThrown = true
         }
@@ -210,7 +209,7 @@ class DefaultWidgetSettingsRepositoryTest {
     @Test
     fun `when widget is deleted_it is removed from persistence`() = runTest {
         val widget = getRandomWidget()
-        val otherWidgetId = getRandomWidgetId()
+        val otherWidgetId = randomWidgetId()
         var storedSettings: ProtoSettings? = null
         val existingSettings = ProtoSettings.newBuilder()
             .addWidgets(ProtoWidget.newBuilder().setId(widget.id.value).build())
@@ -234,10 +233,10 @@ class DefaultWidgetSettingsRepositoryTest {
 
     private companion object {
         fun getRandomWidget() = Widget(
-            id = getRandomWidgetId(),
-            spreadsheetId = UUID.randomUUID().toString(),
-            sheetId = Random.nextInt(),
-            sheetName = UUID.randomUUID().toString(),
+            id = randomWidgetId(),
+            spreadsheetId = randomString(),
+            sheetId = randomInt(),
+            sheetName = randomString(),
             lastUpdatedAt = null
         )
     }

@@ -51,7 +51,7 @@ private val smallBoldTextStyle
     get() = smallTextStyle.copy(fontWeight = FontWeight.Bold)
 
 @Composable
-fun WordsWidgetContent(widgetState: WidgetState, widgetDetailsState: WidgetDetailsState, onReload: () -> Unit) {
+fun WordsWidgetContent(widgetWordsState: WidgetWordsState, widgetDetailsState: WidgetDetailsState, onReload: () -> Unit) {
     GlanceTheme {
         Column(
             modifier = GlanceModifier
@@ -61,10 +61,10 @@ fun WordsWidgetContent(widgetState: WidgetState, widgetDetailsState: WidgetDetai
                 .padding(top = 6.dp, start = 6.dp, end = 6.dp, bottom = 2.dp)
         ) {
             Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.defaultWeight().fillMaxWidth()) {
-                when (widgetState) {
-                    WidgetState.InProgress -> CircularProgressIndicator()
-                    WidgetState.Failure -> Error(onReload)
-                    is WidgetState.Success -> WordList(words = widgetState.words, onItemClick = onReload)
+                when (widgetWordsState) {
+                    WidgetWordsState.Loading -> CircularProgressIndicator()
+                    WidgetWordsState.Failure -> Error(onReload)
+                    is WidgetWordsState.Success -> WordList(words = widgetWordsState.words, onItemClick = onReload)
                 }
             }
             Footer(widgetDetailsState)

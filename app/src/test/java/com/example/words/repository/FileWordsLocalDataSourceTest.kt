@@ -3,18 +3,20 @@ package com.example.words.repository
 import com.example.words.datasource.CSVLine
 import com.example.words.datasource.FileWordsLocalDataSource
 import com.example.words.model.Widget
+import com.example.words.randomWidgetId
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okio.BufferedSource
+import okio.Path
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.Before
 import org.junit.Test
 import kotlin.properties.Delegates
-import kotlin.random.Random
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -26,10 +28,12 @@ class FileWordsLocalDataSourceTest {
     private val spreadsheetsDirectory = "spreadsheets".toPath()
     private val dispatcher = UnconfinedTestDispatcher()
     private var widgetId by Delegates.notNull<Widget.WidgetId>()
+    private lateinit var targetFilePath: Path
 
     @Before
     fun setUp() {
-        widgetId = getRandomWidgetId()
+        widgetId = randomWidgetId()
+        targetFilePath = spreadsheetsDirectory / "${widgetId.value}.csv"
         fakeFileSystem = FakeFileSystem()
         dataSource = FileWordsLocalDataSource(fakeFileSystem, spreadsheetsDirectory, dispatcher)
     }
@@ -37,7 +41,7 @@ class FileWordsLocalDataSourceTest {
     @Test
     fun `when words are requested_given file exists_word lines are returned`() = runTest(dispatcher) {
         fakeFileSystem.createDirectory(spreadsheetsDirectory)
-        fakeFileSystem.write(spreadsheetsDirectory / "${widgetId.value}.csv") { writeUtf8(TEST_CSV) }
+        fakeFileSystem.write(targetFilePath, mustCreate = true) { writeUtf8(TEST_CSV) }
 
         val words = dataSource.getWords(widgetId)
 
@@ -54,26 +58,35 @@ class FileWordsLocalDataSourceTest {
     @Test
     fun `when words are stored_given file exists_words should be written to the file`() = runTest(dispatcher) {
         fakeFileSystem.createDirectory(spreadsheetsDirectory)
-        fakeFileSystem.write(spreadsheetsDirectory / "${widgetId.value}.csv") { emit() }
+        fakeFileSystem.write(targetFilePath, mustCreate = true) { emit() }
 
         dataSource.storeWords(widgetId, TEST_CSV_LINES)
 
-        val fileContent = fakeFileSystem.read(spreadsheetsDirectory / "${widgetId.value}.csv", BufferedSource::readUtf8)
+        val fileContent = fakeFileSystem.read(targetFilePath, BufferedSource::readUtf8)
         assertEquals(TEST_CSV, fileContent)
     }
 
     @Test
-    fun `when words are stored_given file does not exist_words should be written to the file`() = runTest(dispatcher) {
+    fun `when words are stored_given file does not exist_file should be created and words written to it`() = runTest(dispatcher) {
         dataSource.storeWords(widgetId, TEST_CSV_LINES)
 
-        val fileContent = fakeFileSystem.read(spreadsheetsDirectory / "${widgetId.value}.csv", BufferedSource::readUtf8)
+        val fileContent = fakeFileSystem.read(targetFilePath, BufferedSource::readUtf8)
         assertEquals(TEST_CSV, fileContent)
+    }
+
+    @Test
+    fun `when words are deleted_words should be deleted from the filesystem`() = runTest(dispatcher) {
+        fakeFileSystem.createDirectory(spreadsheetsDirectory)
+        fakeFileSystem.write(targetFilePath, mustCreate = true) { emit() }
+
+        dataSource.deleteWords(widgetId)
+
+        val fileExists = fakeFileSystem.exists(targetFilePath)
+        assertFalse(fileExists)
     }
 
     companion object {
         private const val TEST_CSV = "a,b\r\nc,d"
         private val TEST_CSV_LINES = listOf(CSVLine("a,b"), CSVLine("c,d"))
-
-        fun getRandomWidgetId() = Widget.WidgetId(Random.nextInt())
     }
 }

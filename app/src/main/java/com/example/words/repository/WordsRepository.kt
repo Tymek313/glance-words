@@ -13,10 +13,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 interface WordsRepository {
-    fun observeWords(widgetId: Widget.WidgetId): Flow<List<WordPair>?>
-    fun observeWordsUpdates(widgetId: Widget.WidgetId): Flow<List<WordPair>?>
+    fun observeWords(widgetId: Widget.WidgetId): Flow<List<WordPair>>
     suspend fun synchronizeWords(request: SynchronizationRequest)
-
+    suspend fun deleteCachedWords(widgetId: Widget.WidgetId)
     data class SynchronizationRequest(val widgetId: Widget.WidgetId, val spreadsheetId: String, val sheetId: Int)
 }
 
@@ -28,15 +27,12 @@ class DefaultWordsRepository(
 
     private val synchronizationUpdates = MutableSharedFlow<SpreadsheetUpdate>()
 
-    override fun observeWords(widgetId: Widget.WidgetId): Flow<List<WordPair>?> = flow {
+    override fun observeWords(widgetId: Widget.WidgetId): Flow<List<WordPair>> = flow {
         localDataSource.getWords(widgetId)?.let { words ->
             emit(words.map(wordPairMapper::map))
         }
-        emitAll(observeWordsUpdates(widgetId))
+        emitAll(synchronizationUpdates.filter { it.widgetId == widgetId }.map { it.words })
     }
-
-    override fun observeWordsUpdates(widgetId: Widget.WidgetId): Flow<List<WordPair>?> =
-        synchronizationUpdates.filter { it.widgetId == widgetId }.map { it.words }
 
     override suspend fun synchronizeWords(request: WordsRepository.SynchronizationRequest) {
         val remoteCSV = remoteDataSource.getWords(request.spreadsheetId, request.sheetId)
@@ -44,6 +40,10 @@ class DefaultWordsRepository(
         synchronizationUpdates.emit(
             SpreadsheetUpdate(request.widgetId, remoteCSV.map(wordPairMapper::map))
         )
+    }
+
+    override suspend fun deleteCachedWords(widgetId: Widget.WidgetId) {
+        localDataSource.deleteWords(widgetId)
     }
 
     private class SpreadsheetUpdate(val widgetId: Widget.WidgetId, val words: List<WordPair>)

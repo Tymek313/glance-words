@@ -6,14 +6,14 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 interface GoogleSpreadsheetDataSource {
-    suspend fun getSpreadsheets(id: String): List<Sheet>?
+    suspend fun getSpreadsheets(id: String): List<Sheet>
 }
 
 class DefaultGoogleSpreadsheetDataSource(
     private val sheetsProvider: GoogleSheetsProvider,
     private val ioDispatcher: CoroutineDispatcher
 ) : GoogleSpreadsheetDataSource {
-    override suspend fun getSpreadsheets(id: String): List<Sheet>? = withContext(ioDispatcher) {
-        sheetsProvider.getGoogleSheets().spreadsheets().get(id).execute().sheets
+    override suspend fun getSpreadsheets(id: String): List<Sheet> = withContext(ioDispatcher) {
+        sheetsProvider.getGoogleSheets().spreadsheets().get(id).execute().sheets ?: emptyList()
     }
 }

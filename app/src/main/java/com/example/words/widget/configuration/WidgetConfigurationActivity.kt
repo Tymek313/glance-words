@@ -13,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.lifecycleScope
 import com.example.words.DependencyContainer
+import com.example.words.logging.Logger
 import com.example.words.ui.theme.GlanceWordsTheme
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
@@ -20,17 +21,22 @@ import kotlinx.coroutines.flow.onEach
 
 class WidgetConfigurationActivity : ComponentActivity() {
 
+    private val logger: Logger by lazy { (application as DependencyContainer).logger }
     private val viewModel by viewModels<WidgetConfigurationViewModel>(
         factoryProducer = { WidgetConfigurationViewModel.factory(application as DependencyContainer) }
     )
     private var clipboardChecked = false
 
     public override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))
         setResult(RESULT_CANCELED)
-        super.onCreate(savedInstanceState)
 
-        val appWidgetId = getWidgetId() ?: run { finish(); return }
+        val appWidgetId = getWidgetId() ?: run {
+            logger.e(javaClass.name, "Unknown widget id")
+            finish()
+            return
+        }
 
         observeConfigurationFinish(appWidgetId)
 
@@ -66,7 +72,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
     private fun setInitialSpreadsheetIdFromClipboard() {
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.primaryClip?.getItemAt(0)?.text?.let {
-            viewModel.setInitialSpreadsheetIdIfApplicable(clipboardText = it)
+            viewModel.setInitialSpreadsheetIdIfApplicable(url = it)
         }
     }
 

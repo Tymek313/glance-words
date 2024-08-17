@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Configuration
 import androidx.work.WorkManager
-import com.example.glancewords.R
 import com.example.words.datasource.DefaultGoogleSpreadsheetDataSource
 import com.example.words.datasource.FileWordsLocalDataSource
 import com.example.words.datasource.GoogleWordsRemoteDataSource
@@ -12,19 +11,20 @@ import com.example.words.googlesheets.CachingGoogleSheetsProvider
 import com.example.words.logging.DefaultLogger
 import com.example.words.logging.Logger
 import com.example.words.mapper.DefaultWordPairMapper
-import com.example.words.notification.NotificationChannels
+import com.example.words.notification.NotificationChannel
 import com.example.words.persistence.DataStorePersistence
-import com.example.words.repository.DefaultWidgetLoadingStateSynchronizer
+import com.example.words.repository.DefaultWidgetLoadingStateNotifier
 import com.example.words.repository.DefaultWidgetSettingsRepository
 import com.example.words.repository.DefaultWordsRepository
 import com.example.words.repository.DefaultWordsSynchronizer
 import com.example.words.repository.GoogleSpreadsheetRepository
 import com.example.words.repository.SpreadsheetRepository
-import com.example.words.repository.WidgetLoadingStateSynchronizer
+import com.example.words.repository.WidgetLoadingStateNotifier
 import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsRepository
 import com.example.words.repository.WordsSynchronizer
 import com.example.words.settings.settingsDataStore
+import com.example.words.widget.updateWidget
 import com.example.words.work.WorkFactory
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.AndroidClientEngine
@@ -40,7 +40,7 @@ class App : Application(), DependencyContainer {
     override lateinit var wordsSynchronizer: WordsSynchronizer
     override lateinit var spreadsheetRepository: SpreadsheetRepository
     override lateinit var logger: Logger
-    override lateinit var widgetLoadingStateSynchronizer: WidgetLoadingStateSynchronizer
+    override lateinit var widgetLoadingStateNotifier: WidgetLoadingStateNotifier
 
     override fun onCreate() {
         createDependencies()
@@ -50,14 +50,17 @@ class App : Application(), DependencyContainer {
     }
 
     private fun createNotificationChannels() {
-        NotificationManagerCompat.from(this).createNotificationChannel(
-            NotificationChannels.WIDGET_SYNCHRONIZATION.createChannel(::getString)
-        )
+        val notificationManager = NotificationManagerCompat.from(this)
+        NotificationChannel.entries.forEach { channel ->
+            notificationManager.createNotificationChannel(
+                channel.createAndroidChannel(::getString)
+            )
+        }
     }
 
     private fun initializeWorkManager() {
         val configuration = Configuration.Builder()
-            .setWorkerFactory(WorkFactory(wordsSynchronizer, logger, widgetLoadingStateSynchronizer))
+            .setWorkerFactory(WorkFactory(wordsSynchronizer, logger))
             .build()
         WorkManager.initialize(this, configuration)
     }
@@ -69,14 +72,20 @@ class App : Application(), DependencyContainer {
             DefaultWordPairMapper()
         )
         widgetSettingsRepository = DefaultWidgetSettingsRepository(DataStorePersistence(settingsDataStore))
-        wordsSynchronizer = DefaultWordsSynchronizer(wordsRepository, widgetSettingsRepository, Instant::now)
+        widgetLoadingStateNotifier = DefaultWidgetLoadingStateNotifier()
+        wordsSynchronizer = DefaultWordsSynchronizer(
+            wordsRepository,
+            widgetSettingsRepository,
+            widgetLoadingStateNotifier,
+            updateWidget = { updateWidget(context = this, widgetId = it) },
+            Instant::now
+        )
         spreadsheetRepository = GoogleSpreadsheetRepository(
             DefaultGoogleSpreadsheetDataSource(
-                CachingGoogleSheetsProvider(Dispatchers.IO) { resources.openRawResource(R.raw.google_sheets_credentials) },
+                CachingGoogleSheetsProvider(resources, Dispatchers.IO),
                 Dispatchers.IO
             )
         )
         logger = DefaultLogger()
-        widgetLoadingStateSynchronizer = DefaultWidgetLoadingStateSynchronizer()
     }
 }

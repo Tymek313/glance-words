@@ -10,6 +10,7 @@ import okio.Path
 interface WordsLocalDataSource {
     suspend fun getWords(widgetId: Widget.WidgetId): List<CSVLine>?
     suspend fun storeWords(widgetId: Widget.WidgetId, words: List<CSVLine>)
+    suspend fun deleteWords(widgetId: Widget.WidgetId)
 }
 
 class FileWordsLocalDataSource(
@@ -27,13 +28,16 @@ class FileWordsLocalDataSource(
     override suspend fun storeWords(widgetId: Widget.WidgetId, words: List<CSVLine>) {
         withContext(ioDispatcher) {
             val targetPath = getFilePath(widgetId)
-            targetPath.parent?.let { parentDirectory ->
-                if (!fileSystem.exists(parentDirectory)) {
-                    fileSystem.createDirectories(parentDirectory)
-                }
+            val parentDirectory = checkNotNull(targetPath.parent) // Should not be null since we're requiring non-null `spreadsheetsDirectory`
+            if (!fileSystem.exists(parentDirectory)) {
+                fileSystem.createDirectories(parentDirectory)
             }
             fileSystem.write(targetPath) { writeUtf8(words.joinToString(separator = "\r\n", transform = CSVLine::value)) }
         }
+    }
+
+    override suspend fun deleteWords(widgetId: Widget.WidgetId) {
+        fileSystem.delete(getFilePath(widgetId))
     }
 
     private fun getFilePath(widgetId: Widget.WidgetId) = spreadsheetsDirectory / "${widgetId.value}.csv"

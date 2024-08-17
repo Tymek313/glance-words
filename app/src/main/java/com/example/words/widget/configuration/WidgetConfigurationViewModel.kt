@@ -25,7 +25,7 @@ class WidgetConfigurationViewModel(
     private val logger: Logger
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ConfigureWidgetState.INITIAL)
+    private val _state = MutableStateFlow(ConfigureWidgetState())
     val state: StateFlow<ConfigureWidgetState> = _state
 
     private val loadSheetsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -34,14 +34,15 @@ class WidgetConfigurationViewModel(
     }
 
     private val generalCoroutineHandler = CoroutineExceptionHandler { _, throwable ->
+        logger.e(javaClass.name, throwable)
         _state.update { it.copy(isSavingWidget = false, generalError = throwable.localizedMessage) }
     }
 
     private var loadSheetsJob: Job? = null
 
-    fun setInitialSpreadsheetIdIfApplicable(clipboardText: CharSequence) {
-        val spreadsheetId = SPREADSHEET_URL_REGEX.find(clipboardText)?.groupValues?.get(1)
-        if(spreadsheetId != null) {
+    fun setInitialSpreadsheetIdIfApplicable(url: CharSequence) {
+        val spreadsheetId = SPREADSHEET_URL_REGEX.find(url)?.groupValues?.get(1)
+        if (spreadsheetId != null) {
             _state.update { it.copy(spreadsheetId = spreadsheetId) }
             loadSheetsForSpreadsheet(withDebounce = false)
         }
@@ -58,39 +59,48 @@ class WidgetConfigurationViewModel(
         loadSheetsJob?.cancel()
         loadSheetsJob = viewModelScope.launch(loadSheetsExceptionHandler) {
             if (withDebounce) delay(2000)
-            _state.update { it.copy(isLoading = true, sheets = null, selectedSheetId = null) }
+            _state.update { it.copy(isLoading = true, sheets = emptyList(), selectedSheetId = null) }
             val sheets = spreadsheetRepository.fetchSpreadsheetSheets(_state.value.spreadsheetId)
-            _state.update { state -> state.copy(isLoading = false, sheets = sheets?.map { ConfigureWidgetState.Sheet(it.id, it.name) }) }
+            _state.update { state ->
+                state.copy(
+                    isLoading = false,
+                    sheets = sheets.map { ConfigureWidgetState.Sheet(it.id, it.name) }
+                )
+            }
         }
     }
-
 
     fun onSheetSelect(sheetId: Int) {
         _state.update { it.copy(selectedSheetId = sheetId) }
     }
 
-
     fun saveWidgetConfiguration(widgetId: Int) {
+        val selectedSheetId = state.value.selectedSheetId ?: run {
+            logger.e(tag = javaClass.name, message = "Unknown selected sheet id")
+            return
+        }
         _state.update { it.copy(isSavingWidget = true, generalError = null) }
         viewModelScope.launch(generalCoroutineHandler) {
-            state.value.run {
-                widgetSettingsRepository.addWidget(
-                    Widget(
-                        id = Widget.WidgetId(widgetId),
-                        spreadsheetId = spreadsheetId,
-                        sheetId = selectedSheetId!!,
-                        sheetName = sheets?.first { it.id == selectedSheetId }?.name.orEmpty(),
-                        lastUpdatedAt = null
-                    )
-                )
-            }
+            widgetSettingsRepository.addWidget(createWidget(widgetId, selectedSheetId))
             wordsSynchronizer.synchronizeWords(Widget.WidgetId(widgetId))
             _state.update { it.copy(widgetConfigurationSaved = true) }
         }
     }
 
+    private fun createWidget(widgetId: Int, selectedSheetId: Int): Widget {
+        val state = state.value
+        return Widget(
+            id = Widget.WidgetId(widgetId),
+            spreadsheetId = state.spreadsheetId,
+            sheetId = selectedSheetId,
+            sheetName = state.sheets.first { it.id == selectedSheetId }.name,
+            lastUpdatedAt = null
+        )
+    }
+
     companion object {
         private val SPREADSHEET_URL_REGEX = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
+
         fun factory(diContainer: DependencyContainer) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T = diContainer.run {
@@ -101,27 +111,14 @@ class WidgetConfigurationViewModel(
 }
 
 data class ConfigureWidgetState(
-    val spreadsheetId: String,
-    val isLoading: Boolean,
-    val isSavingWidget: Boolean,
-    val spreadsheetError: String?,
-    val generalError: String?,
-    val sheets: List<Sheet>?,
-    val selectedSheetId: Int?,
-    val widgetConfigurationSaved: Boolean
+    val spreadsheetId: String = "",
+    val isLoading: Boolean = false,
+    val isSavingWidget: Boolean = false,
+    val spreadsheetError: String? = null,
+    val generalError: String? = null,
+    val sheets: List<Sheet> = emptyList(),
+    val selectedSheetId: Int? = null,
+    val widgetConfigurationSaved: Boolean = false
 ) {
-    class Sheet(val id: Int, val name: String)
-
-    companion object {
-        val INITIAL = ConfigureWidgetState(
-            spreadsheetId = "",
-            sheets = null,
-            selectedSheetId = null,
-            spreadsheetError = null,
-            isLoading = false,
-            isSavingWidget = false,
-            widgetConfigurationSaved = false,
-            generalError = null
-        )
-    }
+    data class Sheet(val id: Int, val name: String)
 }

@@ -11,18 +11,19 @@ interface WordsSynchronizer {
 class DefaultWordsSynchronizer(
     private val wordsRepository: WordsRepository,
     private val widgetSettingsRepository: WidgetSettingsRepository,
+    private val widgetLoadingStateNotifier: WidgetLoadingStateNotifier,
+    private val updateWidget: suspend (widgetId: Widget.WidgetId) -> Unit,
     private val getNowInstant: () -> Instant
 ) : WordsSynchronizer {
 
     override suspend fun synchronizeWords(widgetId: Widget.WidgetId) {
         val widgetSettings = widgetSettingsRepository.observeSettings(widgetId).first().let(::checkNotNull)
-        wordsRepository.synchronizeWords(
-            WordsRepository.SynchronizationRequest(
-                widgetId = widgetSettings.id,
-                spreadsheetId = widgetSettings.spreadsheetId,
-                sheetId = widgetSettings.sheetId
-            )
-        )
-        widgetSettingsRepository.updateLastUpdatedAt(widgetSettings.id, getNowInstant())
+        // Delete cached words to avoid loading them when widget restarts to prevent blinking
+        wordsRepository.deleteCachedWords(widgetId)
+        updateWidget(widgetId)
+        widgetLoadingStateNotifier.setIsWidgetLoading(widgetId)
+        val syncRequest = widgetSettings.run { WordsRepository.SynchronizationRequest(id, spreadsheetId, sheetId) }
+        wordsRepository.synchronizeWords(syncRequest)
+        widgetSettingsRepository.updateLastUpdatedAt(widgetId, getNowInstant())
     }
 }

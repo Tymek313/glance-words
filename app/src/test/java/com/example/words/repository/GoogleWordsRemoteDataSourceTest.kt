@@ -2,6 +2,8 @@ package com.example.words.repository
 
 import com.example.words.datasource.CSVLine
 import com.example.words.datasource.GoogleWordsRemoteDataSource
+import com.example.words.randomInt
+import com.example.words.randomString
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -10,9 +12,7 @@ import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import java.util.UUID
 import kotlin.properties.Delegates
-import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -27,8 +27,8 @@ class GoogleWordsRemoteDataSourceTest {
 
     @Before
     fun setUp() {
-        spreadsheetId = UUID.randomUUID().toString()
-        sheetId = Random.nextInt()
+        spreadsheetId = randomString()
+        sheetId = randomInt()
         httpClient = HttpClient(
             MockEngine { request ->
                 if (request.url == Url("https://docs.google.com/spreadsheets/d/$spreadsheetId/export?format=csv&gid=$sheetId")) {
@@ -75,5 +75,14 @@ class GoogleWordsRemoteDataSourceTest {
         val csvLines = dataSource.getWords(spreadsheetId, sheetId)
 
         assertEquals(listOf(CSVLine("a,b"), CSVLine("#VALUE!,#VALUE!"), CSVLine("c,d")), csvLines)
+    }
+
+    @Test
+    fun `when words are requested_given csv contains only empty values_no words are returned`() = runTest {
+        response = "#VALUE!,#VALUE!"
+
+        val csvLines = dataSource.getWords(spreadsheetId, sheetId)
+
+        assertEquals(emptyList(), csvLines)
     }
 }

@@ -22,7 +22,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
 
         provideContent {
             WordsWidgetContent(
-                widgetState = viewModel.wordsState.collectAsState(WidgetState.InProgress).value,
+                widgetWordsState = viewModel.wordsState.collectAsState(WidgetWordsState.Loading).value,
                 widgetDetailsState = viewModel.widgetDetailsState.collectAsState(WidgetDetailsState.EMPTY).value,
                 onReload = viewModel::reshuffleWords,
             )
@@ -38,7 +38,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
         Widget.WidgetId(GlanceAppWidgetManager(context).getAppWidgetId(widgetId)),
         diContainer.widgetSettingsRepository,
         diContainer.wordsRepository,
-        diContainer.widgetLoadingStateSynchronizer,
+        diContainer.widgetLoadingStateNotifier,
         diContainer.logger,
         Locale.getDefault(),
         ZoneId.systemDefault()
