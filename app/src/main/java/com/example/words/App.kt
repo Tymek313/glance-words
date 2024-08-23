@@ -24,7 +24,7 @@ import com.example.words.repository.WidgetSettingsRepository
 import com.example.words.repository.WordsRepository
 import com.example.words.repository.WordsSynchronizer
 import com.example.words.settings.settingsDataStore
-import com.example.words.widget.updateWidget
+import com.example.words.widget.refreshWidget
 import com.example.words.work.WorkFactory
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.AndroidClientEngine
@@ -77,7 +77,7 @@ class App : Application(), DependencyContainer {
             wordsRepository,
             widgetSettingsRepository,
             widgetLoadingStateNotifier,
-            updateWidget = { updateWidget(context = this, widgetId = it) },
+            refreshWidget = { refreshWidget(context = this, widgetId = it) },
             Instant::now
         )
         spreadsheetRepository = GoogleSpreadsheetRepository(

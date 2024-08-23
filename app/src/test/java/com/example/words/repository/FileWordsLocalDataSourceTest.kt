@@ -4,7 +4,6 @@ import com.example.words.datasource.CSVLine
 import com.example.words.datasource.FileWordsLocalDataSource
 import com.example.words.model.Widget
 import com.example.words.randomWidgetId
-import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -20,7 +19,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@MockKExtension.ConfirmVerification
 class FileWordsLocalDataSourceTest {
 
     private lateinit var dataSource: FileWordsLocalDataSource

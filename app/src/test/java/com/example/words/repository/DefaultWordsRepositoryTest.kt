@@ -14,7 +14,6 @@ import com.example.words.randomWordPair
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
@@ -28,7 +27,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@MockKExtension.ConfirmVerification
 class DefaultWordsRepositoryTest {
 
     private lateinit var repository: DefaultWordsRepository

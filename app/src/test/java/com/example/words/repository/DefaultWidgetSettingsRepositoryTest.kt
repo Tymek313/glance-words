@@ -10,7 +10,6 @@ import com.example.words.randomWidgetId
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
@@ -23,7 +22,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@MockKExtension.ConfirmVerification
 class DefaultWidgetSettingsRepositoryTest {
 
     private lateinit var repository: DefaultWidgetSettingsRepository

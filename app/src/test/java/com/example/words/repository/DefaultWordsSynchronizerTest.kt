@@ -4,10 +4,10 @@ import com.example.words.model.Widget
 import com.example.words.randomWidget
 import com.example.words.randomWidgetId
 import io.mockk.coEvery
+import io.mockk.coInvoke
 import io.mockk.coVerify
 import io.mockk.coVerifySequence
 import io.mockk.every
-import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
@@ -15,11 +15,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import org.junit.runners.Parameterized.Parameters
 import java.time.Instant
 import kotlin.test.assertTrue
 
-@MockKExtension.ConfirmVerification
 class DefaultWordsSynchronizerTest {
 
     private lateinit var synchronizer: DefaultWordsSynchronizer
@@ -41,12 +39,14 @@ class DefaultWordsSynchronizerTest {
             widgetSettingsRepository = mockWidgetSettingsRepository,
             getNowInstant = mockGetNowInstant,
             widgetLoadingStateNotifier = mockWidgetLoadingStateNotifier,
-            updateWidget = mockUpdateWidget
+            refreshWidget = mockUpdateWidget
         )
         coEvery { mockWidgetSettingsRepository.observeSettings(any()) } returns flowOf(randomWidget())
         coEvery { mockWordsRepository.synchronizeWords(any()) } just runs
         coEvery { mockWidgetSettingsRepository.updateLastUpdatedAt(any(), any()) } just runs
-        coEvery { mockWidgetLoadingStateNotifier.setIsWidgetLoading(any()) } just runs
+        coEvery { mockWidgetLoadingStateNotifier.setLoadingWidgetForAction(any(), captureLambda()) } coAnswers {
+            lambda<suspend () -> Unit>().coInvoke()
+        }
         every { mockGetNowInstant() } returns Instant.now()
         every { mockUpdateWidget(any()) } just runs
         coEvery { mockWordsRepository.deleteCachedWords(any()) } just runs
@@ -68,27 +68,16 @@ class DefaultWordsSynchronizerTest {
     }
 
     @Test
-    @Parameters
-    fun `when words are synchronized_given widget settings exist_then all dependencies are executed in the correct order`() = runTest {
+    fun `when words are synchronized_given widget settings exist_then all steps are executed in the correct order`() = runTest {
         synchronizer.synchronizeWords(randomWidgetId())
 
         coVerifySequence {
             mockWidgetSettingsRepository.observeSettings(any())
-            mockWordsRepository.deleteCachedWords(any())
             mockUpdateWidget(any())
-            mockWidgetLoadingStateNotifier.setIsWidgetLoading(any())
+            mockWidgetLoadingStateNotifier.setLoadingWidgetForAction(any(), any())
             mockWordsRepository.synchronizeWords(any())
             mockWidgetSettingsRepository.updateLastUpdatedAt(any(), any())
         }
-    }
-
-    @Test
-    fun `when words are synchronized_given widget settings exist_then cached words are deleted from repository`() = runTest {
-        val widgetId = randomWidgetId()
-
-        synchronizer.synchronizeWords(widgetId)
-
-        coVerify { mockWordsRepository.deleteCachedWords(widgetId) }
     }
 
     @Test
@@ -106,7 +95,7 @@ class DefaultWordsSynchronizerTest {
 
         synchronizer.synchronizeWords(widgetId)
 
-        coVerify { mockWidgetLoadingStateNotifier.setIsWidgetLoading(widgetId) }
+        coVerify { mockWidgetLoadingStateNotifier.setLoadingWidgetForAction(widgetId, any()) }
     }
 
     @Test

@@ -3,7 +3,6 @@ package com.example.words.widget
 import com.example.words.coroutines.collectToListInBackground
 import com.example.words.logging.Logger
 import com.example.words.model.Widget
-import com.example.words.model.WordPair
 import com.example.words.randomInt
 import com.example.words.randomString
 import com.example.words.randomWidgetId
@@ -14,18 +13,16 @@ import com.example.words.repository.WordsRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -37,9 +34,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@MockKExtension.ConfirmVerification
 class WordsWidgetViewModelTest {
 
     private val dispatcher = UnconfinedTestDispatcher()
@@ -56,11 +53,11 @@ class WordsWidgetViewModelTest {
         mockLogger = mockk()
         every { mockWidgetSettingsRepository.observeSettings(widgetFixture.id) } returns flowOf(widgetFixture)
         every { mockWordsRepository.observeWords(widgetFixture.id) } returns flowOf(wordsFixture)
-        every { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns emptyFlow()
+        every { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns flowOf(false)
     }
 
     @Test
-    fun `when created_given widget has ever been updated_correct widget details state is emitted`() = runTest(dispatcher) {
+    fun `when widget settings are received_given widget has ever been updated_then correct widget details state is emitted`() = runTest(dispatcher) {
         every { mockWidgetSettingsRepository.observeSettings(widgetId = widgetFixture.id) } returns flowOf(
             widgetFixture.copy(lastUpdatedAt = Instant.parse("2024-04-21T19:00:00.00Z"))
         )
@@ -76,7 +73,7 @@ class WordsWidgetViewModelTest {
     }
 
     @Test
-    fun `when created_given widget has never been updated_widget details state with empty last updated date is emitted`() = runTest(dispatcher) {
+    fun `when widget settings are received_given widget has never been updated_then correct widget details state containing empty last updated date is emitted`() = runTest(dispatcher) {
         val viewModel = createViewModel()
 
         assertEquals(
@@ -89,14 +86,14 @@ class WordsWidgetViewModelTest {
     }
     
     @Test
-    fun `when created_given there are words_words state contains shuffled words`() = runTest(dispatcher) {
+    fun `when words are received_given words are emitted_then words state contains shuffled words`() = runTest(dispatcher) {
         val states = collectToListInBackground(createViewModel().wordsState)
 
         assertShuffled(states.single())
     }
 
     @Test
-    fun `when receiving words_words state contains at most 50 elements`() = runTest(dispatcher) {
+    fun `when words are received_given words are emitted_then words state contains at most 50 elements`() = runTest(dispatcher) {
         val randomLowerCount = Random.nextInt(48)
         every { mockWordsRepository.observeWords(widgetFixture.id) } returns flowOf(
             getRandomWords(Random.nextInt(52, 100)),
@@ -116,47 +113,7 @@ class WordsWidgetViewModelTest {
     }
 
     @Test
-    fun `when widget is reported as loading_given for the first time_words state is success`() = runTest(dispatcher) {
-        every { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns flowOf(Unit)
-        val states = collectToListInBackground(createViewModel().wordsState)
-
-        assertIs<WidgetWordsState.Success>(states.last())
-    }
-
-    @Test
-    fun `when widget is reported as loading_given for the second time_words state indicates loading`() = runTest(dispatcher) {
-        coEvery { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns flowOf(Unit, Unit)
-        val states = collectToListInBackground(createViewModel().wordsState)
-
-        assertIs<WidgetWordsState.Loading>(states.last())
-    }
-
-    @Test
-    fun `when widget is reported as loading_given for more than second time_words state indicates loading`() = runTest(dispatcher) {
-        coEvery { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns flowOf(
-            *Array(Random.nextInt(from = 3, until = 100)) {}
-        )
-        val states = collectToListInBackground(createViewModel().wordsState)
-
-        assertIs<WidgetWordsState.Loading>(states.last())
-    }
-
-    @Test
-    fun `when new words are emitted_given widget is loading_words state does not indicate loading`() = runTest(dispatcher) {
-        val isLoadingFlow = MutableSharedFlow<Unit>()
-        val wordsFlow = MutableStateFlow(emptyList<WordPair>())
-        coEvery { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns isLoadingFlow
-        coEvery { mockWordsRepository.observeWords(widgetFixture.id) } returns wordsFlow
-        val states = collectToListInBackground(createViewModel().wordsState)
-        isLoadingFlow.emit(Unit)
-
-        wordsFlow.value = listOf(randomWordPair())
-
-        assertIs<WidgetWordsState.Success>(states.last())
-    }
-
-    @Test
-    fun `when words_given observing words fails_words state contains failed state`() = runTest(dispatcher) {
+    fun `when words are received_given exception is thrown_then words state indicates failure`() = runTest(dispatcher) {
         every { mockWordsRepository.observeWords(widgetFixture.id) } returns flow { throw Exception() }
         every { mockLogger.e(any(), any(), any()) } just runs
         val states = collectToListInBackground(createViewModel().wordsState)
@@ -165,7 +122,32 @@ class WordsWidgetViewModelTest {
     }
 
     @Test
-    fun `when reshuffling words_words state contains reshuffled words`() = runTest(dispatcher) {
+    fun `when loading state is received_given widget is reported as loading_then words state indicates loading`() = runTest(dispatcher) {
+        val isLoadingFlow = MutableSharedFlow<Boolean>()
+        every { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns isLoadingFlow
+        val states = collectToListInBackground(createViewModel().wordsState)
+
+        isLoadingFlow.emit(true)
+
+        assertIs<WidgetWordsState.Loading>(states.last())
+    }
+
+    @Test
+    fun `when loading state is received_given widget is reported as not loading and words are emitted_then words state indicates success`() = runTest(dispatcher) {
+        val isLoadingFlow = MutableSharedFlow<Boolean>()
+        every { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns isLoadingFlow
+        val states = collectToListInBackground(createViewModel().wordsState)
+        isLoadingFlow.emit(true)
+        advanceTimeBy(1.seconds)
+
+        isLoadingFlow.emit(false)
+
+        val state = states.last()
+        assertIs<WidgetWordsState.Success>(state)
+    }
+
+    @Test
+    fun `when reshuffling words_then words state contains reshuffled words`() = runTest(dispatcher) {
         val viewModel = createViewModel()
         val states = collectToListInBackground(viewModel.wordsState)
 
@@ -175,7 +157,7 @@ class WordsWidgetViewModelTest {
     }
 
     @Test
-    fun `when widget is deleted_its settings is deleted`() = runTest(dispatcher) {
+    fun `when widget is deleted_then its settings are deleted from repository`() = runTest(dispatcher) {
         coEvery { mockWidgetSettingsRepository.deleteWidget(widgetFixture.id) } just runs
         val viewModel = createViewModel()
 

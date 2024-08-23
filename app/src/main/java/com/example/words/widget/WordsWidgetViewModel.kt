@@ -11,13 +11,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -26,14 +23,13 @@ import java.util.Locale
 class WordsWidgetViewModel(
     private val widgetId: Widget.WidgetId,
     private val widgetSettingsRepository: WidgetSettingsRepository,
-    wordsRepository: WordsRepository,
+    private val wordsRepository: WordsRepository,
     private val widgetLoadingStateNotifier: WidgetLoadingStateNotifier,
     private val logger: Logger,
     private val locale: Locale,
     private val zoneId: ZoneId
 ) {
     private val shouldReshuffle = MutableStateFlow(false)
-    private var isFirstWordsEmission = true
 
     val widgetDetailsState: Flow<WidgetDetailsState> = widgetSettingsRepository.observeSettings(widgetId)
         .filterNotNull()
@@ -49,32 +45,26 @@ class WordsWidgetViewModel(
             )
         }
 
+    val wordsState: Flow<WidgetWordsState> = combine(
+        observeShuffledLimitedWords(),
+        widgetLoadingStateNotifier.observeIsWidgetLoading(widgetId),
+        ::mapWordsState
+    ).catch { error ->
+        logger.e(javaClass.name, error)
+        emit(WidgetWordsState.Failure)
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    val wordsState: Flow<WidgetWordsState> = wordsRepository.observeWords(widgetId)
-        .flatMapLatest { wordPairs ->
-            shouldReshuffle.map { wordPairs.shuffled().take(50) }
-        }.flatMapLatest { wordPairs ->
-            flow {
-                // This flow starts if there are words emitted so we can just pass false as the first element
-                emit(wordPairs to false)
-                emitAll(widgetLoadingStateNotifier.observeIsWidgetLoading(widgetId)
-                    .drop(if(isFirstWordsEmission) 1 else 0)
-                    // We don't want to react to false here because it will be emitted immediately after reading true
-                    // Besides we don't need to read false as the entire flow chain will be restarted when words come from `observeWords` or `observeWordsUpdates`
-                    .map { wordPairs to true }
-                )
-            }
-        }.onEach {
-            if(isFirstWordsEmission) isFirstWordsEmission = false
-        }.map { (words, isLoading) ->
-            when {
-                isLoading -> WidgetWordsState.Loading
-                else -> WidgetWordsState.Success(words)
-            }
-        }.catch { error ->
-            logger.e(javaClass.name, error)
-            emit(WidgetWordsState.Failure)
+    private fun observeShuffledLimitedWords() = wordsRepository.observeWords(widgetId)
+        .flatMapLatest { wordPairs -> shouldReshuffle.map { wordPairs.shuffled().take(50) } }
+
+    private fun mapWordsState(words: List<WordPair>, isLoading: Boolean): WidgetWordsState {
+        return if (isLoading) {
+            WidgetWordsState.Loading
+        } else {
+            WidgetWordsState.Success(words)
         }
+    }
 
     fun reshuffleWords() {
         shouldReshuffle.value = !shouldReshuffle.value

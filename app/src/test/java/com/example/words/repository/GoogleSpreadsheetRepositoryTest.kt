@@ -8,14 +8,12 @@ import com.google.api.services.sheets.v4.model.Sheet
 import com.google.api.services.sheets.v4.model.SheetProperties
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-@MockKExtension.ConfirmVerification
 class GoogleSpreadsheetRepositoryTest {
 
     private lateinit var fakeGoogleSpreadsheetDataSource: GoogleSpreadsheetDataSource

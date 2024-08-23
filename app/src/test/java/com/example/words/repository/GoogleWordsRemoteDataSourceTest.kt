@@ -8,7 +8,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.Url
-import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -16,7 +15,6 @@ import kotlin.properties.Delegates
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@MockKExtension.ConfirmVerification
 class GoogleWordsRemoteDataSourceTest {
 
     private lateinit var dataSource: GoogleWordsRemoteDataSource
