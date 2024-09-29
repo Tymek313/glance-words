@@ -6,9 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.words.DependencyContainer
 import com.example.words.logging.Logger
 import com.example.words.logging.e
+import com.example.words.model.Sheet
+import com.example.words.model.SheetId
+import com.example.words.model.SheetSpreadsheetId
 import com.example.words.model.Widget
 import com.example.words.repository.SpreadsheetRepository
-import com.example.words.repository.WidgetSettingsRepository
+import com.example.words.repository.WidgetRepository
 import com.example.words.repository.WordsSynchronizer
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
@@ -20,7 +23,7 @@ import kotlinx.coroutines.launch
 
 class WidgetConfigurationViewModel(
     private val spreadsheetRepository: SpreadsheetRepository,
-    private val widgetSettingsRepository: WidgetSettingsRepository,
+    private val widgetRepository: WidgetRepository,
     private val wordsSynchronizer: WordsSynchronizer,
     private val logger: Logger
 ) : ViewModel() {
@@ -81,8 +84,8 @@ class WidgetConfigurationViewModel(
         }
         _state.update { it.copy(isSavingWidget = true, generalError = null) }
         viewModelScope.launch(generalCoroutineHandler) {
-            widgetSettingsRepository.addWidget(createWidget(widgetId, selectedSheetId))
-            wordsSynchronizer.synchronizeWords(Widget.WidgetId(widgetId))
+            val storedWidget = widgetRepository.addWidget(createWidget(widgetId, selectedSheetId))
+            wordsSynchronizer.synchronizeWords(storedWidget.id)
             _state.update { it.copy(widgetConfigurationSaved = true) }
         }
     }
@@ -91,10 +94,12 @@ class WidgetConfigurationViewModel(
         val state = state.value
         return Widget(
             id = Widget.WidgetId(widgetId),
-            spreadsheetId = state.spreadsheetId,
-            sheetId = selectedSheetId,
-            sheetName = state.sheets.first { it.id == selectedSheetId }.name,
-            lastUpdatedAt = null
+            sheet = Sheet(
+                id = SheetId.None,
+                sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = state.spreadsheetId, sheetId = selectedSheetId),
+                name = state.sheets.first { it.id == selectedSheetId }.name,
+                lastUpdatedAt = null
+            )
         )
     }
 
@@ -104,7 +109,7 @@ class WidgetConfigurationViewModel(
         fun factory(diContainer: DependencyContainer) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T = diContainer.run {
-                WidgetConfigurationViewModel(spreadsheetRepository, widgetSettingsRepository, wordsSynchronizer, logger) as T
+                WidgetConfigurationViewModel(spreadsheetRepository, widgetRepository, wordsSynchronizer, logger) as T
             }
         }
     }

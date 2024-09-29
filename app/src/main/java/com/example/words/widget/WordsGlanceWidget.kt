@@ -36,7 +36,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
 
     private fun createViewModel(context: Context, widgetId: GlanceId, diContainer: DependencyContainer) = WordsWidgetViewModel(
         Widget.WidgetId(GlanceAppWidgetManager(context).getAppWidgetId(widgetId)),
-        diContainer.widgetSettingsRepository,
+        diContainer.widgetRepository,
         diContainer.wordsRepository,
         diContainer.widgetLoadingStateNotifier,
         diContainer.logger,

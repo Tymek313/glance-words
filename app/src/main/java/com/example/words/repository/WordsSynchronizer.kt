@@ -10,19 +10,21 @@ interface WordsSynchronizer {
 
 class DefaultWordsSynchronizer(
     private val wordsRepository: WordsRepository,
-    private val widgetSettingsRepository: WidgetSettingsRepository,
+    private val widgetRepository: WidgetRepository,
+    private val sheetRepository: SheetRepository,
     private val widgetLoadingStateNotifier: WidgetLoadingStateNotifier,
     private val refreshWidget: suspend (widgetId: Widget.WidgetId) -> Unit,
     private val getNowInstant: () -> Instant
 ) : WordsSynchronizer {
 
     override suspend fun synchronizeWords(widgetId: Widget.WidgetId) {
-        val widgetSettings = widgetSettingsRepository.observeSettings(widgetId).first().let(::checkNotNull)
+        val widget = widgetRepository.observeWidget(widgetId).first().let(::checkNotNull)
         refreshWidget(widgetId)
         widgetLoadingStateNotifier.setLoadingWidgetForAction(widgetId) {
-            val syncRequest = widgetSettings.run { WordsRepository.SynchronizationRequest(id, spreadsheetId, sheetId) }
-            wordsRepository.synchronizeWords(syncRequest)
-            widgetSettingsRepository.updateLastUpdatedAt(widgetId, getNowInstant())
+            wordsRepository.synchronizeWords(
+                WordsRepository.SynchronizationRequest(widget.id, widget.sheet.sheetSpreadsheetId)
+            )
+            sheetRepository.updateLastUpdatedAt(widget.sheet.id, getNowInstant())
         }
     }
 }

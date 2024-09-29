@@ -21,41 +21,44 @@ import kotlin.test.assertTrue
 class DefaultWordsSynchronizerTest {
 
     private lateinit var synchronizer: DefaultWordsSynchronizer
-    private lateinit var mockWordsRepository: WordsRepository
-    private lateinit var mockWidgetSettingsRepository: WidgetSettingsRepository
-    private lateinit var mockGetNowInstant: () -> Instant
-    private lateinit var mockWidgetLoadingStateNotifier: WidgetLoadingStateNotifier
-    private lateinit var mockUpdateWidget: (Widget.WidgetId) -> Unit
+    private lateinit var fakeWordsRepository: WordsRepository
+    private lateinit var fakeWidgetRepository: WidgetRepository
+    private lateinit var fakeSheetRepository: SheetRepository
+    private lateinit var fakeGetNowInstant: () -> Instant
+    private lateinit var fakeWidgetLoadingStateNotifier: WidgetLoadingStateNotifier
+    private lateinit var fakeUpdateWidget: (Widget.WidgetId) -> Unit
 
     @Before
     fun setUp() {
-        mockWordsRepository = mockk()
-        mockWidgetSettingsRepository = mockk()
-        mockGetNowInstant = mockk()
-        mockWidgetLoadingStateNotifier = mockk()
-        mockUpdateWidget = mockk()
+        fakeWordsRepository = mockk()
+        fakeWidgetRepository = mockk()
+        fakeGetNowInstant = mockk()
+        fakeWidgetLoadingStateNotifier = mockk()
+        fakeUpdateWidget = mockk()
+        fakeSheetRepository = mockk()
         synchronizer = DefaultWordsSynchronizer(
-            wordsRepository =  mockWordsRepository,
-            widgetSettingsRepository = mockWidgetSettingsRepository,
-            getNowInstant = mockGetNowInstant,
-            widgetLoadingStateNotifier = mockWidgetLoadingStateNotifier,
-            refreshWidget = mockUpdateWidget
+            wordsRepository =  fakeWordsRepository,
+            widgetRepository = fakeWidgetRepository,
+            sheetRepository = fakeSheetRepository,
+            getNowInstant = fakeGetNowInstant,
+            widgetLoadingStateNotifier = fakeWidgetLoadingStateNotifier,
+            refreshWidget = fakeUpdateWidget
         )
-        coEvery { mockWidgetSettingsRepository.observeSettings(any()) } returns flowOf(randomWidget())
-        coEvery { mockWordsRepository.synchronizeWords(any()) } just runs
-        coEvery { mockWidgetSettingsRepository.updateLastUpdatedAt(any(), any()) } just runs
-        coEvery { mockWidgetLoadingStateNotifier.setLoadingWidgetForAction(any(), captureLambda()) } coAnswers {
+        coEvery { fakeWidgetRepository.observeWidget(any()) } returns flowOf(randomWidget())
+        coEvery { fakeWordsRepository.synchronizeWords(any()) } just runs
+        coEvery { fakeSheetRepository.updateLastUpdatedAt(any(), any()) } just runs
+        coEvery { fakeWidgetLoadingStateNotifier.setLoadingWidgetForAction(any(), captureLambda()) } coAnswers {
             lambda<suspend () -> Unit>().coInvoke()
         }
-        every { mockGetNowInstant() } returns Instant.now()
-        every { mockUpdateWidget(any()) } just runs
-        coEvery { mockWordsRepository.deleteCachedWords(any()) } just runs
+        every { fakeGetNowInstant() } returns Instant.now()
+        every { fakeUpdateWidget(any()) } just runs
+        coEvery { fakeWordsRepository.deleteCachedWords(any()) } just runs
     }
 
     @Test
     fun `when words are synchronized_given widget settings do not exist_then exception is thrown`() = runTest {
         val widget = randomWidget()
-        coEvery { mockWidgetSettingsRepository.observeSettings(widget.id) } returns flowOf(null)
+        coEvery { fakeWidgetRepository.observeWidget(widget.id) } returns flowOf(null)
         var exceptionThrown = false
 
         try {
@@ -72,11 +75,11 @@ class DefaultWordsSynchronizerTest {
         synchronizer.synchronizeWords(randomWidgetId())
 
         coVerifySequence {
-            mockWidgetSettingsRepository.observeSettings(any())
-            mockUpdateWidget(any())
-            mockWidgetLoadingStateNotifier.setLoadingWidgetForAction(any(), any())
-            mockWordsRepository.synchronizeWords(any())
-            mockWidgetSettingsRepository.updateLastUpdatedAt(any(), any())
+            fakeWidgetRepository.observeWidget(any())
+            fakeUpdateWidget(any())
+            fakeWidgetLoadingStateNotifier.setLoadingWidgetForAction(any(), any())
+            fakeWordsRepository.synchronizeWords(any())
+            fakeSheetRepository.updateLastUpdatedAt(any(), any())
         }
     }
 
@@ -86,7 +89,7 @@ class DefaultWordsSynchronizerTest {
 
         synchronizer.synchronizeWords(widgetId)
 
-        coVerify { mockUpdateWidget(widgetId) }
+        coVerify { fakeUpdateWidget(widgetId) }
     }
 
     @Test
@@ -95,29 +98,30 @@ class DefaultWordsSynchronizerTest {
 
         synchronizer.synchronizeWords(widgetId)
 
-        coVerify { mockWidgetLoadingStateNotifier.setLoadingWidgetForAction(widgetId, any()) }
+        coVerify { fakeWidgetLoadingStateNotifier.setLoadingWidgetForAction(widgetId, any()) }
     }
 
     @Test
     fun `when words are synchronized_given widget settings exist_then words are synchronized in the repository`() = runTest {
         val widget = randomWidget()
         val widgetId = widget.id
-        val expectedSyncRequest = widget.run { WordsRepository.SynchronizationRequest(id, spreadsheetId, sheetId) }
-        coEvery { mockWidgetSettingsRepository.observeSettings(widgetId) } returns flowOf(widget)
+        val expectedSyncRequest = widget.run { WordsRepository.SynchronizationRequest(id, widget.sheet.sheetSpreadsheetId) }
+        coEvery { fakeWidgetRepository.observeWidget(widgetId) } returns flowOf(widget)
 
         synchronizer.synchronizeWords(widgetId)
 
-        coVerify { mockWordsRepository.synchronizeWords(expectedSyncRequest) }
+        coVerify { fakeWordsRepository.synchronizeWords(expectedSyncRequest) }
     }
 
     @Test
     fun `when words are synchronized_given widget settings exist_then last update date of the correct widget is updated`() = runTest {
-        val widgetId = randomWidgetId()
+        val widget = randomWidget()
         val currentTime = Instant.now()
-        every { mockGetNowInstant.invoke() } returns currentTime
+        every { fakeGetNowInstant.invoke() } returns currentTime
+        coEvery { fakeWidgetRepository.observeWidget(any()) } returns flowOf(widget)
 
-        synchronizer.synchronizeWords(widgetId)
+        synchronizer.synchronizeWords(widget.id)
 
-        coVerify { mockWidgetSettingsRepository.updateLastUpdatedAt(widgetId, currentTime) }
+        coVerify { fakeSheetRepository.updateLastUpdatedAt(widget.sheet.id, currentTime) }
     }
 }

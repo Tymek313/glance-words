@@ -3,12 +3,13 @@ package com.example.words.widget.configuration
 import com.example.words.coroutines.MainDispatcherRule
 import com.example.words.coroutines.collectToListInBackground
 import com.example.words.logging.Logger
+import com.example.words.model.SheetId
 import com.example.words.model.SpreadsheetSheet
-import com.example.words.model.Widget
 import com.example.words.randomInt
 import com.example.words.randomString
+import com.example.words.randomWidget
 import com.example.words.repository.SpreadsheetRepository
-import com.example.words.repository.WidgetSettingsRepository
+import com.example.words.repository.WidgetRepository
 import com.example.words.repository.WordsSynchronizer
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -40,19 +41,19 @@ class WidgetConfigurationViewModelTest {
 
     private lateinit var viewModel: WidgetConfigurationViewModel
     private lateinit var fakeSpreadsheetRepository: SpreadsheetRepository
-    private lateinit var fakeWidgetSettingsRepository: WidgetSettingsRepository
+    private lateinit var fakeWidgetRepository: WidgetRepository
     private lateinit var fakeWordsSynchronizer: WordsSynchronizer
     private lateinit var fakeLogger: Logger
 
     @Before
     fun setup() {
         fakeSpreadsheetRepository = mockk()
-        fakeWidgetSettingsRepository = mockk()
+        fakeWidgetRepository = mockk()
         fakeWordsSynchronizer = mockk()
         fakeLogger = mockk()
         viewModel = WidgetConfigurationViewModel(
             fakeSpreadsheetRepository,
-            fakeWidgetSettingsRepository,
+            fakeWidgetRepository,
             fakeWordsSynchronizer,
             fakeLogger
         )
@@ -220,7 +221,7 @@ class WidgetConfigurationViewModelTest {
         )
         val states = collectToListInBackground(viewModel.state)
         coEvery { fakeSpreadsheetRepository.fetchSpreadsheetSheets(any()) } returns sheetsFixture
-        coEvery { fakeWidgetSettingsRepository.addWidget(any()) } coAnswers { suspendCoroutine { } }
+        coEvery { fakeWidgetRepository.addWidget(any()) } coAnswers { suspendCoroutine { } }
         viewModel.onSpreadsheetIdChanged(spreadsheetId)
         advanceUntilIdle()
         viewModel.onSheetSelect(selectedSheetId)
@@ -244,7 +245,7 @@ class WidgetConfigurationViewModelTest {
         val states = collectToListInBackground(viewModel.state)
         every { fakeLogger.e(any(), any(), any()) } just runs
         coEvery { fakeSpreadsheetRepository.fetchSpreadsheetSheets(any()) } returns sheetsFixture
-        coEvery { fakeWidgetSettingsRepository.addWidget(any()) } throws Exception() coAndThen { suspendCoroutine { } }
+        coEvery { fakeWidgetRepository.addWidget(any()) } throws Exception() coAndThen { suspendCoroutine { } }
         viewModel.onSpreadsheetIdChanged(spreadsheetId)
         advanceUntilIdle()
         viewModel.onSheetSelect(selectedSheetId)
@@ -257,35 +258,42 @@ class WidgetConfigurationViewModelTest {
 
     @Test
     fun `when saving widget configuration_given it succeeds_widget is stored in the repository`() = runTest(dispatcher) {
-        val widgetId = randomInt()
-        val spreadsheetId = randomString()
-        val expectedWidgetToStore = Widget(Widget.WidgetId(widgetId), spreadsheetId, sheetFixture.id, sheetFixture.name, lastUpdatedAt = null)
+        val expectedWidgetToStore = randomWidget().run {
+            copy(
+                sheet = sheet.copy(
+                    id = SheetId.None,
+                    name = sheetFixture.name,
+                    sheetSpreadsheetId = sheet.sheetSpreadsheetId.copy(sheetId = sheetFixture.id),
+                    lastUpdatedAt = null
+                )
+            )
+        }
         coEvery { fakeSpreadsheetRepository.fetchSpreadsheetSheets(any()) } returns sheetsFixture
-        coEvery { fakeWidgetSettingsRepository.addWidget(any()) } just runs
+        coEvery { fakeWidgetRepository.addWidget(any()) } returns expectedWidgetToStore
         coEvery { fakeWordsSynchronizer.synchronizeWords(any()) } just runs
-        viewModel.onSpreadsheetIdChanged(spreadsheetId)
+        viewModel.onSpreadsheetIdChanged(expectedWidgetToStore.sheet.sheetSpreadsheetId.spreadsheetId)
         advanceUntilIdle()
         viewModel.onSheetSelect(sheetFixture.id)
 
-        viewModel.saveWidgetConfiguration(widgetId)
+        viewModel.saveWidgetConfiguration(expectedWidgetToStore.id.value)
 
-        coVerify { fakeWidgetSettingsRepository.addWidget(expectedWidgetToStore) }
+        coVerify { fakeWidgetRepository.addWidget(expectedWidgetToStore) }
     }
 
     @Test
     fun `when saving widget configuration_given it succeeds_words are synchronized`() = runTest(dispatcher) {
-        val widgetIdNumber = randomInt()
-        val widgetId = Widget.WidgetId(widgetIdNumber)
+        val storedWidget = randomWidget()
+        val storedWidgetId = storedWidget.id
         coEvery { fakeSpreadsheetRepository.fetchSpreadsheetSheets(any()) } returns sheetsFixture
-        coEvery { fakeWidgetSettingsRepository.addWidget(any()) } just runs
-        coEvery { fakeWordsSynchronizer.synchronizeWords(widgetId) } just runs
+        coEvery { fakeWidgetRepository.addWidget(any()) } returns storedWidget
+        coEvery { fakeWordsSynchronizer.synchronizeWords(storedWidgetId) } just runs
         viewModel.onSpreadsheetIdChanged(randomString())
         advanceUntilIdle()
         viewModel.onSheetSelect(sheetFixture.id)
 
-        viewModel.saveWidgetConfiguration(widgetIdNumber)
+        viewModel.saveWidgetConfiguration(randomInt())
 
-        coVerifyAll { fakeWordsSynchronizer.synchronizeWords(widgetId) }
+        coVerifyAll { fakeWordsSynchronizer.synchronizeWords(storedWidgetId) }
     }
 
     @Test
@@ -301,7 +309,7 @@ class WidgetConfigurationViewModelTest {
         )
         val states = collectToListInBackground(viewModel.state)
         coEvery { fakeSpreadsheetRepository.fetchSpreadsheetSheets(any()) } returns sheetsFixture
-        coEvery { fakeWidgetSettingsRepository.addWidget(any()) } just runs
+        coEvery { fakeWidgetRepository.addWidget(any()) } returns randomWidget()
         coEvery { fakeWordsSynchronizer.synchronizeWords(any()) } just runs
         viewModel.onSpreadsheetIdChanged(spreadsheetId)
         advanceUntilIdle()
@@ -326,7 +334,7 @@ class WidgetConfigurationViewModelTest {
         )
         val states = collectToListInBackground(viewModel.state)
         coEvery { fakeSpreadsheetRepository.fetchSpreadsheetSheets(any()) } returns sheetsFixture
-        coEvery { fakeWidgetSettingsRepository.addWidget(any()) } throws Exception(errorMessage)
+        coEvery { fakeWidgetRepository.addWidget(any()) } throws Exception(errorMessage)
         coEvery { fakeLogger.e(any(), any(), any()) } just runs
         viewModel.onSpreadsheetIdChanged(spreadsheetId)
         advanceUntilIdle()

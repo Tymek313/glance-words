@@ -5,7 +5,7 @@ import com.example.words.logging.e
 import com.example.words.model.Widget
 import com.example.words.model.WordPair
 import com.example.words.repository.WidgetLoadingStateNotifier
-import com.example.words.repository.WidgetSettingsRepository
+import com.example.words.repository.WidgetRepository
 import com.example.words.repository.WordsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -22,21 +22,21 @@ import java.util.Locale
 
 class WordsWidgetViewModel(
     private val widgetId: Widget.WidgetId,
-    private val widgetSettingsRepository: WidgetSettingsRepository,
+    private val widgetRepository: WidgetRepository,
     private val wordsRepository: WordsRepository,
-    private val widgetLoadingStateNotifier: WidgetLoadingStateNotifier,
+    widgetLoadingStateNotifier: WidgetLoadingStateNotifier,
     private val logger: Logger,
     private val locale: Locale,
     private val zoneId: ZoneId
 ) {
     private val shouldReshuffle = MutableStateFlow(false)
 
-    val widgetDetailsState: Flow<WidgetDetailsState> = widgetSettingsRepository.observeSettings(widgetId)
+    val widgetDetailsState: Flow<WidgetDetailsState> = widgetRepository.observeWidget(widgetId)
         .filterNotNull()
-        .map { widgetSettings ->
+        .map { widget ->
             WidgetDetailsState(
-                sheetName = widgetSettings.sheetName,
-                lastUpdatedAt = widgetSettings.lastUpdatedAt?.let { lastUpdatedAt ->
+                sheetName = widget.sheet.name,
+                lastUpdatedAt = widget.sheet.lastUpdatedAt?.let { lastUpdatedAt ->
                     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
                         .withLocale(locale)
                         .withZone(zoneId)
@@ -71,7 +71,7 @@ class WordsWidgetViewModel(
     }
 
     suspend fun deleteWidget() {
-        widgetSettingsRepository.deleteWidget(widgetId)
+        widgetRepository.deleteWidget(widgetId)
     }
 }
 

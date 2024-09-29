@@ -7,8 +7,7 @@ import com.example.words.datasource.WordsRemoteDataSource
 import com.example.words.mapper.WordPairMapper
 import com.example.words.model.Widget
 import com.example.words.model.WordPair
-import com.example.words.randomInt
-import com.example.words.randomString
+import com.example.words.randomSheetSpreadsheetId
 import com.example.words.randomWidgetId
 import com.example.words.randomWordPair
 import io.mockk.coEvery
@@ -46,15 +45,15 @@ class DefaultWordsRepositoryTest {
     fun `when words are observed_given there are cached words for the widget_words stored locally`() = runTest(UnconfinedTestDispatcher()) {
         val widgetId = randomWidgetId()
         val wordPair = randomWordPair()
-        coEvery { fakeLocalDataSource.getWords(widgetId) } returns TEST_CSV_LINE
-        every { fakeWordPairMapper.map(TEST_CSV_LINE.first()) } returns wordPair
+        coEvery { fakeLocalDataSource.getWords(widgetId) } returns TEST_CSV_LINES
+        every { fakeWordPairMapper.map(TEST_CSV_LINES.first()) } returns wordPair
 
         val words = collectWords(widgetId)
 
         assertEquals(listOf(wordPair), words.single())
         coVerify {
             fakeLocalDataSource.getWords(widgetId)
-            fakeWordPairMapper.map(TEST_CSV_LINE.first())
+            fakeWordPairMapper.map(TEST_CSV_LINES.first())
         }
     }
 
@@ -73,26 +72,18 @@ class DefaultWordsRepositoryTest {
 
     @Test
     fun `when words are synchronized_new words are emitted`() = runTest(UnconfinedTestDispatcher()) {
+        val sheetSpreadsheetId = randomSheetSpreadsheetId()
         val widgetId = randomWidgetId()
-        val spreadsheetId = randomString()
-        val sheetId = randomInt()
         val wordPair = randomWordPair()
-
         coEvery { fakeLocalDataSource.getWords(widgetId) } returns null
-        coEvery { fakeRemoteDataSource.getWords(spreadsheetId, sheetId) } returns TEST_CSV_LINE
-        coEvery { fakeLocalDataSource.storeWords(widgetId, TEST_CSV_LINE) } just runs
-        every { fakeWordPairMapper.map(TEST_CSV_LINE.first()) } returns wordPair
+        coEvery { fakeRemoteDataSource.getWords(sheetSpreadsheetId) } returns TEST_CSV_LINES
+        coEvery { fakeLocalDataSource.storeWords(widgetId, TEST_CSV_LINES) } just runs
+        every { fakeWordPairMapper.map(TEST_CSV_LINES.first()) } returns wordPair
 
         val words = collectWords(widgetId)
-        repository.synchronizeWords(WordsRepository.SynchronizationRequest(widgetId, spreadsheetId, sheetId))
+        repository.synchronizeWords(WordsRepository.SynchronizationRequest(widgetId, sheetSpreadsheetId))
 
         assertEquals(listOf(wordPair), words.single())
-        coVerify {
-            fakeLocalDataSource.getWords(widgetId)
-            fakeRemoteDataSource.getWords(spreadsheetId, sheetId)
-            fakeLocalDataSource.storeWords(widgetId, TEST_CSV_LINE)
-            fakeWordPairMapper.map(TEST_CSV_LINE.first())
-        }
     }
 
     @Test
@@ -108,6 +99,6 @@ class DefaultWordsRepositoryTest {
     private fun TestScope.collectWords(widgetId: Widget.WidgetId): List<List<WordPair>?> = collectToListInBackground(repository.observeWords(widgetId))
 
     companion object {
-        private val TEST_CSV_LINE = listOf(CSVLine("a,b"))
+        private val TEST_CSV_LINES = listOf(CSVLine("a,b"))
     }
 }

@@ -3,6 +3,7 @@ package com.example.words.repository
 import com.example.words.datasource.WordsLocalDataSource
 import com.example.words.datasource.WordsRemoteDataSource
 import com.example.words.mapper.WordPairMapper
+import com.example.words.model.SheetSpreadsheetId
 import com.example.words.model.Widget
 import com.example.words.model.WordPair
 import kotlinx.coroutines.flow.Flow
@@ -16,7 +17,7 @@ interface WordsRepository {
     fun observeWords(widgetId: Widget.WidgetId): Flow<List<WordPair>>
     suspend fun synchronizeWords(request: SynchronizationRequest)
     suspend fun deleteCachedWords(widgetId: Widget.WidgetId)
-    data class SynchronizationRequest(val widgetId: Widget.WidgetId, val spreadsheetId: String, val sheetId: Int)
+    data class SynchronizationRequest(val widgetId: Widget.WidgetId, val sheetSpreadsheetId: SheetSpreadsheetId)
 }
 
 class DefaultWordsRepository(
@@ -35,7 +36,7 @@ class DefaultWordsRepository(
     }
 
     override suspend fun synchronizeWords(request: WordsRepository.SynchronizationRequest) {
-        val remoteCSV = remoteDataSource.getWords(request.spreadsheetId, request.sheetId)
+        val remoteCSV = remoteDataSource.getWords(request.sheetSpreadsheetId)
         localDataSource.storeWords(request.widgetId, remoteCSV)
         synchronizationUpdates.emit(
             SpreadsheetUpdate(request.widgetId, remoteCSV.map(wordPairMapper::map))

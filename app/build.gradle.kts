@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    alias(libs.plugins.protobuf)
+    alias(libs.plugins.sqldelight)
 }
 
 android {
@@ -53,25 +53,13 @@ android {
     }
 }
 
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:4.26.1"
-    }
-
-    // Generates the java Protobuf-lite code for the Protobufs in this project. See
-    // https://github.com/google/protobuf-gradle-plugin#customizing-protobuf-compilation
-    // for more information.
-    generateProtoTasks {
-        all().forEach { task ->
-            task.builtins {
-                create("java") {
-                    option("lite")
-                }
-            }
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("com.example.words.database")
         }
     }
 }
-
 
 dependencies {
 
@@ -93,11 +81,13 @@ dependencies {
     implementation(libs.google.api.client)
     implementation(libs.google.auth.library.oauth2.http)
     implementation(libs.google.api.services.sheets)
-    implementation(libs.androidx.datastore)
-    implementation(libs.google.protobuf.javalite)
     implementation(libs.okio)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.android)
+    implementation(libs.sqldelight.driver.android)
+    implementation(libs.sqldelight.coroutines)
+    implementation(libs.sqldelight.primitive.adapters)
+    testImplementation(libs.sqldelight.driver.jvm)
     testImplementation(libs.okio.fakefilesystem)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.junit)

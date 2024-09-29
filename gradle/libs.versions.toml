@@ -3,6 +3,7 @@ kotlinxCoroutines = "1.8.0"
 kotlin = "1.9.23"
 okio = "3.9.0"
 ktor = "2.3.10"
+sqldelight = "2.0.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.13.0" }
@@ -40,9 +41,13 @@ google-auth-library-oauth2-http = { group = "com.google.auth", name = "google-au
 mockk = { module = "io.mockk:mockk", version = "1.13.10" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
+sqldelight-driver-android = { module = "app.cash.sqldelight:android-driver", version.ref="sqldelight" }
+sqldelight-driver-jvm = { module = "app.cash.sqldelight:sqlite-driver", version.ref="sqldelight" }
+sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref="sqldelight" }
+sqldelight-primitive-adapters = { module = "app.cash.sqldelight:primitive-adapters", version.ref="sqldelight" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version = "8.3.2" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref="kotlin" }
-protobuf = {id = "com.google.protobuf", version = "0.9.4"}
+sqldelight = {id = "app.cash.sqldelight", version = "2.0.2"}
 

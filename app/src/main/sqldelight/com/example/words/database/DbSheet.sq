@@ -1,0 +1,21 @@
+import kotlin.Int;
+
+CREATE TABLE DbSheet (
+    id INTEGER AS Int PRIMARY KEY AUTOINCREMENT,
+    spreadsheet_id TEXT NOT NULL,
+    sheet_id INTEGER AS Int NOT NULL,
+    name TEXT NOT NULL,
+    last_updated_at INTEGER
+);
+
+getAll:
+SELECT * FROM DbSheet;
+
+insert:
+INSERT INTO DbSheet(spreadsheet_id, sheet_id, name, last_updated_at) VALUES ?;
+
+updateLastUpdatedAt:
+UPDATE DbSheet SET last_updated_at = ? WHERE id = ?;
+
+getLastId:
+SELECT last_insert_rowid();

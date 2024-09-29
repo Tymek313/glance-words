@@ -2,8 +2,12 @@ package com.example.words
 
 import android.app.Application
 import androidx.core.app.NotificationManagerCompat
+import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import com.example.words.database.Database
+import com.example.words.database.createDatabase
 import com.example.words.datasource.DefaultGoogleSpreadsheetDataSource
 import com.example.words.datasource.FileWordsLocalDataSource
 import com.example.words.datasource.GoogleWordsRemoteDataSource
@@ -12,18 +16,17 @@ import com.example.words.logging.DefaultLogger
 import com.example.words.logging.Logger
 import com.example.words.mapper.DefaultWordPairMapper
 import com.example.words.notification.NotificationChannel
-import com.example.words.persistence.DataStorePersistence
+import com.example.words.repository.DefaultSheetRepository
 import com.example.words.repository.DefaultWidgetLoadingStateNotifier
-import com.example.words.repository.DefaultWidgetSettingsRepository
+import com.example.words.repository.DefaultWidgetRepository
 import com.example.words.repository.DefaultWordsRepository
 import com.example.words.repository.DefaultWordsSynchronizer
 import com.example.words.repository.GoogleSpreadsheetRepository
 import com.example.words.repository.SpreadsheetRepository
 import com.example.words.repository.WidgetLoadingStateNotifier
-import com.example.words.repository.WidgetSettingsRepository
+import com.example.words.repository.WidgetRepository
 import com.example.words.repository.WordsRepository
 import com.example.words.repository.WordsSynchronizer
-import com.example.words.settings.settingsDataStore
 import com.example.words.widget.refreshWidget
 import com.example.words.work.WorkFactory
 import io.ktor.client.HttpClient
@@ -36,7 +39,7 @@ import java.time.Instant
 
 class App : Application(), DependencyContainer {
     override lateinit var wordsRepository: WordsRepository
-    override lateinit var widgetSettingsRepository: WidgetSettingsRepository
+    override lateinit var widgetRepository: WidgetRepository
     override lateinit var wordsSynchronizer: WordsSynchronizer
     override lateinit var spreadsheetRepository: SpreadsheetRepository
     override lateinit var logger: Logger
@@ -66,16 +69,30 @@ class App : Application(), DependencyContainer {
     }
 
     private fun createDependencies() {
+        val database = createDatabase(
+            AndroidSqliteDriver(
+                schema = Database.Schema,
+                context = this,
+                name = "database.db",
+                callback = object : AndroidSqliteDriver.Callback(Database.Schema) {
+                    override fun onOpen(db: SupportSQLiteDatabase) {
+                        db.setForeignKeyConstraintsEnabled(true)
+                    }
+                }
+            )
+        )
+        val sheetRepository = DefaultSheetRepository(database.dbSheetQueries, Dispatchers.IO)
         wordsRepository = DefaultWordsRepository(
             GoogleWordsRemoteDataSource(HttpClient(AndroidClientEngine(AndroidEngineConfig()))),
             FileWordsLocalDataSource(FileSystem.SYSTEM, filesDir.toOkioPath(), Dispatchers.IO),
             DefaultWordPairMapper()
         )
-        widgetSettingsRepository = DefaultWidgetSettingsRepository(DataStorePersistence(settingsDataStore))
+        widgetRepository = DefaultWidgetRepository(database.dbWidgetQueries, sheetRepository, Dispatchers.IO)
         widgetLoadingStateNotifier = DefaultWidgetLoadingStateNotifier()
         wordsSynchronizer = DefaultWordsSynchronizer(
             wordsRepository,
-            widgetSettingsRepository,
+            widgetRepository,
+            sheetRepository,
             widgetLoadingStateNotifier,
             refreshWidget = { refreshWidget(context = this, widgetId = it) },
             Instant::now

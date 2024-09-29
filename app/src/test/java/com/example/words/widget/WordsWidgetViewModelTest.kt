@@ -2,13 +2,11 @@ package com.example.words.widget
 
 import com.example.words.coroutines.collectToListInBackground
 import com.example.words.logging.Logger
-import com.example.words.model.Widget
-import com.example.words.randomInt
-import com.example.words.randomString
-import com.example.words.randomWidgetId
+import com.example.words.randomSheet
+import com.example.words.randomWidget
 import com.example.words.randomWordPair
 import com.example.words.repository.WidgetLoadingStateNotifier
-import com.example.words.repository.WidgetSettingsRepository
+import com.example.words.repository.WidgetRepository
 import com.example.words.repository.WordsRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -40,32 +38,32 @@ import kotlin.time.Duration.Companion.seconds
 class WordsWidgetViewModelTest {
 
     private val dispatcher = UnconfinedTestDispatcher()
-    private lateinit var mockWidgetSettingsRepository: WidgetSettingsRepository
+    private lateinit var mockWidgetRepository: WidgetRepository
     private lateinit var mockWidgetLoadingStateNotifier: WidgetLoadingStateNotifier
     private lateinit var mockWordsRepository: WordsRepository
     private lateinit var mockLogger: Logger
 
     @Before
     fun setUp() {
-        mockWidgetSettingsRepository = mockk()
+        mockWidgetRepository = mockk()
         mockWidgetLoadingStateNotifier = mockk()
         mockWordsRepository = mockk()
         mockLogger = mockk()
-        every { mockWidgetSettingsRepository.observeSettings(widgetFixture.id) } returns flowOf(widgetFixture)
+        every { mockWidgetRepository.observeWidget(widgetFixture.id) } returns flowOf(widgetFixture)
         every { mockWordsRepository.observeWords(widgetFixture.id) } returns flowOf(wordsFixture)
         every { mockWidgetLoadingStateNotifier.observeIsWidgetLoading(widgetFixture.id) } returns flowOf(false)
     }
 
     @Test
     fun `when widget settings are received_given widget has ever been updated_then correct widget details state is emitted`() = runTest(dispatcher) {
-        every { mockWidgetSettingsRepository.observeSettings(widgetId = widgetFixture.id) } returns flowOf(
-            widgetFixture.copy(lastUpdatedAt = Instant.parse("2024-04-21T19:00:00.00Z"))
+        every { mockWidgetRepository.observeWidget(widgetId = widgetFixture.id) } returns flowOf(
+            widgetFixture.copy(sheet = widgetFixture.sheet.copy(lastUpdatedAt = Instant.parse("2024-04-21T19:00:00.00Z")))
         )
         val viewModel = createViewModel()
 
         assertEquals(
             WidgetDetailsState(
-                sheetName = widgetFixture.sheetName,
+                sheetName = widgetFixture.sheet.name,
                 lastUpdatedAt = "Apr 21, 2024, 7:00 PM"
             ),
             viewModel.widgetDetailsState.single()
@@ -78,13 +76,13 @@ class WordsWidgetViewModelTest {
 
         assertEquals(
             WidgetDetailsState(
-                sheetName = widgetFixture.sheetName,
+                sheetName = widgetFixture.sheet.name,
                 lastUpdatedAt = ""
             ),
             viewModel.widgetDetailsState.single()
         )
     }
-    
+
     @Test
     fun `when words are received_given words are emitted_then words state contains shuffled words`() = runTest(dispatcher) {
         val states = collectToListInBackground(createViewModel().wordsState)
@@ -158,17 +156,17 @@ class WordsWidgetViewModelTest {
 
     @Test
     fun `when widget is deleted_then its settings are deleted from repository`() = runTest(dispatcher) {
-        coEvery { mockWidgetSettingsRepository.deleteWidget(widgetFixture.id) } just runs
+        coEvery { mockWidgetRepository.deleteWidget(widgetFixture.id) } just runs
         val viewModel = createViewModel()
 
         viewModel.deleteWidget()
 
-        coVerify { mockWidgetSettingsRepository.deleteWidget(widgetFixture.id) }
+        coVerify { mockWidgetRepository.deleteWidget(widgetFixture.id) }
     }
 
     private fun createViewModel() = WordsWidgetViewModel(
         widgetId = widgetFixture.id,
-        widgetSettingsRepository = mockWidgetSettingsRepository,
+        widgetRepository = mockWidgetRepository,
         widgetLoadingStateNotifier = mockWidgetLoadingStateNotifier,
         wordsRepository = mockWordsRepository,
         locale = Locale.US,
@@ -186,12 +184,6 @@ class WordsWidgetViewModelTest {
     private companion object {
         fun getRandomWords(size: Int) = List(size) { randomWordPair() }
         val wordsFixture = getRandomWords(10)
-        val widgetFixture = Widget(
-            id = randomWidgetId(),
-            spreadsheetId = randomString(),
-            sheetId = randomInt(),
-            sheetName = randomString(),
-            lastUpdatedAt = null
-        )
+        val widgetFixture = randomWidget().copy(sheet = randomSheet().copy(lastUpdatedAt = null))
     }
 }

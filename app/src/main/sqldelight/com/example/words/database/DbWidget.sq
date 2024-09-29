@@ -1,0 +1,31 @@
+import kotlin.Int;
+
+CREATE TABLE DbWidget (
+    id INTEGER AS Int PRIMARY KEY,
+    sheet_id INTEGER AS Int NOT NULL,
+    FOREIGN KEY(sheet_id) REFERENCES DbSheet(id) ON DELETE CASCADE
+);
+
+CREATE TRIGGER delete_last_referenced_sheet AFTER DELETE ON DbWidget
+    FOR EACH ROW
+    BEGIN
+        DELETE FROM DbSheet WHERE id = old.sheet_id
+        AND old.sheet_id NOT IN (SELECT sheet_id FROM DbWidget);
+    END;
+
+getById:
+SELECT
+    W.*,
+    S.spreadsheet_id AS s_spreadsheet_id,
+    S.sheet_id AS s_sheet_id,
+    S.name AS s_name,
+    S.last_updated_at AS s_last_updated_at
+FROM DbWidget AS W
+INNER JOIN DbSheet AS S ON W.sheet_id = S.id
+WHERE W.id = ?;
+
+insert:
+INSERT INTO DbWidget(id, sheet_id) VALUES ?;
+
+delete:
+DELETE FROM DbWidget WHERE id = ?;
