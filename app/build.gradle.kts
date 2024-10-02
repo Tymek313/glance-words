@@ -19,12 +19,14 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            isMinifyEnabled = true
+            isDebuggable = false
+            isShrinkResources = true
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -34,7 +36,8 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs = listOf("-Xdebug")
+        // Enable for debugging
+        // freeCompilerArgs = listOf("-Xdebug")
     }
     buildFeatures {
         compose = true
