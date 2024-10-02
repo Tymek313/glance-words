@@ -2,8 +2,7 @@ package com.example.words.widget
 
 import com.example.words.coroutines.collectToListInBackground
 import com.example.words.logging.Logger
-import com.example.words.randomSheet
-import com.example.words.randomWidget
+import com.example.words.randomWidgetWithNewSheet
 import com.example.words.randomWordPair
 import com.example.words.repository.WidgetLoadingStateNotifier
 import com.example.words.repository.WidgetRepository
@@ -184,6 +183,6 @@ class WordsWidgetViewModelTest {
     private companion object {
         fun getRandomWords(size: Int) = List(size) { randomWordPair() }
         val wordsFixture = getRandomWords(10)
-        val widgetFixture = randomWidget().copy(sheet = randomSheet().copy(lastUpdatedAt = null))
+        val widgetFixture = randomWidgetWithNewSheet().run { copy(sheet = sheet.copy(lastUpdatedAt = null)) }
     }
 }

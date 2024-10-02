@@ -32,6 +32,7 @@ class WordsWidgetViewModel(
     private val shouldReshuffle = MutableStateFlow(false)
 
     val widgetDetailsState: Flow<WidgetDetailsState> = widgetRepository.observeWidget(widgetId)
+        .catch { logger.e(this@WordsWidgetViewModel, it) }
         .filterNotNull()
         .map { widget ->
             WidgetDetailsState(
@@ -50,7 +51,7 @@ class WordsWidgetViewModel(
         widgetLoadingStateNotifier.observeIsWidgetLoading(widgetId),
         ::mapWordsState
     ).catch { error ->
-        logger.e(javaClass.name, error)
+        logger.e(this@WordsWidgetViewModel, error)
         emit(WidgetWordsState.Failure)
     }
 

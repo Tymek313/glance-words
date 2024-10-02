@@ -4,19 +4,18 @@ import com.example.words.coroutines.collectToListInBackground
 import com.example.words.database.Database
 import com.example.words.database.DbWidget
 import com.example.words.database.utility.createTestDatabase
-import com.example.words.model.Sheet
+import com.example.words.dbSheetFixture
 import com.example.words.model.SheetId
-import com.example.words.model.SheetSpreadsheetId
 import com.example.words.model.Widget
 import com.example.words.randomDbSheet
-import com.example.words.randomWidget
 import com.example.words.randomWidgetId
+import com.example.words.randomWidgetWithNewSheet
+import com.example.words.sheetFixture
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -46,25 +45,14 @@ class DefaultWidgetRepositoryTest {
     @Test
     fun `when widget is observed_given widget has been updated_then widget is emitted`() = runTest(dispatcher) {
         val widgetId = randomWidgetId()
-        val dbSheet = randomDbSheet()
-        database.dbSheetQueries.insert(dbSheet)
+        database.dbSheetQueries.insert(dbSheetFixture)
         val dbSheetId = database.dbSheetQueries.getLastId().executeAsOne().toInt()
+        val expectedWidget = Widget(id = widgetId, sheet = sheetFixture.copy(id = SheetId(1)))
         database.dbWidgetQueries.insert(DbWidget(id = widgetId.value, sheet_id = dbSheetId))
 
         val widgetEmissions = collectToListInBackground(repository.observeWidget(widgetId))
 
-        assertEquals(
-            Widget(
-                id = widgetId,
-                sheet = Sheet(
-                    id = SheetId(dbSheetId),
-                    name = dbSheet.name,
-                    sheetSpreadsheetId = SheetSpreadsheetId(dbSheet.spreadsheet_id, dbSheet.sheet_id),
-                    lastUpdatedAt = Instant.ofEpochSecond(dbSheet.last_updated_at!!)
-                ),
-            ),
-            widgetEmissions.single()
-        )
+        assertEquals(expectedWidget, widgetEmissions.singleOrNull())
     }
 
     @Test
@@ -82,7 +70,7 @@ class DefaultWidgetRepositoryTest {
 
     @Test
     fun `when widget is added_then it is stored in the database`() = runTest(dispatcher) {
-        val widget = randomWidget()
+        val widget = randomWidgetWithNewSheet()
 
         repository.addWidget(widget)
 

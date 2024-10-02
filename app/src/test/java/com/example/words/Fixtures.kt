@@ -20,9 +20,14 @@ fun randomEpochSeconds() = Random.nextLong(Instant.MIN.epochSecond, Instant.MAX.
 
 fun randomWidgetId() = Widget.WidgetId(randomInt())
 
-fun randomWidget() = Widget(
+fun randomWidgetWithNewSheet() = Widget(
     id = randomWidgetId(),
-    sheet = randomSheet()
+    sheet = randomNewSheet()
+)
+
+fun randomWidgetWithExistingSheet() = Widget(
+    id = randomWidgetId(),
+    sheet = randomExistingSheet()
 )
 
 fun randomDbSheet() = DbSheet(
@@ -33,7 +38,12 @@ fun randomDbSheet() = DbSheet(
     last_updated_at = randomEpochSeconds()
 )
 
-fun randomSheet() = Sheet(
+fun randomNewSheet() = Sheet.createNew(
+    sheetSpreadsheetId = randomSheetSpreadsheetId(),
+    name = randomString(),
+)
+
+fun randomExistingSheet() = Sheet.createExisting(
     id = randomSheetId(),
     sheetSpreadsheetId = randomSheetSpreadsheetId(),
     name = randomString(),
@@ -48,3 +58,14 @@ fun randomSheetSpreadsheetId() = SheetSpreadsheetId(
 )
 
 fun randomWordPair() = WordPair(randomString(), randomString())
+
+val dbSheetFixture = randomDbSheet()
+
+val sheetFixture = dbSheetFixture.run {
+    Sheet.createExisting(
+        id = SheetId(id),
+        sheetSpreadsheetId = SheetSpreadsheetId(spreadsheet_id, sheet_id),
+        name = name,
+        lastUpdatedAt = Instant.ofEpochSecond(last_updated_at!!)
+    )
+}

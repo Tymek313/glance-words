@@ -18,4 +18,4 @@ class DefaultLogger: Logger {
     }
 }
 
-fun Logger.e(tag: String?, throwable: Throwable?) = e(tag, null, throwable)
+fun Logger.e(obj: Any, throwable: Throwable?) = e(obj::class.qualifiedName, null, throwable)

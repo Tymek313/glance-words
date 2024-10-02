@@ -24,7 +24,7 @@ class DefaultSheetRepository(
         database.getAll().executeAsList().map { it.toDomain() }
     }
 
-    private fun DbSheet.toDomain() = Sheet(
+    private fun DbSheet.toDomain() = Sheet.createExisting(
         id = SheetId(id),
         sheetSpreadsheetId = SheetSpreadsheetId(spreadsheet_id, sheet_id),
         name = name,

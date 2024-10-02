@@ -4,6 +4,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.example.words.database.DbWidget
 import com.example.words.database.DbWidgetQueries
+import com.example.words.database.GetById
 import com.example.words.model.Sheet
 import com.example.words.model.SheetId
 import com.example.words.model.SheetSpreadsheetId
@@ -30,20 +31,18 @@ class DefaultWidgetRepository(
         return database.getById(widgetId.value)
             .asFlow()
             .mapToOneOrNull(ioDispatcher)
-            .map { dbWidget ->
-                dbWidget?.run {
-                    Widget(
-                        id = Widget.WidgetId(id),
-                        sheet = Sheet(
-                            id = SheetId(sheet_id),
-                            sheetSpreadsheetId = SheetSpreadsheetId(s_spreadsheet_id, s_sheet_id),
-                            name = s_name,
-                            lastUpdatedAt = s_last_updated_at?.let(Instant::ofEpochSecond)
-                        )
-                    )
-                }
-            }
+            .map { it?.toDomain() }
     }
+
+    private fun GetById.toDomain() = Widget(
+        id = Widget.WidgetId(id),
+        sheet = Sheet.createExisting(
+            id = SheetId(sheet_id),
+            sheetSpreadsheetId = SheetSpreadsheetId(s_spreadsheet_id, s_sheet_id),
+            name = s_name,
+            lastUpdatedAt = s_last_updated_at?.let(Instant::ofEpochSecond)
+        )
+    )
 
     override suspend fun addWidget(widget: Widget) = withContext(ioDispatcher) {
         val sheet = sheetRepository.addSheet(widget.sheet)

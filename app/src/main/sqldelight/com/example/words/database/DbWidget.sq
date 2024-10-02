@@ -22,7 +22,7 @@ SELECT
     S.last_updated_at AS s_last_updated_at
 FROM DbWidget AS W
 INNER JOIN DbSheet AS S ON W.sheet_id = S.id
-WHERE W.id = ?;
+WHERE W.id = :widgetId;
 
 insert:
 INSERT INTO DbWidget(id, sheet_id) VALUES ?;

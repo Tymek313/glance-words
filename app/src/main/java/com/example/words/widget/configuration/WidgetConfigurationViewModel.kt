@@ -7,7 +7,6 @@ import com.example.words.DependencyContainer
 import com.example.words.logging.Logger
 import com.example.words.logging.e
 import com.example.words.model.Sheet
-import com.example.words.model.SheetId
 import com.example.words.model.SheetSpreadsheetId
 import com.example.words.model.Widget
 import com.example.words.repository.SpreadsheetRepository
@@ -32,12 +31,12 @@ class WidgetConfigurationViewModel(
     val state: StateFlow<ConfigureWidgetState> = _state
 
     private val loadSheetsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        logger.e(javaClass.name, throwable)
+        logger.e(this, throwable)
         _state.update { it.copy(spreadsheetError = throwable.localizedMessage, isLoading = false) }
     }
 
     private val generalCoroutineHandler = CoroutineExceptionHandler { _, throwable ->
-        logger.e(javaClass.name, throwable)
+        logger.e(this, throwable)
         _state.update { it.copy(isSavingWidget = false, generalError = throwable.localizedMessage) }
     }
 
@@ -94,11 +93,9 @@ class WidgetConfigurationViewModel(
         val state = state.value
         return Widget(
             id = Widget.WidgetId(widgetId),
-            sheet = Sheet(
-                id = SheetId.None,
+            sheet = Sheet.createNew(
                 sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = state.spreadsheetId, sheetId = selectedSheetId),
                 name = state.sheets.first { it.id == selectedSheetId }.name,
-                lastUpdatedAt = null
             )
         )
     }

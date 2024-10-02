@@ -8,7 +8,7 @@ import com.example.words.model.SheetId
 import com.example.words.model.SheetSpreadsheetId
 import com.example.words.randomDbSheet
 import com.example.words.randomInstant
-import com.example.words.randomSheet
+import com.example.words.randomNewSheet
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -55,7 +55,7 @@ class DefaultSheetRepositoryTest {
     @Test
     fun `when sheet is added_then it is stored in database`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
-        val sheet = randomSheet()
+        val sheet = randomNewSheet()
         val expectedDbSheet = createDbSheetFrom(sheet).copy(id = 2)
 
         repository.addSheet(sheet)
@@ -67,7 +67,7 @@ class DefaultSheetRepositoryTest {
 
     @Test
     fun `when sheet is added_given it was never updated_then stored sheet does not contain last updated date`() = runTest(dispatcher) {
-        val sheet = randomSheet().copy(lastUpdatedAt = null)
+        val sheet = randomNewSheet().copy(lastUpdatedAt = null)
 
         repository.addSheet(sheet)
 
@@ -78,9 +78,8 @@ class DefaultSheetRepositoryTest {
     @Test
     fun `when sheet is added_then sheet with updated id is returned`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
-        val sheet = randomSheet()
 
-        val updatedSheet = repository.addSheet(sheet)
+        val updatedSheet = repository.addSheet(randomNewSheet())
 
         assertEquals(2, updatedSheet.id.value)
     }
@@ -98,7 +97,7 @@ class DefaultSheetRepositoryTest {
         assertEquals(updatedInstant.epochSecond, storedLastUpdatedAt)
     }
 
-    private fun createDomainSheetFrom(dbSheet: DbSheet) = Sheet(
+    private fun createDomainSheetFrom(dbSheet: DbSheet) = Sheet.createExisting(
         id = dbSheet.id.let(::SheetId),
         sheetSpreadsheetId = dbSheet.run { SheetSpreadsheetId(spreadsheet_id, sheet_id) },
         name = dbSheet.name,

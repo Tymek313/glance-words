@@ -1,8 +1,8 @@
 package com.example.words.repository
 
 import com.example.words.model.Widget
-import com.example.words.randomWidget
 import com.example.words.randomWidgetId
+import com.example.words.randomWidgetWithExistingSheet
 import io.mockk.coEvery
 import io.mockk.coInvoke
 import io.mockk.coVerify
@@ -44,7 +44,7 @@ class DefaultWordsSynchronizerTest {
             widgetLoadingStateNotifier = fakeWidgetLoadingStateNotifier,
             refreshWidget = fakeUpdateWidget
         )
-        coEvery { fakeWidgetRepository.observeWidget(any()) } returns flowOf(randomWidget())
+        coEvery { fakeWidgetRepository.observeWidget(any()) } returns flowOf(randomWidgetWithExistingSheet())
         coEvery { fakeWordsRepository.synchronizeWords(any()) } just runs
         coEvery { fakeSheetRepository.updateLastUpdatedAt(any(), any()) } just runs
         coEvery { fakeWidgetLoadingStateNotifier.setLoadingWidgetForAction(any(), captureLambda()) } coAnswers {
@@ -57,12 +57,12 @@ class DefaultWordsSynchronizerTest {
 
     @Test
     fun `when words are synchronized_given widget settings do not exist_then exception is thrown`() = runTest {
-        val widget = randomWidget()
-        coEvery { fakeWidgetRepository.observeWidget(widget.id) } returns flowOf(null)
+        val widgetId = randomWidgetId()
+        coEvery { fakeWidgetRepository.observeWidget(widgetId) } returns flowOf(null)
         var exceptionThrown = false
 
         try {
-            synchronizer.synchronizeWords(widget.id)
+            synchronizer.synchronizeWords(widgetId)
         } catch (e: IllegalStateException) {
             exceptionThrown = true
         }
@@ -103,7 +103,7 @@ class DefaultWordsSynchronizerTest {
 
     @Test
     fun `when words are synchronized_given widget settings exist_then words are synchronized in the repository`() = runTest {
-        val widget = randomWidget()
+        val widget = randomWidgetWithExistingSheet()
         val widgetId = widget.id
         val expectedSyncRequest = widget.run { WordsRepository.SynchronizationRequest(id, widget.sheet.sheetSpreadsheetId) }
         coEvery { fakeWidgetRepository.observeWidget(widgetId) } returns flowOf(widget)
@@ -115,7 +115,7 @@ class DefaultWordsSynchronizerTest {
 
     @Test
     fun `when words are synchronized_given widget settings exist_then last update date of the correct widget is updated`() = runTest {
-        val widget = randomWidget()
+        val widget = randomWidgetWithExistingSheet()
         val currentTime = Instant.now()
         every { fakeGetNowInstant.invoke() } returns currentTime
         coEvery { fakeWidgetRepository.observeWidget(any()) } returns flowOf(widget)
