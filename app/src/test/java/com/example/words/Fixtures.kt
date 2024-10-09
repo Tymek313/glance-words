@@ -61,7 +61,7 @@ fun randomWordPair() = WordPair(randomString(), randomString())
 
 val dbSheetFixture = randomDbSheet()
 
-val sheetFixture = dbSheetFixture.run {
+val existingSheetFixture = dbSheetFixture.run {
     Sheet.createExisting(
         id = SheetId(id),
         sheetSpreadsheetId = SheetSpreadsheetId(spreadsheet_id, sheet_id),

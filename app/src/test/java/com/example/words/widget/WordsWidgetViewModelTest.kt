@@ -63,7 +63,7 @@ class WordsWidgetViewModelTest {
         assertEquals(
             WidgetDetailsState(
                 sheetName = widgetFixture.sheet.name,
-                lastUpdatedAt = "Apr 21, 2024, 7:00 PM"
+                lastUpdatedAt = "Apr 21, 2024, 7:00 PM"
             ),
             viewModel.widgetDetailsState.single()
         )

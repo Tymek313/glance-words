@@ -45,7 +45,7 @@ class DefaultWidgetRepository(
     )
 
     override suspend fun addWidget(widget: Widget) = withContext(ioDispatcher) {
-        val sheet = sheetRepository.addSheet(widget.sheet)
+        val sheet = sheetRepository.getBySheetSpreadsheetId(widget.sheet.sheetSpreadsheetId) ?: sheetRepository.addSheet(widget.sheet)
         database.insert(DbWidget(id = widget.id.value, sheet_id = sheet.id.value))
         widget.copy(sheet = sheet)
     }

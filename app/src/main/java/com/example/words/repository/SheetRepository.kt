@@ -11,6 +11,7 @@ import java.time.Instant
 
 interface SheetRepository {
     suspend fun getSheets(): List<Sheet>
+    suspend fun getBySheetSpreadsheetId(sheetSpreadsheetId: SheetSpreadsheetId): Sheet?
     suspend fun addSheet(sheet: Sheet): Sheet
     suspend fun updateLastUpdatedAt(sheetId: SheetId, lastUpdatedAt: Instant)
 }
@@ -37,6 +38,13 @@ class DefaultSheetRepository(
             database.getLastId().executeAsOne().toInt()
         }
         sheet.copy(id = SheetId(sheetId))
+    }
+
+    override suspend fun getBySheetSpreadsheetId(sheetSpreadsheetId: SheetSpreadsheetId) = withContext(ioDispatcher) {
+        database.getBySheetSpreadsheetId(
+            sheetSpreadsheetId.spreadsheetId,
+            sheetSpreadsheetId.sheetId
+        ).executeAsOneOrNull()?.toDomain()
     }
 
     private fun Sheet.toDb() = DbSheet(
