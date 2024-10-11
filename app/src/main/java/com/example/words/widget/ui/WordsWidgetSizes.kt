@@ -1,4 +1,4 @@
-package com.example.words.widget
+package com.example.words.widget.ui
 
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp

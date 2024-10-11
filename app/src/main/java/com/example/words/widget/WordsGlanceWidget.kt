@@ -5,10 +5,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import com.example.words.DependencyContainer
 import com.example.words.model.Widget
+import com.example.words.widget.ui.WordsWidgetContent
 import java.time.ZoneId
 import java.util.Locale
 
@@ -43,4 +45,8 @@ class WordsGlanceWidget : GlanceAppWidget() {
         Locale.getDefault(),
         ZoneId.systemDefault()
     )
+}
+
+class WordsWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget = WordsGlanceWidget()
 }
