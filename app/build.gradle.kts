@@ -74,7 +74,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material)
     implementation(libs.androidx.glance)
-    debugImplementation(libs.androidx.glance.preview)
+    implementation(libs.androidx.glance.preview)
     debugImplementation(libs.androidx.glance.appwidget.preview)
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.appcompat)
