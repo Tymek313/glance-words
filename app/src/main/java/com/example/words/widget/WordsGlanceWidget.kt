@@ -23,11 +23,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
         val viewModel = createViewModel(context, id, context.applicationContext as DependencyContainer)
 
         provideContent {
-            WordsWidgetContent(
-                widgetWordsState = viewModel.wordsState.collectAsState(WidgetWordsState.Loading).value,
-                widgetDetailsState = viewModel.widgetDetailsState.collectAsState(WidgetDetailsState.EMPTY).value,
-                onReload = viewModel::reshuffleWords,
-            )
+            WordsWidgetContent(uiState = viewModel.uiState.collectAsState(WidgetUiState(isLoading = true)).value)
         }
     }
 
@@ -43,7 +39,8 @@ class WordsGlanceWidget : GlanceAppWidget() {
         diContainer.widgetLoadingStateNotifier,
         diContainer.logger,
         Locale.getDefault(),
-        ZoneId.systemDefault()
+        ZoneId.systemDefault(),
+        diContainer.reshuffleNotifier
     )
 }
 

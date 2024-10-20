@@ -1,5 +1,7 @@
 package com.example.words.repository
 
+import com.example.words.domain.DefaultWordsSynchronizer
+import com.example.words.domain.WidgetLoadingStateNotifier
 import com.example.words.model.Widget
 import com.example.words.randomWidgetId
 import com.example.words.randomWidgetWithExistingSheet

@@ -1,4 +1,4 @@
-package com.example.words.repository
+package com.example.words.domain
 
 import com.example.words.model.Widget
 import kotlinx.coroutines.flow.Flow

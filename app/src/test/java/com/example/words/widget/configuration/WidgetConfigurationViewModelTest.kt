@@ -2,6 +2,7 @@ package com.example.words.widget.configuration
 
 import com.example.words.coroutines.MainDispatcherRule
 import com.example.words.coroutines.collectToListInBackground
+import com.example.words.domain.WordsSynchronizer
 import com.example.words.logging.Logger
 import com.example.words.model.SpreadsheetSheet
 import com.example.words.randomInt
@@ -10,7 +11,6 @@ import com.example.words.randomWidgetWithExistingSheet
 import com.example.words.randomWidgetWithNewSheet
 import com.example.words.repository.SpreadsheetRepository
 import com.example.words.repository.WidgetRepository
-import com.example.words.repository.WordsSynchronizer
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll

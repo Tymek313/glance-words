@@ -1,6 +1,7 @@
 package com.example.words.repository
 
 import com.example.words.coroutines.collectToListInBackground
+import com.example.words.domain.DefaultWidgetLoadingStateNotifier
 import com.example.words.randomWidgetId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.drop

@@ -6,11 +6,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.example.words.domain.WordsSynchronizer
 import com.example.words.logging.Logger
 import com.example.words.model.Widget
 import com.example.words.notification.NotificationChannel
 import com.example.words.notification.NotificationIds
-import com.example.words.repository.WordsSynchronizer
 
 class SynchronizeWordsWorker(
     private val context: Context,

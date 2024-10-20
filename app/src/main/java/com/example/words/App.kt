@@ -11,22 +11,24 @@ import com.example.words.database.createDatabase
 import com.example.words.datasource.DefaultGoogleSpreadsheetDataSource
 import com.example.words.datasource.FileWordsLocalDataSource
 import com.example.words.datasource.GoogleWordsRemoteDataSource
+import com.example.words.domain.DefaultWidgetLoadingStateNotifier
+import com.example.words.domain.DefaultWordsSynchronizer
+import com.example.words.domain.WidgetLoadingStateNotifier
+import com.example.words.domain.WordsSynchronizer
 import com.example.words.googlesheets.CachingGoogleSheetsProvider
 import com.example.words.logging.DefaultLogger
 import com.example.words.logging.Logger
 import com.example.words.mapper.DefaultWordPairMapper
 import com.example.words.notification.NotificationChannel
 import com.example.words.repository.DefaultSheetRepository
-import com.example.words.repository.DefaultWidgetLoadingStateNotifier
 import com.example.words.repository.DefaultWidgetRepository
 import com.example.words.repository.DefaultWordsRepository
-import com.example.words.repository.DefaultWordsSynchronizer
 import com.example.words.repository.GoogleSpreadsheetRepository
 import com.example.words.repository.SpreadsheetRepository
-import com.example.words.repository.WidgetLoadingStateNotifier
 import com.example.words.repository.WidgetRepository
 import com.example.words.repository.WordsRepository
-import com.example.words.repository.WordsSynchronizer
+import com.example.words.widget.DefaultReshuffleNotifier
+import com.example.words.widget.ReshuffleNotifier
 import com.example.words.widget.refreshWidget
 import com.example.words.work.WorkFactory
 import io.ktor.client.HttpClient
@@ -44,6 +46,7 @@ class App : Application(), DependencyContainer {
     override lateinit var spreadsheetRepository: SpreadsheetRepository
     override lateinit var logger: Logger
     override lateinit var widgetLoadingStateNotifier: WidgetLoadingStateNotifier
+    override lateinit var reshuffleNotifier: ReshuffleNotifier
 
     override fun onCreate() {
         createDependencies()
@@ -103,6 +106,7 @@ class App : Application(), DependencyContainer {
                 Dispatchers.IO
             )
         )
+        reshuffleNotifier = DefaultReshuffleNotifier()
         logger = DefaultLogger()
     }
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.words.DependencyContainer
+import com.example.words.domain.WordsSynchronizer
 import com.example.words.logging.Logger
 import com.example.words.logging.e
 import com.example.words.model.Sheet
@@ -11,7 +12,6 @@ import com.example.words.model.SheetSpreadsheetId
 import com.example.words.model.Widget
 import com.example.words.repository.SpreadsheetRepository
 import com.example.words.repository.WidgetRepository
-import com.example.words.repository.WordsSynchronizer
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

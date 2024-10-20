@@ -1,4 +1,4 @@
-package com.example.words.widget.ui
+package com.example.words.widget.ui.actions
 
 import android.content.Context
 import androidx.glance.GlanceId
