@@ -2,8 +2,8 @@ package com.example.words.repository
 
 import com.example.words.datasource.CSVLine
 import com.example.words.datasource.GoogleWordsRemoteDataSource
+import com.example.words.fixture.randomSheetSpreadsheetId
 import com.example.words.model.SheetSpreadsheetId
-import com.example.words.randomSheetSpreadsheetId
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond

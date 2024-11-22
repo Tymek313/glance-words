@@ -1,9 +1,11 @@
-package com.example.words
+package com.example.words.fixture
 
 import com.example.words.database.DbSheet
+import com.example.words.database.DbWidget
 import com.example.words.model.Sheet
 import com.example.words.model.SheetId
 import com.example.words.model.SheetSpreadsheetId
+import com.example.words.model.SpreadsheetSheet
 import com.example.words.model.Widget
 import com.example.words.model.WordPair
 import java.time.Instant
@@ -14,7 +16,7 @@ fun randomString() = UUID.randomUUID().toString()
 
 fun randomInt() = Random.nextInt()
 
-fun randomInstant() = Instant.ofEpochSecond(randomEpochSeconds())
+fun randomInstant(): Instant = Instant.ofEpochSecond(randomEpochSeconds())
 
 fun randomEpochSeconds() = Random.nextLong(Instant.MIN.epochSecond, Instant.MAX.epochSecond)
 
@@ -30,12 +32,19 @@ fun randomWidgetWithExistingSheet() = Widget(
     sheet = randomExistingSheet()
 )
 
+fun randomDbWidget() = DbWidget(id = randomInt(), sheet_id = randomInt())
+
 fun randomDbSheet() = DbSheet(
     id = randomInt(),
     spreadsheet_id = randomString(),
     sheet_id = randomInt(),
     name = randomString(),
     last_updated_at = randomEpochSeconds()
+)
+
+fun randomSheetSpreadsheetId() = SheetSpreadsheetId(
+    spreadsheetId = randomString(),
+    sheetId = randomInt()
 )
 
 fun randomNewSheet() = Sheet.createNew(
@@ -52,20 +61,6 @@ fun randomExistingSheet() = Sheet.createExisting(
 
 fun randomSheetId() = SheetId(randomInt())
 
-fun randomSheetSpreadsheetId() = SheetSpreadsheetId(
-    spreadsheetId = randomString(),
-    sheetId = randomInt()
-)
-
 fun randomWordPair() = WordPair(randomString(), randomString())
 
-val dbSheetFixture = randomDbSheet()
-
-val existingSheetFixture = dbSheetFixture.run {
-    Sheet.createExisting(
-        id = SheetId(id),
-        sheetSpreadsheetId = SheetSpreadsheetId(spreadsheet_id, sheet_id),
-        name = name,
-        lastUpdatedAt = Instant.ofEpochSecond(last_updated_at!!)
-    )
-}
+fun randomSpreadsheetSheet() = SpreadsheetSheet(id = randomInt(), name = randomString())

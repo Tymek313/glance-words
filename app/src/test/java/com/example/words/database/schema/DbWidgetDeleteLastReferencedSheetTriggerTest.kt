@@ -2,8 +2,8 @@ package com.example.words.database.schema
 
 import com.example.words.database.DbWidget
 import com.example.words.database.utility.createTestDatabase
-import com.example.words.randomDbSheet
-import com.example.words.randomInt
+import com.example.words.fixture.randomDbSheet
+import com.example.words.fixture.randomInt
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -16,8 +16,7 @@ class DbWidgetDeleteLastReferencedSheetTriggerTest {
         val dbWidgetId = randomInt()
         val dbSheet = randomDbSheet()
         database.dbSheetQueries.insert(dbSheet)
-        val dbSheetId = database.dbSheetQueries.getLastId().executeAsOne().toInt()
-        database.dbWidgetQueries.insert(DbWidget(id = dbWidgetId, sheet_id = dbSheetId))
+        database.dbWidgetQueries.insert(DbWidget(id = dbWidgetId, sheet_id = 1))
 
         database.dbWidgetQueries.delete(dbWidgetId)
 
@@ -30,9 +29,8 @@ class DbWidgetDeleteLastReferencedSheetTriggerTest {
         val dbWidgetId = randomInt()
         val dbSheet = randomDbSheet()
         database.dbSheetQueries.insert(dbSheet)
-        val dbSheetId = database.dbSheetQueries.getLastId().executeAsOne().toInt()
-        database.dbWidgetQueries.insert(DbWidget(id = dbWidgetId, sheet_id = dbSheetId))
-        database.dbWidgetQueries.insert(DbWidget(id = randomInt(), sheet_id = dbSheetId))
+        database.dbWidgetQueries.insert(DbWidget(id = dbWidgetId, sheet_id = 1))
+        database.dbWidgetQueries.insert(DbWidget(id = randomInt(), sheet_id = 1))
 
         database.dbWidgetQueries.delete(dbWidgetId)
 
@@ -46,9 +44,8 @@ class DbWidgetDeleteLastReferencedSheetTriggerTest {
         val dbSheet = randomDbSheet()
         val dbSheetOther = randomDbSheet()
         database.dbSheetQueries.insert(dbSheet)
-        val dbSheetId = database.dbSheetQueries.getLastId().executeAsOne().toInt()
         database.dbSheetQueries.insert(dbSheetOther)
-        database.dbWidgetQueries.insert(DbWidget(id = dbWidgetId, sheet_id = dbSheetId))
+        database.dbWidgetQueries.insert(DbWidget(id = dbWidgetId, sheet_id = 1))
 
         database.dbWidgetQueries.delete(dbWidgetId)
 

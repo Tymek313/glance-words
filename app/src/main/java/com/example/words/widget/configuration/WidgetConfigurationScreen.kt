@@ -45,7 +45,7 @@ import kotlinx.coroutines.flow.filterNot
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WidgetConfigurationScreen(
-    state: ConfigureWidgetState,
+    state: WidgetConfigurationState,
     onCreateWidgetClick: () -> Unit,
     onDismiss: () -> Unit,
     onSheetSelect: (sheetId: Int) -> Unit,
@@ -132,7 +132,7 @@ private fun rememberSheetState(onDismiss: () -> Unit): SheetState {
 }
 
 @Composable
-private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId: Int?, onSheetSelect: (sheetId: Int) -> Unit) {
+private fun SheetList(sheets: List<WidgetConfigurationState.Sheet>, selectedSheetId: Int?, onSheetSelect: (sheetId: Int) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
             .fillMaxWidth()
@@ -149,11 +149,11 @@ private fun SheetList(sheets: List<ConfigureWidgetState.Sheet>, selectedSheetId:
 private fun ConfigureScreenPreview() {
     GlanceWordsTheme {
         WidgetConfigurationScreen(
-            state = ConfigureWidgetState(
+            state = WidgetConfigurationState(
                 spreadsheetId = "",
                 sheets = listOf(
-                    ConfigureWidgetState.Sheet(id = 1, name = "Sheet 1"),
-                    ConfigureWidgetState.Sheet(id = 2, name = "Sheet 2"),
+                    WidgetConfigurationState.Sheet(id = 1, name = "Sheet 1"),
+                    WidgetConfigurationState.Sheet(id = 2, name = "Sheet 2"),
                 ),
                 selectedSheetId = null,
                 spreadsheetError = "Error",
@@ -175,11 +175,11 @@ private fun ConfigureScreenPreview() {
 private fun ConfigureScreenSelectedSheetPreview() {
     GlanceWordsTheme {
         WidgetConfigurationScreen(
-            state = ConfigureWidgetState(
+            state = WidgetConfigurationState(
                 spreadsheetId = "",
                 sheets = listOf(
-                    ConfigureWidgetState.Sheet(id = 1, name = "Sheet 1"),
-                    ConfigureWidgetState.Sheet(id = 2, name = "Sheet 2"),
+                    WidgetConfigurationState.Sheet(id = 1, name = "Sheet 1"),
+                    WidgetConfigurationState.Sheet(id = 2, name = "Sheet 2"),
                 ),
                 selectedSheetId = 1,
                 spreadsheetError = null,

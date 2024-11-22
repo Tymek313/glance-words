@@ -1,13 +1,12 @@
 package com.example.words.repository
 
 import com.example.words.datasource.GoogleSpreadsheetDataSource
+import com.example.words.fixture.randomInt
+import com.example.words.fixture.randomString
 import com.example.words.model.SpreadsheetSheet
-import com.example.words.randomInt
-import com.example.words.randomString
 import com.google.api.services.sheets.v4.model.Sheet
 import com.google.api.services.sheets.v4.model.SheetProperties
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -19,6 +18,8 @@ class GoogleSpreadsheetRepositoryTest {
     private lateinit var fakeGoogleSpreadsheetDataSource: GoogleSpreadsheetDataSource
     private lateinit var repository: GoogleSpreadsheetRepository
 
+    private val everyGetSpreadsheets get() = coEvery { fakeGoogleSpreadsheetDataSource.getSpreadsheets(SPREADSHEET_ID_FIXTURE) }
+
     @Before
     fun setup() {
         fakeGoogleSpreadsheetDataSource = mockk()
@@ -27,16 +28,21 @@ class GoogleSpreadsheetRepositoryTest {
 
     @Test
     fun `when spreadsheet sheets are fetched_given there are sheets_they are returned`() = runTest {
-        val spreadsheetId = randomString()
-        val sheetId = randomInt()
-        val sheetTitle = randomString()
-        coEvery { fakeGoogleSpreadsheetDataSource.getSpreadsheets(spreadsheetId) } returns listOf(
-            Sheet().setProperties(SheetProperties().setSheetId(sheetId).setTitle(sheetTitle))
-        )
+        googleSheetsAreFetched()
 
-        val sheets = repository.fetchSpreadsheetSheets(spreadsheetId)
+        val sheets = repository.fetchSpreadsheetSheets(SPREADSHEET_ID_FIXTURE)
 
-        assertEquals(listOf(SpreadsheetSheet(sheetId, sheetTitle)), sheets)
-        coVerify { fakeGoogleSpreadsheetDataSource.getSpreadsheets(spreadsheetId) }
+        assertEquals(listOf(SpreadsheetSheet(SHEET_ID_FIXTURE, SHEET_TITLE_FIXTURE)), sheets)
+    }
+
+    private fun googleSheetsAreFetched() {
+        everyGetSpreadsheets returns listOf(GOOGLE_SHEET_FIXTURE)
+    }
+
+    private companion object {
+        val SPREADSHEET_ID_FIXTURE = randomString()
+        val SHEET_ID_FIXTURE = randomInt()
+        val SHEET_TITLE_FIXTURE = randomString()
+        val GOOGLE_SHEET_FIXTURE: Sheet = Sheet().setProperties(SheetProperties().setSheetId(SHEET_ID_FIXTURE).setTitle(SHEET_TITLE_FIXTURE))
     }
 }

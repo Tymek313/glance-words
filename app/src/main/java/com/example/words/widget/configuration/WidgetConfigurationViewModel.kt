@@ -27,8 +27,8 @@ class WidgetConfigurationViewModel(
     private val logger: Logger
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ConfigureWidgetState())
-    val state: StateFlow<ConfigureWidgetState> = _state
+    private val _state = MutableStateFlow(WidgetConfigurationState())
+    val state: StateFlow<WidgetConfigurationState> = _state
 
     private val loadSheetsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
         logger.e(this, throwable)
@@ -66,7 +66,7 @@ class WidgetConfigurationViewModel(
             _state.update { state ->
                 state.copy(
                     isLoading = false,
-                    sheets = sheets.map { ConfigureWidgetState.Sheet(it.id, it.name) }
+                    sheets = sheets.map { WidgetConfigurationState.Sheet(it.id, it.name) }
                 )
             }
         }
@@ -77,9 +77,8 @@ class WidgetConfigurationViewModel(
     }
 
     fun saveWidgetConfiguration(widgetId: Int) {
-        val selectedSheetId = state.value.selectedSheetId ?: run {
+        val selectedSheetId = state.value.selectedSheetId ?: return run {
             logger.e(tag = javaClass.name, message = "Unknown selected sheet id")
-            return
         }
         _state.update { it.copy(isSavingWidget = true, generalError = null) }
         viewModelScope.launch(generalCoroutineHandler) {
@@ -112,7 +111,7 @@ class WidgetConfigurationViewModel(
     }
 }
 
-data class ConfigureWidgetState(
+data class WidgetConfigurationState(
     val spreadsheetId: String = "",
     val isLoading: Boolean = false,
     val isSavingWidget: Boolean = false,
