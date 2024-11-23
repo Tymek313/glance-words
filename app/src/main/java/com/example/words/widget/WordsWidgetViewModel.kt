@@ -1,6 +1,6 @@
 package com.example.words.widget
 
-import com.example.words.domain.WidgetLoadingStateNotifier
+import com.example.words.domain.WordsSynchronizationStateNotifier
 import com.example.words.logging.Logger
 import com.example.words.logging.d
 import com.example.words.logging.e
@@ -13,12 +13,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -28,7 +28,7 @@ class WordsWidgetViewModel(
     private val widgetId: Widget.WidgetId,
     private val widgetRepository: WidgetRepository,
     private val wordsRepository: WordsRepository,
-    widgetLoadingStateNotifier: WidgetLoadingStateNotifier,
+    wordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier,
     private val logger: Logger,
     private val locale: Locale,
     private val zoneId: ZoneId,
@@ -38,8 +38,7 @@ class WordsWidgetViewModel(
     val uiState: Flow<WidgetUiState> = combine(
         observeWidget(),
         observeShuffledLimitedWords(),
-        widgetLoadingStateNotifier.observeIsWidgetLoading(widgetId)
-            .combine(reshuffleNotifier.shouldReshuffle) { loading, reshuffling -> loading || reshuffling },
+        wordsSynchronizationStateNotifier.observeAreWordsSynchronized(widgetId),
         ::mapUiState
     ).catch { logger.e(this@WordsWidgetViewModel, throwable = it) }
 
@@ -50,7 +49,7 @@ class WordsWidgetViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeShuffledLimitedWords() = flow {
         emit(true)
-        emitAll(reshuffleNotifier.shouldReshuffle.filter { it })
+        emitAll(reshuffleNotifier.reshuffleEvents.receiveAsFlow())
     }.flatMapLatest {
         wordsRepository.observeWords(widgetId).map { it.shuffled().take(50) }
     }

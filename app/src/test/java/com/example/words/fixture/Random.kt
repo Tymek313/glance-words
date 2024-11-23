@@ -27,11 +27,6 @@ fun randomWidgetWithNewSheet() = Widget(
     sheet = randomNewSheet()
 )
 
-fun randomWidgetWithExistingSheet() = Widget(
-    id = randomWidgetId(),
-    sheet = randomExistingSheet()
-)
-
 fun randomDbWidget() = DbWidget(id = randomInt(), sheet_id = randomInt())
 
 fun randomDbSheet() = DbSheet(

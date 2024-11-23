@@ -36,7 +36,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
         Widget.WidgetId(GlanceAppWidgetManager(context).getAppWidgetId(widgetId)),
         diContainer.widgetRepository,
         diContainer.wordsRepository,
-        diContainer.widgetLoadingStateNotifier,
+        diContainer.wordsSynchronizationStateNotifier,
         diContainer.logger,
         Locale.getDefault(),
         ZoneId.systemDefault(),

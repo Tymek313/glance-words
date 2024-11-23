@@ -1,7 +1,7 @@
 package com.example.words.repository
 
 import com.example.words.coroutines.collectToListInBackground
-import com.example.words.domain.DefaultWidgetLoadingStateNotifier
+import com.example.words.domain.DefaultWordsSynchronizationStateNotifier
 import com.example.words.fixture.randomWidgetId
 import com.example.words.fixture.widgetIdFixture
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,39 +17,39 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DefaultWidgetLoadingStateNotifierTest {
+class DefaultWordsSynchronizationStateNotifierTest {
 
     private val dispatcher = UnconfinedTestDispatcher()
-    private lateinit var notifier: DefaultWidgetLoadingStateNotifier
+    private lateinit var notifier: DefaultWordsSynchronizationStateNotifier
 
     @Before
     fun setUp() {
-        notifier = DefaultWidgetLoadingStateNotifier()
+        notifier = DefaultWordsSynchronizationStateNotifier()
     }
 
     @Test
     fun `when observing widget loading state_given it was not set to loading beforehand_then non-loading value is emitted`() = runTest(dispatcher) {
-        backgroundScope.launch { notifier.setLoadingWidgetForAction(randomWidgetId()) { suspendCoroutine { } } }
+        backgroundScope.launch { notifier.notifyWordsSynchronizationForAction(randomWidgetId()) { suspendCoroutine { } } }
 
-        val isWidgetLoadingValues = collectToListInBackground(notifier.observeIsWidgetLoading(randomWidgetId()))
+        val isWidgetLoadingValues = collectToListInBackground(notifier.observeAreWordsSynchronized(randomWidgetId()))
 
         assertFalse(isWidgetLoadingValues.single())
     }
 
     @Test
     fun `when observing widget loading state_given it was set to loading beforehand_then loading value is emitted`() = runTest(dispatcher) {
-        backgroundScope.launch { notifier.setLoadingWidgetForAction(widgetIdFixture) { suspendCoroutine { } } }
+        backgroundScope.launch { notifier.notifyWordsSynchronizationForAction(widgetIdFixture) { suspendCoroutine { } } }
 
-        val isWidgetLoadingValues = collectToListInBackground(notifier.observeIsWidgetLoading(widgetIdFixture))
+        val isWidgetLoadingValues = collectToListInBackground(notifier.observeAreWordsSynchronized(widgetIdFixture))
 
         assertTrue(isWidgetLoadingValues.single())
     }
 
     @Test
     fun `when widget is set to loading_then loading value is emitted`() = runTest(dispatcher) {
-        val isWidgetLoadingValues = collectToListInBackground(notifier.observeIsWidgetLoading(widgetIdFixture).drop(1))
+        val isWidgetLoadingValues = collectToListInBackground(notifier.observeAreWordsSynchronized(widgetIdFixture).drop(1))
 
-        backgroundScope.launch { notifier.setLoadingWidgetForAction(widgetIdFixture) { suspendCoroutine { } } }
+        backgroundScope.launch { notifier.notifyWordsSynchronizationForAction(widgetIdFixture) { suspendCoroutine { } } }
 
         assertTrue(isWidgetLoadingValues.single())
     }
@@ -57,10 +57,10 @@ class DefaultWidgetLoadingStateNotifierTest {
     @Test
     fun `when widget is set to loading_given action has not finished_action is invoked after emitting loading`() = runTest(dispatcher) {
         var actionCalledAfterEmission = false
-        val isWidgetLoadingValues = collectToListInBackground(notifier.observeIsWidgetLoading(widgetIdFixture).drop(1))
+        val isWidgetLoadingValues = collectToListInBackground(notifier.observeAreWordsSynchronized(widgetIdFixture).drop(1))
 
         backgroundScope.launch {
-            notifier.setLoadingWidgetForAction(widgetIdFixture) {
+            notifier.notifyWordsSynchronizationForAction(widgetIdFixture) {
                 yield()
                 actionCalledAfterEmission = isWidgetLoadingValues.isNotEmpty()
                 suspendCoroutine { }
@@ -72,9 +72,9 @@ class DefaultWidgetLoadingStateNotifierTest {
 
     @Test
     fun `when widget is set to loading_given action has finished_then non-loading value is emitted`() = runTest(dispatcher) {
-        val isWidgetLoadingValues = collectToListInBackground(notifier.observeIsWidgetLoading(widgetIdFixture).drop(2))
+        val isWidgetLoadingValues = collectToListInBackground(notifier.observeAreWordsSynchronized(widgetIdFixture).drop(2))
 
-        notifier.setLoadingWidgetForAction(widgetIdFixture) { }
+        notifier.notifyWordsSynchronizationForAction(widgetIdFixture) { }
 
         assertFalse(isWidgetLoadingValues.single())
     }
@@ -82,9 +82,9 @@ class DefaultWidgetLoadingStateNotifierTest {
     @Test
     fun `when widget is set to loading_given action has finished_then non-loading value is emitted after action finished`() = runTest(dispatcher) {
         var actionCalledBeforeEmission = false
-        val isWidgetLoadingValues = collectToListInBackground(notifier.observeIsWidgetLoading(widgetIdFixture).drop(2))
+        val isWidgetLoadingValues = collectToListInBackground(notifier.observeAreWordsSynchronized(widgetIdFixture).drop(2))
 
-        notifier.setLoadingWidgetForAction(widgetIdFixture) {
+        notifier.notifyWordsSynchronizationForAction(widgetIdFixture) {
             yield()
             actionCalledBeforeEmission = isWidgetLoadingValues.isEmpty()
         }

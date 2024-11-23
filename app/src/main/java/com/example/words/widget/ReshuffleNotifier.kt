@@ -1,23 +1,21 @@
 package com.example.words.widget
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 
 interface ReshuffleNotifier {
-    val shouldReshuffle: Flow<Boolean>
+    val reshuffleEvents: ReceiveChannel<Unit>
 
     suspend fun emitReshuffle()
 }
 
 class DefaultReshuffleNotifier : ReshuffleNotifier {
 
-    private val flow = MutableSharedFlow<Boolean>(replay = 1).apply { tryEmit(false) }
+    private val channel = Channel<Unit>(Channel.CONFLATED)
 
-    override val shouldReshuffle: Flow<Boolean> = flow.asSharedFlow()
+    override val reshuffleEvents: ReceiveChannel<Unit> = channel
 
     override suspend fun emitReshuffle() {
-        flow.emit(true)
-        flow.emit(false)
+        channel.send(Unit)
     }
 }

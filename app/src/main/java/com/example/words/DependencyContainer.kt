@@ -1,6 +1,6 @@
 package com.example.words
 
-import com.example.words.domain.WidgetLoadingStateNotifier
+import com.example.words.domain.WordsSynchronizationStateNotifier
 import com.example.words.domain.WordsSynchronizer
 import com.example.words.logging.Logger
 import com.example.words.repository.SpreadsheetRepository
@@ -14,6 +14,6 @@ interface DependencyContainer {
     val wordsSynchronizer: WordsSynchronizer
     val spreadsheetRepository: SpreadsheetRepository
     val logger: Logger
-    val widgetLoadingStateNotifier: WidgetLoadingStateNotifier
+    val wordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier
     val reshuffleNotifier: ReshuffleNotifier
 }

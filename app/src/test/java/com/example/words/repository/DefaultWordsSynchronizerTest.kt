@@ -1,7 +1,7 @@
 package com.example.words.repository
 
 import com.example.words.domain.DefaultWordsSynchronizer
-import com.example.words.domain.WidgetLoadingStateNotifier
+import com.example.words.domain.WordsSynchronizationStateNotifier
 import com.example.words.fixture.existingSheetFixture
 import com.example.words.fixture.instantFixture
 import com.example.words.fixture.widgetIdFixture
@@ -31,13 +31,15 @@ class DefaultWordsSynchronizerTest {
     private lateinit var fakeWidgetRepository: WidgetRepository
     private lateinit var fakeSheetRepository: SheetRepository
     private lateinit var fakeGetNowInstant: () -> Instant
-    private lateinit var fakeWidgetLoadingStateNotifier: WidgetLoadingStateNotifier
+    private lateinit var fakeWordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier
     private lateinit var fakeRefreshWidget: suspend (Widget.WidgetId) -> Unit
 
     private val everyObserveWidget get() = coEvery { fakeWidgetRepository.observeWidget(widgetIdFixture) }
     private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(any()) }
     private val everyUpdateLastUpdatedAt get() = coEvery { fakeSheetRepository.updateLastUpdatedAt(existingSheetFixture.id, instantFixture) }
-    private val everySetLoadingWidgetForAction get() = coEvery { fakeWidgetLoadingStateNotifier.setLoadingWidgetForAction(widgetIdFixture, captureLambda()) }
+    private val everyNotifyWordsSynchronizationForAction get() = coEvery {
+        fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widgetIdFixture, captureLambda())
+    }
     private val everyGetNowInstant get() = every { fakeGetNowInstant() }
     private val everyRefreshWidget get() = coEvery { fakeRefreshWidget(widgetIdFixture) }
     private val everyDeleteCachedWords get() = coEvery { fakeWordsRepository.deleteCachedWords(widgetIdFixture) }
@@ -47,7 +49,7 @@ class DefaultWordsSynchronizerTest {
         fakeWordsRepository = mockk()
         fakeWidgetRepository = mockk()
         fakeGetNowInstant = mockk()
-        fakeWidgetLoadingStateNotifier = mockk()
+        fakeWordsSynchronizationStateNotifier = mockk()
         fakeRefreshWidget = mockk()
         fakeSheetRepository = mockk()
         synchronizer = DefaultWordsSynchronizer(
@@ -55,7 +57,7 @@ class DefaultWordsSynchronizerTest {
             widgetRepository = fakeWidgetRepository,
             sheetRepository = fakeSheetRepository,
             getNowInstant = fakeGetNowInstant,
-            widgetLoadingStateNotifier = fakeWidgetLoadingStateNotifier,
+            wordsSynchronizationStateNotifier = fakeWordsSynchronizationStateNotifier,
             refreshWidget = fakeRefreshWidget
         )
     }
@@ -73,7 +75,7 @@ class DefaultWordsSynchronizerTest {
         cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshed()
-        loadingWidgetForAction()
+        notifyWordsSynchronization()
         wordsAreSynchronized()
         lastUpdatedPropertyIsUpdated()
         instantIsReturned()
@@ -84,7 +86,7 @@ class DefaultWordsSynchronizerTest {
             fakeWordsRepository.deleteCachedWords(widgetIdFixture)
             fakeWidgetRepository.observeWidget(widgetIdFixture)
             fakeRefreshWidget(widgetIdFixture)
-            fakeWidgetLoadingStateNotifier.setLoadingWidgetForAction(widgetIdFixture, any())
+            fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widgetIdFixture, any())
             fakeWordsRepository.synchronizeWords(any())
             fakeSheetRepository.updateLastUpdatedAt(existingSheetFixture.id, instantFixture)
         }
@@ -108,13 +110,13 @@ class DefaultWordsSynchronizerTest {
         cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshed()
-        widgetIsRefreshedSuspended()
+        notifyWordsSynchronizationSuspended()
 
         backgroundScope.launch {
             synchronizer.synchronizeWords(widgetIdFixture)
         }
 
-        coVerify { fakeWidgetLoadingStateNotifier.setLoadingWidgetForAction(widgetIdFixture, any()) }
+        coVerify { fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widgetIdFixture, any()) }
     }
 
     @Test
@@ -122,7 +124,7 @@ class DefaultWordsSynchronizerTest {
         cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshed()
-        loadingWidgetForAction()
+        notifyWordsSynchronization()
         lastUpdatedPropertyIsUpdated()
         wordsAreSynchronized()
         instantIsReturned()
@@ -141,7 +143,7 @@ class DefaultWordsSynchronizerTest {
         cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshed()
-        loadingWidgetForAction()
+        notifyWordsSynchronization()
         wordsAreSynchronized()
         lastUpdatedPropertyIsUpdated()
         instantIsReturned()
@@ -159,7 +161,9 @@ class DefaultWordsSynchronizerTest {
 
     private fun lastUpdatedPropertyIsUpdated() = everyUpdateLastUpdatedAt just runs
 
-    private fun loadingWidgetForAction() = everySetLoadingWidgetForAction coAnswers { lambda<suspend () -> Unit>().coInvoke() }
+    private fun notifyWordsSynchronization() = everyNotifyWordsSynchronizationForAction coAnswers { lambda<suspend () -> Unit>().coInvoke() }
+
+    private fun notifyWordsSynchronizationSuspended() = everyNotifyWordsSynchronizationForAction just awaits
 
     private fun cachedWordsAreDeleted() = everyDeleteCachedWords just runs
 

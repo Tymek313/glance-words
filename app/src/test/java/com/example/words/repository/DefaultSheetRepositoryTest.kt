@@ -4,6 +4,7 @@ import com.example.words.database.Database
 import com.example.words.database.utility.createTestDatabase
 import com.example.words.fixture.dbSheetFixture
 import com.example.words.fixture.existingSheetFixture
+import com.example.words.fixture.newSheetFixture
 import com.example.words.fixture.randomDbSheet
 import com.example.words.fixture.randomInstant
 import com.example.words.fixture.randomNewSheet
@@ -51,24 +52,12 @@ class DefaultSheetRepositoryTest {
     @Test
     fun `when sheet is added_then it is stored in database`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
-        val sheet = randomNewSheet()
-        val expectedDbSheet = dbSheetFixture.copy(id = 2)
 
-        repository.addSheet(sheet)
+        repository.addSheet(newSheetFixture)
 
         val sheets = database.dbSheetQueries.getAll().executeAsList()
         assertEquals(2, sheets.size)
-        assertEquals(expectedDbSheet, sheets.singleOrNull { it.id == 2 })
-    }
-
-    @Test
-    fun `when sheet is added_given it was never updated_then stored sheet does not contain last updated date`() = runTest(dispatcher) {
-        val sheet = randomNewSheet().copy(lastUpdatedAt = null)
-
-        repository.addSheet(sheet)
-
-        val sheets = database.dbSheetQueries.getAll().executeAsList()
-        assertNull(sheets.first().last_updated_at)
+        assertEquals(dbSheetFixture.copy(id = 2, last_updated_at = null), sheets.singleOrNull { it.id == 2 })
     }
 
     @Test

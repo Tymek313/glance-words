@@ -15,7 +15,7 @@ class DefaultWordsSynchronizer(
     private val wordsRepository: WordsRepository,
     private val widgetRepository: WidgetRepository,
     private val sheetRepository: SheetRepository,
-    private val widgetLoadingStateNotifier: WidgetLoadingStateNotifier,
+    private val wordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier,
     private val refreshWidget: suspend (widgetId: Widget.WidgetId) -> Unit,
     private val getNowInstant: () -> Instant
 ) : WordsSynchronizer {
@@ -25,7 +25,7 @@ class DefaultWordsSynchronizer(
         wordsRepository.deleteCachedWords(widgetId)
         val widget = widgetRepository.observeWidget(widgetId).first().let(::checkNotNull)
         refreshWidget(widgetId)
-        widgetLoadingStateNotifier.setLoadingWidgetForAction(widgetId) {
+        wordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widgetId) {
             wordsRepository.synchronizeWords(
                 WordsRepository.SynchronizationRequest(widget.id, widget.sheet.sheetSpreadsheetId)
             )

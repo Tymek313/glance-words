@@ -11,9 +11,9 @@ import com.example.words.database.createDatabase
 import com.example.words.datasource.DefaultGoogleSpreadsheetDataSource
 import com.example.words.datasource.FileWordsLocalDataSource
 import com.example.words.datasource.GoogleWordsRemoteDataSource
-import com.example.words.domain.DefaultWidgetLoadingStateNotifier
+import com.example.words.domain.DefaultWordsSynchronizationStateNotifier
 import com.example.words.domain.DefaultWordsSynchronizer
-import com.example.words.domain.WidgetLoadingStateNotifier
+import com.example.words.domain.WordsSynchronizationStateNotifier
 import com.example.words.domain.WordsSynchronizer
 import com.example.words.googlesheets.CachingGoogleSheetsProvider
 import com.example.words.logging.DefaultLogger
@@ -45,7 +45,7 @@ class App : Application(), DependencyContainer {
     override lateinit var wordsSynchronizer: WordsSynchronizer
     override lateinit var spreadsheetRepository: SpreadsheetRepository
     override lateinit var logger: Logger
-    override lateinit var widgetLoadingStateNotifier: WidgetLoadingStateNotifier
+    override lateinit var wordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier
     override lateinit var reshuffleNotifier: ReshuffleNotifier
 
     override fun onCreate() {
@@ -91,12 +91,12 @@ class App : Application(), DependencyContainer {
             DefaultWordPairMapper()
         )
         widgetRepository = DefaultWidgetRepository(database.dbWidgetQueries, sheetRepository, Dispatchers.IO)
-        widgetLoadingStateNotifier = DefaultWidgetLoadingStateNotifier()
+        wordsSynchronizationStateNotifier = DefaultWordsSynchronizationStateNotifier()
         wordsSynchronizer = DefaultWordsSynchronizer(
             wordsRepository,
             widgetRepository,
             sheetRepository,
-            widgetLoadingStateNotifier,
+            wordsSynchronizationStateNotifier,
             refreshWidget = { refreshWidget(context = this, widgetId = it) },
             Instant::now
         )
