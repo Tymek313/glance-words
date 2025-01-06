@@ -7,8 +7,11 @@ import com.example.words.fixture.existingSheetFixture
 import com.example.words.fixture.newSheetFixture
 import com.example.words.fixture.randomDbSheet
 import com.example.words.fixture.randomInstant
-import com.example.words.fixture.randomNewSheet
+import com.example.words.fixture.sheetSpreadsheetIdFixture
+import com.example.words.mapper.SheetMapper
 import com.example.words.model.SheetId
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -21,28 +24,38 @@ class DefaultSheetRepositoryTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val dispatcher = UnconfinedTestDispatcher()
+
     private lateinit var repository: DefaultSheetRepository
     private lateinit var database: Database
+    private lateinit var fakeSheetMapper: SheetMapper
+
+    private val everyMapToDomain get() = every { fakeSheetMapper.mapToDomain(dbSheetFixture.copy(id = 1)) }
+    private val everyMapToDb get() = every { fakeSheetMapper.mapToDb(newSheetFixture) }
+
+    private val mappedDomainSheet = existingSheetFixture.copy(id = SheetId(1))
+    private val mappedDbSheet = dbSheetFixture.copy(id = 2)
 
     @Before
     fun setUp() {
         database = createTestDatabase()
-        repository = DefaultSheetRepository(database.dbSheetQueries, dispatcher)
+        fakeSheetMapper = mockk()
+        repository = DefaultSheetRepository(database.dbSheetQueries, fakeSheetMapper, dispatcher)
     }
 
     @Test
     fun `when sheets are requested_then stored sheets are returned`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(dbSheetFixture)
+        everyMapToDomain returns mappedDomainSheet
 
         val sheets = repository.getSheets()
 
-        assertEquals(existingSheetFixture.copy(id = SheetId(1)), sheets.singleOrNull())
+        assertEquals(mappedDomainSheet, sheets.singleOrNull())
     }
 
     @Test
     fun `when sheets are requested_given sheet was never updated_then returned sheet does not contain last updated date`() = runTest(dispatcher) {
-        val dbSheet = randomDbSheet().copy(last_updated_at = null)
-        database.dbSheetQueries.insert(dbSheet)
+        database.dbSheetQueries.insert(dbSheetFixture)
+        everyMapToDomain returns mappedDomainSheet.copy(lastUpdatedAt = null)
 
         val sheets = repository.getSheets()
 
@@ -52,32 +65,57 @@ class DefaultSheetRepositoryTest {
     @Test
     fun `when sheet is added_then it is stored in database`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
+        everyMapToDb returns mappedDbSheet
 
         repository.addSheet(newSheetFixture)
 
         val sheets = database.dbSheetQueries.getAll().executeAsList()
         assertEquals(2, sheets.size)
-        assertEquals(dbSheetFixture.copy(id = 2, last_updated_at = null), sheets.singleOrNull { it.id == 2 })
+        assertEquals(mappedDbSheet, sheets.single { it.id == 2 })
     }
 
     @Test
     fun `when sheet is added_then sheet with updated id is returned`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
+        everyMapToDb returns mappedDbSheet
 
-        val updatedSheet = repository.addSheet(randomNewSheet())
+        val updatedSheet = repository.addSheet(newSheetFixture)
 
         assertEquals(2, updatedSheet.id.value)
     }
 
     @Test
+    fun `when sheet is requested by spreadsheet id_given it exists_sheet is returned`() = runTest(dispatcher) {
+        database.dbSheetQueries.insert(dbSheetFixture)
+        everyMapToDomain returns mappedDomainSheet
+
+        val sheet = repository.getBySheetSpreadsheetId(sheetSpreadsheetIdFixture)
+
+        assertEquals(mappedDomainSheet, sheet)
+    }
+
+
+    @Test
+    fun `when sheet is requested by spreadsheet id_given it does not exist_null is returned`() = runTest(dispatcher) {
+        database.dbSheetQueries.insert(randomDbSheet())
+
+        val sheet = repository.getBySheetSpreadsheetId(sheetSpreadsheetIdFixture)
+
+        assertNull(sheet)
+    }
+
+    @Test
     fun `when last update is updated for the widget_then it is updated in the database`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
+        database.dbSheetQueries.insert(dbSheetFixture)
         val updatedInstant = randomInstant()
 
         repository.updateLastUpdatedAt(sheetId = SheetId(1), lastUpdatedAt = updatedInstant)
 
         val sheets = database.dbSheetQueries.getAll().executeAsList()
-        val storedLastUpdatedAt = sheets.find { it.id == 1 }?.last_updated_at
-        assertEquals(updatedInstant.epochSecond, storedLastUpdatedAt)
+        val updatedLastUpdatedAt = sheets.first { it.id == 1 }.last_updated_at
+        val unchangedLastUpdatedAt = sheets.first { it.id == 2 }.last_updated_at
+        assertEquals(updatedInstant.epochSecond, updatedLastUpdatedAt)
+        assertEquals(dbSheetFixture.last_updated_at, unchangedLastUpdatedAt)
     }
 }
