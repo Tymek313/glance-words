@@ -10,7 +10,8 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.words.DependencyContainer
 import com.example.words.logging.Logger
@@ -43,7 +44,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
         setContent {
             GlanceWordsTheme {
                 WidgetConfigurationScreen(
-                    state = viewModel.state.collectAsState().value,
+                    state = viewModel.state.collectAsStateWithLifecycle().value,
                     onCreateWidgetClick = { viewModel.saveWidgetConfiguration(appWidgetId) },
                     onDismiss = ::finish,
                     onSheetSelect = viewModel::onSheetSelect,
@@ -55,6 +56,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
 
     private fun observeConfigurationFinish(appWidgetId: Int) {
         viewModel.state
+            .flowWithLifecycle(lifecycle)
             .filter { it.widgetConfigurationSaved }
             .onEach { finishSuccessfully(appWidgetId) }
             .launchIn(lifecycleScope)

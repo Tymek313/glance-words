@@ -125,8 +125,10 @@ private fun rememberSheetState(onDismiss: () -> Unit): SheetState {
         density = density,
         initialValue = SheetValue.Expanded,
     )
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
+
     LaunchedEffect(Unit) {
-        snapshotFlow { state.isVisible }.filterNot { it }.collect { onDismiss() }
+        snapshotFlow { state.isVisible }.filterNot { it }.collect { currentOnDismiss() }
     }
     return remember { state }
 }
