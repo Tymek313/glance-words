@@ -8,6 +8,8 @@ import com.google.api.services.sheets.v4.Sheets
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 interface GoogleSheetsProvider {
@@ -18,13 +20,17 @@ class CachingGoogleSheetsProvider(
     private val resources: Resources,
     private val ioDispatcher: CoroutineDispatcher
 ) : GoogleSheetsProvider {
+
+    private val mutex = Mutex()
     private var sheets: Sheets? = null
 
-    override suspend fun getGoogleSheets(): Sheets = sheets ?: withContext(ioDispatcher) {
-        Sheets.Builder(
-            NetHttpTransport(),
-            GsonFactory.getDefaultInstance(),
-            HttpCredentialsAdapter(GoogleCredentials.fromStream(resources.openRawResource(R.raw.google_sheets_credentials)))
-        ).build().also { sheets = it }
+    override suspend fun getGoogleSheets(): Sheets = mutex.withLock {
+        sheets ?: withContext(ioDispatcher) {
+            Sheets.Builder(
+                NetHttpTransport(),
+                GsonFactory.getDefaultInstance(),
+                HttpCredentialsAdapter(GoogleCredentials.fromStream(resources.openRawResource(R.raw.google_sheets_credentials)))
+            ).build().also { sheets = it }
+        }
     }
 }
