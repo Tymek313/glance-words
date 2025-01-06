@@ -1,12 +1,13 @@
-package com.example.words.repository
+package com.example.words.synchronization
 
-import com.example.words.domain.DefaultWordsSynchronizer
-import com.example.words.domain.WordsSynchronizationStateNotifier
 import com.example.words.fixture.existingSheetFixture
 import com.example.words.fixture.instantFixture
 import com.example.words.fixture.widgetIdFixture
 import com.example.words.fixture.widgetWithExistingSheetFixture
 import com.example.words.model.Widget
+import com.example.words.repository.SheetRepository
+import com.example.words.repository.WidgetRepository
+import com.example.words.repository.WordsRepository
 import io.mockk.awaits
 import io.mockk.coEvery
 import io.mockk.coInvoke

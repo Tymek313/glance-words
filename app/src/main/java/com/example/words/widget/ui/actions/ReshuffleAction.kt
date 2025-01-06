@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
-import com.example.words.DependencyContainer
+import com.example.words.di.DependencyContainer
 import com.example.words.widget.WordsGlanceWidget
 
 /*

@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
-import com.example.words.domain.WordsSynchronizer
 import com.example.words.logging.Logger
+import com.example.words.synchronization.WordsSynchronizer
 
 class WorkFactory(
     private val wordsSynchronizer: WordsSynchronizer,

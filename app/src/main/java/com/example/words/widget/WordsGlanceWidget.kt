@@ -4,15 +4,11 @@ import android.content.Context
 import androidx.compose.runtime.collectAsState
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
-import com.example.words.DependencyContainer
-import com.example.words.model.Widget
+import com.example.words.application.dependencyContainer
 import com.example.words.widget.ui.WordsWidgetContent
-import java.time.ZoneId
-import java.util.Locale
 
 class WordsGlanceWidget : GlanceAppWidget() {
 
@@ -20,7 +16,7 @@ class WordsGlanceWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val viewModel = createViewModel(context, id, context.applicationContext as DependencyContainer)
+        val viewModel = context.dependencyContainer.getWordsWidgetViewModel(id)
 
         provideContent {
             WordsWidgetContent(uiState = viewModel.uiState.collectAsState(WidgetUiState(isLoading = true)).value)
@@ -29,19 +25,8 @@ class WordsGlanceWidget : GlanceAppWidget() {
 
     override suspend fun onDelete(context: Context, glanceId: GlanceId) {
         super.onDelete(context, glanceId)
-        createViewModel(context, glanceId, context.applicationContext as DependencyContainer).deleteWidget()
+        context.dependencyContainer.getWordsWidgetViewModel(glanceId).deleteWidget()
     }
-
-    private fun createViewModel(context: Context, widgetId: GlanceId, diContainer: DependencyContainer) = WordsWidgetViewModel(
-        Widget.WidgetId(GlanceAppWidgetManager(context).getAppWidgetId(widgetId)),
-        diContainer.widgetRepository,
-        diContainer.wordsRepository,
-        diContainer.wordsSynchronizationStateNotifier,
-        diContainer.logger,
-        Locale.getDefault(),
-        ZoneId.systemDefault(),
-        diContainer.reshuffleNotifier
-    )
 }
 
 class WordsWidgetReceiver : GlanceAppWidgetReceiver() {

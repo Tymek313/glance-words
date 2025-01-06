@@ -1,6 +1,5 @@
 package com.example.words.widget
 
-import com.example.words.domain.WordsSynchronizationStateNotifier
 import com.example.words.logging.Logger
 import com.example.words.logging.d
 import com.example.words.logging.e
@@ -8,6 +7,7 @@ import com.example.words.model.Widget
 import com.example.words.model.WordPair
 import com.example.words.repository.WidgetRepository
 import com.example.words.repository.WordsRepository
+import com.example.words.synchronization.WordsSynchronizationStateNotifier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch

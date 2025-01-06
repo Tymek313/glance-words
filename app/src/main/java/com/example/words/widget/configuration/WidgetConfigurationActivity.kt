@@ -13,7 +13,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.example.words.DependencyContainer
+import com.example.words.application.dependencyContainer
 import com.example.words.logging.Logger
 import com.example.words.ui.theme.GlanceWordsTheme
 import kotlinx.coroutines.flow.filter
@@ -22,9 +22,9 @@ import kotlinx.coroutines.flow.onEach
 
 class WidgetConfigurationActivity : ComponentActivity() {
 
-    private val logger: Logger by lazy { (application as DependencyContainer).logger }
+    private val logger: Logger get() = dependencyContainer.logger
     private val viewModel by viewModels<WidgetConfigurationViewModel>(
-        factoryProducer = { WidgetConfigurationViewModel.factory(application as DependencyContainer) }
+        factoryProducer = { WidgetConfigurationViewModel.factory(dependencyContainer) }
     )
     private var clipboardChecked = false
 

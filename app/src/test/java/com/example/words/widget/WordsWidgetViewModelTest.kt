@@ -1,7 +1,6 @@
 package com.example.words.widget
 
 import com.example.words.coroutines.collectToListInBackground
-import com.example.words.domain.WordsSynchronizationStateNotifier
 import com.example.words.fixture.randomWidgetWithNewSheet
 import com.example.words.fixture.randomWordPair
 import com.example.words.logging.Logger
@@ -9,6 +8,7 @@ import com.example.words.model.Widget
 import com.example.words.model.WordPair
 import com.example.words.repository.WidgetRepository
 import com.example.words.repository.WordsRepository
+import com.example.words.synchronization.WordsSynchronizationStateNotifier
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

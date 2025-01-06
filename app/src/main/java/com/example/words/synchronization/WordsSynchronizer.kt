@@ -1,4 +1,4 @@
-package com.example.words.domain
+package com.example.words.synchronization
 
 import com.example.words.model.Widget
 import com.example.words.repository.SheetRepository

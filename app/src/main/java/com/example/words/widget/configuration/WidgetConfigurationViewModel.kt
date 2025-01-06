@@ -1,10 +1,10 @@
 package com.example.words.widget.configuration
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.words.DependencyContainer
-import com.example.words.domain.WordsSynchronizer
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.words.di.DependencyContainer
 import com.example.words.logging.Logger
 import com.example.words.logging.e
 import com.example.words.model.Sheet
@@ -12,6 +12,7 @@ import com.example.words.model.SheetSpreadsheetId
 import com.example.words.model.Widget
 import com.example.words.repository.SpreadsheetRepository
 import com.example.words.repository.WidgetRepository
+import com.example.words.synchronization.WordsSynchronizer
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -60,7 +61,7 @@ class WidgetConfigurationViewModel(
     private fun loadSheetsForSpreadsheet(withDebounce: Boolean) {
         loadSheetsJob?.cancel()
         loadSheetsJob = viewModelScope.launch(loadSheetsExceptionHandler) {
-            if (withDebounce) delay(2000)
+            if (withDebounce) delay(SHEET_LOAD_DEBOUNCE)
             _state.update { it.copy(isLoading = true, sheets = emptyList(), selectedSheetId = null) }
             val sheets = spreadsheetRepository.fetchSpreadsheetSheets(_state.value.spreadsheetId)
             _state.update { state ->
@@ -101,11 +102,11 @@ class WidgetConfigurationViewModel(
 
     companion object {
         private val SPREADSHEET_URL_REGEX = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
+        private const val SHEET_LOAD_DEBOUNCE = 2000L
 
-        fun factory(diContainer: DependencyContainer) = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = diContainer.run {
-                WidgetConfigurationViewModel(spreadsheetRepository, widgetRepository, wordsSynchronizer, logger) as T
+        fun factory(diContainer: DependencyContainer) = viewModelFactory {
+            initializer {
+                diContainer.run { WidgetConfigurationViewModel(spreadsheetRepository, widgetRepository, wordsSynchronizer, logger) }
             }
         }
     }

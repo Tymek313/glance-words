@@ -1,7 +1,6 @@
-package com.example.words.repository
+package com.example.words.synchronization
 
 import com.example.words.coroutines.collectToListInBackground
-import com.example.words.domain.DefaultWordsSynchronizationStateNotifier
 import com.example.words.fixture.randomWidgetId
 import com.example.words.fixture.widgetIdFixture
 import kotlinx.coroutines.ExperimentalCoroutinesApi
