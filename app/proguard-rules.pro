@@ -23,9 +23,3 @@
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 
 -keep public class com.example.words.work.SynchronizeWordsWorker
-
--keep class com.google.api.client.json.GenericJson
--keepclasseswithmembers class * extends com.google.api.client.json.GenericJson { *; }
--keepclassmembers class * {
-  @com.google.api.client.util.Key <fields>;
-}

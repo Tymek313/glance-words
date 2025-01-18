@@ -1,14 +1,16 @@
 package com.example.words.widget
 
-import com.example.words.coroutines.collectToListInBackground
-import com.example.words.fixture.randomWidgetWithNewSheet
-import com.example.words.fixture.randomWordPair
+import com.example.domain.model.Sheet
+import com.example.domain.model.SheetSpreadsheetId
+import com.example.domain.model.Widget
+import com.example.domain.model.WordPair
+import com.example.domain.repository.WidgetRepository
+import com.example.domain.repository.WordsRepository
+import com.example.domain.synchronization.WordsSynchronizationStateNotifier
+import com.example.testcommon.coroutines.collectToListInBackground
+import com.example.testcommon.fixture.randomInt
+import com.example.testcommon.fixture.randomString
 import com.example.words.logging.Logger
-import com.example.words.model.Widget
-import com.example.words.model.WordPair
-import com.example.words.repository.WidgetRepository
-import com.example.words.repository.WordsRepository
-import com.example.words.synchronization.WordsSynchronizationStateNotifier
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -44,15 +46,6 @@ class WordsWidgetViewModelTest {
     private lateinit var fakeLogger: Logger
     private lateinit var fakeReshuffleNotifier: ReshuffleNotifier
 
-    @Before
-    fun setUp() {
-        fakeWidgetRepository = mockk()
-        fakeWordsSynchronizationStateNotifier = mockk()
-        fakeWordsRepository = mockk()
-        fakeLogger = mockk()
-        fakeReshuffleNotifier = mockk()
-    }
-
     private val everyObserveWidget get() = every { fakeWidgetRepository.observeWidget(widgetFixture.id) }
     private val everyObserveWords get() = every { fakeWordsRepository.observeWords(widgetFixture.id) }
     private val everyObserveAreWordsSynchronized get() = every { fakeWordsSynchronizationStateNotifier.observeAreWordsSynchronized(widgetFixture.id) }
@@ -67,6 +60,24 @@ class WordsWidgetViewModelTest {
     private fun shouldNotReshuffle() = Channel<Unit>(Channel.CONFLATED).apply { close() }.also { everyReshuffleEvents returns it }
     private fun shouldReshuffleIsDeferred() = Channel<Unit>(Channel.CONFLATED).also { everyReshuffleEvents returns it }
     private fun widgetIsDeleted() = coEvery { fakeWidgetRepository.deleteWidget(widgetFixture.id) } just runs
+
+    private val wordsFixture = getRandomWords(10)
+    private val widgetFixture = Widget(
+        id = Widget.WidgetId(randomInt()),
+        sheet = Sheet.createNew(
+            sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = randomString(), sheetId = randomInt()),
+            name = randomString(),
+        )
+    )
+
+    @Before
+    fun setUp() {
+        fakeWidgetRepository = mockk()
+        fakeWordsSynchronizationStateNotifier = mockk()
+        fakeWordsRepository = mockk()
+        fakeLogger = mockk()
+        fakeReshuffleNotifier = mockk()
+    }
 
     @Test
     fun `when widget is received_given widget has ever been updated_then correct state is emitted`() = runTest(dispatcher) {
@@ -210,9 +221,5 @@ class WordsWidgetViewModelTest {
         reshuffleNotifier = fakeReshuffleNotifier
     )
 
-    private companion object {
-        fun getRandomWords(size: Int) = List(size) { randomWordPair() }
-        val wordsFixture = getRandomWords(10)
-        val widgetFixture = randomWidgetWithNewSheet().run { copy(sheet = sheet.copy(lastUpdatedAt = null)) }
-    }
+    private fun getRandomWords(size: Int) = List(size) { WordPair(randomString(), randomString()) }
 }

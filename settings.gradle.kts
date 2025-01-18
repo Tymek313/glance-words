@@ -21,4 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "GlanceWords"
 include(":app")
- 
+include(":domain")
+include(":data")
+include(":testCommon")

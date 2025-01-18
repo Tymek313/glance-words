@@ -1,19 +1,19 @@
 package com.example.words.widget.configuration
 
-import com.example.words.coroutines.MainDispatcherRule
-import com.example.words.coroutines.collectToListInBackground
-import com.example.words.fixture.randomInt
-import com.example.words.fixture.randomSpreadsheetSheet
-import com.example.words.fixture.randomString
-import com.example.words.fixture.sheetSpreadsheetIdFixture
-import com.example.words.fixture.spreadsheetSheetForNewSheetFixture
-import com.example.words.fixture.widgetWithExistingSheetFixture
-import com.example.words.fixture.widgetWithNewSheetFixture
+import com.example.domain.model.Sheet
+import com.example.domain.model.SheetId
+import com.example.domain.model.SheetSpreadsheetId
+import com.example.domain.model.SpreadsheetSheet
+import com.example.domain.model.Widget
+import com.example.domain.repository.SpreadsheetRepository
+import com.example.domain.repository.WidgetRepository
+import com.example.domain.synchronization.WordsSynchronizer
+import com.example.testcommon.coroutines.collectToListInBackground
+import com.example.testcommon.fixture.randomInstant
+import com.example.testcommon.fixture.randomInt
+import com.example.testcommon.fixture.randomString
 import com.example.words.logging.Logger
-import com.example.words.model.Widget
-import com.example.words.repository.SpreadsheetRepository
-import com.example.words.repository.WidgetRepository
-import com.example.words.synchronization.WordsSynchronizer
+import com.example.words.widget.coroutines.MainDispatcherRule
 import io.mockk.andThenJust
 import io.mockk.awaits
 import io.mockk.coEvery
@@ -49,17 +49,17 @@ class WidgetConfigurationViewModelTest {
     private lateinit var fakeLogger: Logger
 
     private val everyAddWidget get() = coEvery { fakeWidgetRepository.addWidget(any()) }
-    private val everySynchronizeWords get() = coEvery { fakeWordsSynchronizer.synchronizeWords(widgetWithExistingSheetFixture.id) }
-    private fun everyFetchSpreadsheetSheets(spreadsheetId: String = SPREADSHEET_ID_FIXTURE) = coEvery {
+    private val everySynchronizeWords get() = coEvery { fakeWordsSynchronizer.synchronizeWords(STORED_WIDGET.id) }
+    private fun everyFetchSpreadsheetSheets(spreadsheetId: String = SPREADSHEET_ID) = coEvery {
         fakeSpreadsheetRepository.fetchSpreadsheetSheets(spreadsheetId)
     }
 
     private fun spreadsheetsFetchIsSuspended() = everyFetchSpreadsheetSheets() just awaits
-    private fun spreadsheetsAreFetched() = everyFetchSpreadsheetSheets() returns listOf(spreadsheetSheetForNewSheetFixture)
-    private fun spreadsheetsFetchFails() = everyFetchSpreadsheetSheets() throws Exception(FETCH_EXCEPTION_MESSAGE_FIXTURE)
+    private fun spreadsheetsAreFetched() = everyFetchSpreadsheetSheets() returns listOf(FETCHED_SPREADSHEET_SHEET)
+    private fun spreadsheetsFetchFails() = everyFetchSpreadsheetSheets() throws Exception(FETCH_EXCEPTION_MESSAGE)
     private fun addWidgetIsSuspended() = everyAddWidget just awaits
-    private fun addWidgetFails() = everyAddWidget throws Exception(ADD_WIDGET_EXCEPTION_MESSAGE_FIXTURE)
-    private fun widgetIsAdded() = everyAddWidget returns widgetWithExistingSheetFixture
+    private fun addWidgetFails() = everyAddWidget throws Exception(ADD_WIDGET_EXCEPTION_MESSAGE)
+    private fun widgetIsAdded() = everyAddWidget returns STORED_WIDGET
     private fun wordsAreSynchronized() = everySynchronizeWords just runs
 
     @Before
@@ -74,7 +74,7 @@ class WidgetConfigurationViewModelTest {
             fakeWordsSynchronizer,
             fakeLogger
         )
-        coEvery { fakeLogger.e(any(), any(), any()) } just runs
+        every { fakeLogger.e(any(), any(), any()) } just runs
         every { fakeLogger.e(any(), any()) } just runs
     }
 
@@ -94,10 +94,10 @@ class WidgetConfigurationViewModelTest {
     fun `when initial spreadsheet id is set_given correct url and sheets are being fetched_state indicates loading and contains spreadsheet id`() {
         spreadsheetsFetchIsSuspended()
 
-        viewModel.setInitialSpreadsheetIdIfApplicable(createValidUrl())
+        viewModel.setInitialSpreadsheetIdIfApplicable(VALID_URL)
 
         assertEquals(
-            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID_FIXTURE, isLoading = true),
+            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = true),
             viewModel.state.value
         )
     }
@@ -106,10 +106,10 @@ class WidgetConfigurationViewModelTest {
     fun `when initial spreadsheet id is set_given correct url and sheets has been fetched_state contains spreadsheet id and sheets and doesn't indicate loading`() {
         spreadsheetsAreFetched()
 
-        viewModel.setInitialSpreadsheetIdIfApplicable(createValidUrl())
+        viewModel.setInitialSpreadsheetIdIfApplicable(VALID_URL)
 
         assertEquals(
-            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID_FIXTURE, sheets = widgetSheetsFixture, isLoading = false),
+            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, sheets = SHEETS, isLoading = false),
             viewModel.state.value
         )
     }
@@ -118,10 +118,10 @@ class WidgetConfigurationViewModelTest {
     fun `when initial spreadsheet id is set_given correct url and sheets fetch fails_state contains spreadsheet id and spreadsheet exception message and doesn't indicate loading`() {
         spreadsheetsFetchFails()
 
-        viewModel.setInitialSpreadsheetIdIfApplicable(createValidUrl())
+        viewModel.setInitialSpreadsheetIdIfApplicable(VALID_URL)
 
         assertEquals(
-            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID_FIXTURE, isLoading = false, spreadsheetError = FETCH_EXCEPTION_MESSAGE_FIXTURE),
+            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = false, spreadsheetError = FETCH_EXCEPTION_MESSAGE),
             viewModel.state.value
         )
     }
@@ -138,11 +138,11 @@ class WidgetConfigurationViewModelTest {
     fun `when spreadsheet id changes_given it is not blank and sheets are being fetched_state spreadsheet id is updated and indicates loading`() = runTest {
         spreadsheetsFetchIsSuspended()
 
-        viewModel.onSpreadsheetIdChanged(SPREADSHEET_ID_FIXTURE)
+        viewModel.onSpreadsheetIdChanged(SPREADSHEET_ID)
         advanceUntilIdle()
 
         assertEquals(
-            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID_FIXTURE, isLoading = true),
+            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = true),
             viewModel.state.value
         )
     }
@@ -152,11 +152,11 @@ class WidgetConfigurationViewModelTest {
         runTest {
             spreadsheetsAreFetched()
 
-            viewModel.onSpreadsheetIdChanged(SPREADSHEET_ID_FIXTURE)
+            viewModel.onSpreadsheetIdChanged(SPREADSHEET_ID)
             advanceUntilIdle()
 
             assertEquals(
-                WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID_FIXTURE, isLoading = false, sheets = widgetSheetsFixture),
+                WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = false, sheets = SHEETS),
                 viewModel.state.value
             )
         }
@@ -166,11 +166,11 @@ class WidgetConfigurationViewModelTest {
         runTest {
             spreadsheetsFetchFails()
 
-            viewModel.onSpreadsheetIdChanged(SPREADSHEET_ID_FIXTURE)
+            viewModel.onSpreadsheetIdChanged(SPREADSHEET_ID)
             advanceUntilIdle()
 
             assertEquals(
-                WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID_FIXTURE, isLoading = false, spreadsheetError = FETCH_EXCEPTION_MESSAGE_FIXTURE),
+                WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = false, spreadsheetError = FETCH_EXCEPTION_MESSAGE),
                 viewModel.state.value
             )
         }
@@ -220,7 +220,7 @@ class WidgetConfigurationViewModelTest {
         viewModel.saveWidgetConfiguration(randomInt())
 
         assertEquals(
-            stateAfterSheetSelection.copy(isSavingWidget = true),
+            STATE_AFTER_SHEET_SELECTION.copy(isSavingWidget = true),
             states.last()
         )
     }
@@ -236,7 +236,7 @@ class WidgetConfigurationViewModelTest {
         viewModel.saveWidgetConfiguration(randomInt())
 
         assertEquals(
-            stateAfterSheetSelection.copy(generalError = null, isSavingWidget = true),
+            STATE_AFTER_SHEET_SELECTION.copy(generalError = null, isSavingWidget = true),
             states.last()
         )
     }
@@ -248,10 +248,10 @@ class WidgetConfigurationViewModelTest {
         wordsAreSynchronized()
         setSpreadsheetIdAndSheet()
 
-        viewModel.saveWidgetConfiguration(widgetWithNewSheetFixture.id.value)
+        viewModel.saveWidgetConfiguration(WIDGET_TO_STORE.id.value)
 
         coVerify {
-            fakeWidgetRepository.addWidget(widgetWithNewSheetFixture.withSpreadsheetId(SPREADSHEET_ID_FIXTURE))
+            fakeWidgetRepository.addWidget(WIDGET_TO_STORE)
         }
     }
 
@@ -264,7 +264,7 @@ class WidgetConfigurationViewModelTest {
 
         viewModel.saveWidgetConfiguration(randomInt())
 
-        coVerify { fakeWordsSynchronizer.synchronizeWords(widgetWithExistingSheetFixture.id) }
+        coVerify { fakeWordsSynchronizer.synchronizeWords(STORED_WIDGET.id) }
     }
 
     @Test
@@ -278,7 +278,7 @@ class WidgetConfigurationViewModelTest {
         viewModel.saveWidgetConfiguration(randomInt())
 
         assertEquals(
-            stateAfterSheetSelection.copy(
+            STATE_AFTER_SHEET_SELECTION.copy(
                 isSavingWidget = true,
                 widgetConfigurationSaved = true,
             ),
@@ -296,9 +296,9 @@ class WidgetConfigurationViewModelTest {
         viewModel.saveWidgetConfiguration(randomInt())
 
         assertEquals(
-            stateAfterSheetSelection.copy(
+            STATE_AFTER_SHEET_SELECTION.copy(
                 isSavingWidget = false,
-                generalError = ADD_WIDGET_EXCEPTION_MESSAGE_FIXTURE,
+                generalError = ADD_WIDGET_EXCEPTION_MESSAGE,
             ),
             states.last()
         )
@@ -317,30 +317,42 @@ class WidgetConfigurationViewModelTest {
     }
 
     private fun TestScope.setSpreadsheetIdAndSheet() {
-        viewModel.onSpreadsheetIdChanged(SPREADSHEET_ID_FIXTURE)
+        viewModel.onSpreadsheetIdChanged(SPREADSHEET_ID)
         advanceUntilIdle()
-        viewModel.onSheetSelect(sheetSpreadsheetIdFixture.sheetId)
+        viewModel.onSheetSelect(FETCHED_SPREADSHEET_SHEET.id)
     }
 
-    private fun createValidUrl() = "https://docs.google.com/spreadsheets/d/$SPREADSHEET_ID_FIXTURE/"
+    private fun randomSpreadsheetSheet() = SpreadsheetSheet(id = randomInt(), name = randomString())
 
-    private fun Widget.withSpreadsheetId(spreadsheetId: String) = copy(
-        sheet = sheet.copy(
-            sheetSpreadsheetId = sheet.sheetSpreadsheetId.copy(spreadsheetId = spreadsheetId)
+    private companion object {
+        val SPREADSHEET_ID = randomString()
+        val VALID_URL = "https://docs.google.com/spreadsheets/d/$SPREADSHEET_ID/"
+        val FETCH_EXCEPTION_MESSAGE = randomString()
+        val ADD_WIDGET_EXCEPTION_MESSAGE = randomString()
+        val STORED_WIDGET = Widget(
+            id = Widget.WidgetId(randomInt()),
+            sheet = Sheet.createExisting(
+                id = SheetId(randomInt()),
+                sheetSpreadsheetId = SheetSpreadsheetId(randomString(), randomInt()),
+                name = randomString(),
+                lastUpdatedAt = randomInstant()
+            )
         )
-    )
-
-    private val stateAfterSheetSelection = WidgetConfigurationState(
-        spreadsheetId = SPREADSHEET_ID_FIXTURE,
-        selectedSheetId = spreadsheetSheetForNewSheetFixture.id,
-        sheets = widgetSheetsFixture
-    )
-
-    companion object {
-        private val widgetSheetsFixture =
-            listOf(WidgetConfigurationState.Sheet(id = spreadsheetSheetForNewSheetFixture.id, name = spreadsheetSheetForNewSheetFixture.name))
-        private val SPREADSHEET_ID_FIXTURE = randomString()
-        private val FETCH_EXCEPTION_MESSAGE_FIXTURE = randomString()
-        private val ADD_WIDGET_EXCEPTION_MESSAGE_FIXTURE = randomString()
+        val FETCHED_SPREADSHEET_SHEET = SpreadsheetSheet(id = randomInt(), name = randomString())
+        val SHEETS = listOf(
+            WidgetConfigurationState.Sheet(id = FETCHED_SPREADSHEET_SHEET.id, name = FETCHED_SPREADSHEET_SHEET.name)
+        )
+        val WIDGET_TO_STORE = Widget(
+            id = Widget.WidgetId(randomInt()),
+            sheet = Sheet.createNew(
+                sheetSpreadsheetId = SheetSpreadsheetId(SPREADSHEET_ID, FETCHED_SPREADSHEET_SHEET.id),
+                name = FETCHED_SPREADSHEET_SHEET.name
+            )
+        )
+        val STATE_AFTER_SHEET_SELECTION = WidgetConfigurationState(
+            spreadsheetId = SPREADSHEET_ID,
+            selectedSheetId = FETCHED_SPREADSHEET_SHEET.id,
+            sheets = SHEETS
+        )
     }
 }

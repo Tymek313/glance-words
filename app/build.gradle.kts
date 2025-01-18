@@ -1,7 +1,6 @@
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
-    alias(libs.plugins.sqldelight)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -31,12 +30,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+    kotlin {
+        jvmToolchain(libs.versions.java.get().toInt())
     }
     kotlinOptions {
-        jvmTarget = "17"
         // Enable for debugging
         // freeCompilerArgs = listOf("-Xdebug")
     }
@@ -54,16 +51,14 @@ android {
     }
 }
 
-sqldelight {
-    databases {
-        create("Database") {
-            packageName.set("com.example.words.database")
-        }
-    }
-}
-
 dependencies {
-
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.koin.core.viewmodel)
+    implementation(libs.koin.androidx.workmanager)
+    implementation(libs.koin.android)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -81,18 +76,8 @@ dependencies {
     implementation(libs.androidx.work)
     implementation(libs.material)
     implementation(libs.androidx.activity)
-    implementation(libs.google.api.client)
-    implementation(libs.google.auth.library.oauth2.http)
-    implementation(libs.google.api.services.sheets)
-    implementation(libs.okio)
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.android)
     implementation(libs.sqldelight.driver.android)
-    implementation(libs.sqldelight.coroutines)
-    implementation(libs.sqldelight.primitive.adapters)
-    testImplementation(libs.sqldelight.driver.jvm)
-    testImplementation(libs.okio.fakefilesystem)
-    testImplementation(libs.ktor.client.mock)
+    testImplementation(project(":testCommon"))
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlin.test)
