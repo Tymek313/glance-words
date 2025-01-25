@@ -20,9 +20,7 @@ import io.mockk.runs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -46,29 +44,19 @@ class WordsWidgetViewModelTest {
     private lateinit var fakeLogger: Logger
     private lateinit var fakeReshuffleNotifier: ReshuffleNotifier
 
-    private val everyObserveWidget get() = every { fakeWidgetRepository.observeWidget(widgetFixture.id) }
-    private val everyObserveWords get() = every { fakeWordsRepository.observeWords(widgetFixture.id) }
-    private val everyObserveAreWordsSynchronized get() = every { fakeWordsSynchronizationStateNotifier.observeAreWordsSynchronized(widgetFixture.id) }
+    private val everyObserveWidget get() = every { fakeWidgetRepository.observeWidget(WIDGET.id) }
+    private val everyObserveWords get() = every { fakeWordsRepository.observeWords(WIDGET.id) }
+    private val everyObserveAreWordsSynchronized get() = every { fakeWordsSynchronizationStateNotifier.observeAreWordsSynchronized(WIDGET.id) }
     private val everyReshuffleEvents get() = every { fakeReshuffleNotifier.reshuffleEvents }
 
-    private fun widgetIsEmitted(widget: Widget = widgetFixture) = everyObserveWidget returns flowOf(widget)
+    private fun widgetIsEmitted(widget: Widget = WIDGET) = everyObserveWidget returns flowOf(widget)
     private fun noWordsAreEmitted() = everyObserveWords returns flowOf(emptyList())
-    private fun wordsAreEmitted() = everyObserveWords returns flowOf(wordsFixture)
-    private fun multipleWordsAreEmitted(vararg words: List<WordPair>) = everyObserveWords returns words.asFlow()
+    private fun wordsAreEmitted() = everyObserveWords returns flowOf(WORDS)
+    private fun multipleWordListsAreEmitted(first: List<WordPair>, second: List<WordPair>) = everyObserveWords returns flowOf(first) andThen flowOf(second)
     private fun wordsAreNotLoading() = everyObserveAreWordsSynchronized returns flowOf(false)
     private fun wordsAreLoadingDeferred() = MutableStateFlow(false).also { everyObserveAreWordsSynchronized returns it }
-    private fun shouldNotReshuffle() = Channel<Unit>(Channel.CONFLATED).apply { close() }.also { everyReshuffleEvents returns it }
     private fun shouldReshuffleIsDeferred() = Channel<Unit>(Channel.CONFLATED).also { everyReshuffleEvents returns it }
-    private fun widgetIsDeleted() = coEvery { fakeWidgetRepository.deleteWidget(widgetFixture.id) } just runs
-
-    private val wordsFixture = getRandomWords(10)
-    private val widgetFixture = Widget(
-        id = Widget.WidgetId(randomInt()),
-        sheet = Sheet.createNew(
-            sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = randomString(), sheetId = randomInt()),
-            name = randomString(),
-        )
-    )
+    private fun widgetIsDeleted() = coEvery { fakeWidgetRepository.deleteWidget(WIDGET.id) } just runs
 
     @Before
     fun setUp() {
@@ -81,38 +69,37 @@ class WordsWidgetViewModelTest {
 
     @Test
     fun `when widget is received_given widget has ever been updated_then correct state is emitted`() = runTest(dispatcher) {
-        widgetIsEmitted(widgetFixture.withLastUpdatedAt("2024-04-21T19:00:00.00Z"))
+        widgetIsEmitted(WIDGET.withLastUpdatedAt("2024-04-21T19:00:00.00Z"))
         noWordsAreEmitted()
         wordsAreNotLoading()
-        shouldNotReshuffle()
+        shouldReshuffleIsDeferred()
 
-        val viewModel = createViewModel()
+        val states = collectToListInBackground(createViewModel().uiState)
 
         assertEquals(
             WidgetUiState(
-                sheetName = widgetFixture.sheet.name,
+                sheetName = WIDGET.sheet.name,
                 lastUpdatedAt = "Apr 21, 2024, 7:00 PM",
             ),
-            viewModel.uiState.single()
+            states.single()
         )
     }
-
 
     @Test
     fun `when widget is received_given widget has never been updated_then correct state containing empty last updated date is emitted`() = runTest(dispatcher) {
         widgetIsEmitted()
         noWordsAreEmitted()
         wordsAreNotLoading()
-        shouldNotReshuffle()
+        shouldReshuffleIsDeferred()
 
-        val viewModel = createViewModel()
+        val states = collectToListInBackground(createViewModel().uiState)
 
         assertEquals(
             WidgetUiState(
-                sheetName = widgetFixture.sheet.name,
+                sheetName = WIDGET.sheet.name,
                 lastUpdatedAt = ""
             ),
-            viewModel.uiState.single()
+            states.single()
         )
     }
 
@@ -121,12 +108,12 @@ class WordsWidgetViewModelTest {
         widgetIsEmitted()
         wordsAreEmitted()
         wordsAreNotLoading()
-        shouldNotReshuffle()
+        shouldReshuffleIsDeferred()
 
         val states = collectToListInBackground(createViewModel().uiState)
 
-        assertEquals(wordsFixture.size, states.single().words.size)
-        assertNotEquals(wordsFixture, states.single().words)
+        assertEquals(WORDS.size, states.single().words.size)
+        assertNotEquals(WORDS, states.single().words)
     }
 
     @Test
@@ -134,7 +121,7 @@ class WordsWidgetViewModelTest {
         widgetIsEmitted()
         wordsAreEmitted()
         wordsAreNotLoading()
-        shouldNotReshuffle()
+        shouldReshuffleIsDeferred()
         val randomLowerCount = Random.nextInt(48)
         everyObserveWords returns flowOf(
             getRandomWords(Random.nextInt(52, 100)),
@@ -156,7 +143,7 @@ class WordsWidgetViewModelTest {
     @Test
     fun `when loading state is received_given widget is reported as loading_then state indicates loading`() = runTest(dispatcher) {
         widgetIsEmitted()
-        shouldNotReshuffle()
+        shouldReshuffleIsDeferred()
         wordsAreEmitted()
         val isLoadingFlow = wordsAreLoadingDeferred()
         val states = collectToListInBackground(createViewModel().uiState)
@@ -168,7 +155,7 @@ class WordsWidgetViewModelTest {
 
     @Test
     fun `when loading state is received_given widget is reported as not loading_then state does not indicate loading`() = runTest(dispatcher) {
-        shouldNotReshuffle()
+        shouldReshuffleIsDeferred()
         widgetIsEmitted()
         wordsAreEmitted()
         val isLoadingFlow = wordsAreLoadingDeferred()
@@ -184,14 +171,14 @@ class WordsWidgetViewModelTest {
     fun `when reshuffling event is received_then state contains new set of words`() = runTest(dispatcher) {
         widgetIsEmitted()
         wordsAreNotLoading()
-        multipleWordsAreEmitted(getRandomWords(10), wordsFixture)
+        multipleWordListsAreEmitted(getRandomWords(), WORDS)
         val reshuffleFlow = shouldReshuffleIsDeferred()
         val states = collectToListInBackground(createViewModel().uiState)
 
         reshuffleFlow.send(Unit)
 
-        assertEquals(wordsFixture.size, states.last().words.size)
-        assertTrue(states.last().words.containsAll(wordsFixture))
+        assertEquals(WORDS.size, states.last().words.size)
+        assertTrue(states.last().words.containsAll(WORDS))
     }
 
     @Test
@@ -199,19 +186,19 @@ class WordsWidgetViewModelTest {
         widgetIsEmitted()
         wordsAreNotLoading()
         wordsAreEmitted()
-        shouldNotReshuffle()
+        shouldReshuffleIsDeferred()
         widgetIsDeleted()
         val viewModel = createViewModel()
 
         viewModel.deleteWidget()
 
-        coVerify { fakeWidgetRepository.deleteWidget(widgetFixture.id) }
+        coVerify { fakeWidgetRepository.deleteWidget(WIDGET.id) }
     }
 
     private fun Widget.withLastUpdatedAt(isoLastUpdatedAt: String) = copy(sheet = sheet.copy(lastUpdatedAt = Instant.parse(isoLastUpdatedAt)))
 
     private fun createViewModel() = WordsWidgetViewModel(
-        widgetId = widgetFixture.id,
+        widgetId = WIDGET.id,
         widgetRepository = fakeWidgetRepository,
         wordsSynchronizationStateNotifier = fakeWordsSynchronizationStateNotifier,
         wordsRepository = fakeWordsRepository,
@@ -221,5 +208,15 @@ class WordsWidgetViewModelTest {
         reshuffleNotifier = fakeReshuffleNotifier
     )
 
-    private fun getRandomWords(size: Int) = List(size) { WordPair(randomString(), randomString()) }
+    private companion object {
+        fun getRandomWords(size: Int = 10) = List(size) { WordPair(randomString(), randomString()) }
+        val WORDS = getRandomWords()
+        val WIDGET = Widget(
+            id = Widget.WidgetId(randomInt()),
+            sheet = Sheet.createNew(
+                sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = randomString(), sheetId = randomInt()),
+                name = randomString(),
+            )
+        )
+    }
 }
