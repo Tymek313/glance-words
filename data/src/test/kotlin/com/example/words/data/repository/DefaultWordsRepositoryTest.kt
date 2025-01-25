@@ -6,6 +6,9 @@ import com.example.testcommon.coroutines.collectToListInBackground
 import com.example.words.data.datasource.CSVLine
 import com.example.words.data.datasource.WordsLocalDataSource
 import com.example.words.data.datasource.WordsRemoteDataSource
+import com.example.words.data.fixture.SHEET_SPREADSHEET_ID
+import com.example.words.data.fixture.WIDGET_ID
+import com.example.words.data.fixture.WORD_PAIR
 import com.example.words.data.mapper.WordPairMapper
 import io.mockk.awaits
 import io.mockk.coEvery
@@ -34,11 +37,11 @@ class DefaultWordsRepositoryTest {
     private lateinit var fakeRemoteDataSource: WordsRemoteDataSource
     private lateinit var fakeWordPairMapper: WordPairMapper
 
-    private val everyGetLocalWords get() = coEvery { fakeLocalDataSource.getWords(com.example.words.data.fixture.widgetIdFixture) }
-    private val everyGetRemoteWords get() = coEvery { fakeRemoteDataSource.getWords(com.example.words.data.fixture.sheetSpreadsheetIdFixture) }
-    private val everyStoreLocalWords get() = coEvery { fakeLocalDataSource.storeWords(com.example.words.data.fixture.widgetIdFixture, TEST_CSV_LINES) }
+    private val everyGetLocalWords get() = coEvery { fakeLocalDataSource.getWords(WIDGET_ID) }
+    private val everyGetRemoteWords get() = coEvery { fakeRemoteDataSource.getWords(SHEET_SPREADSHEET_ID) }
+    private val everyStoreLocalWords get() = coEvery { fakeLocalDataSource.storeWords(WIDGET_ID, TEST_CSV_LINES) }
     private val everyMapWordPair get() = every { fakeWordPairMapper.map(TEST_CSV_LINES.first()) }
-    private val everyDeleteLocalWords get() = coEvery { fakeLocalDataSource.deleteWords(com.example.words.data.fixture.widgetIdFixture) }
+    private val everyDeleteLocalWords get() = coEvery { fakeLocalDataSource.deleteWords(WIDGET_ID) }
 
     @Before
     fun setUp() {
@@ -55,7 +58,7 @@ class DefaultWordsRepositoryTest {
 
         val words = collectWords()
 
-        assertEquals(listOf(com.example.words.data.fixture.wordPairFixture), words.single())
+        assertEquals(listOf(WORD_PAIR), words.single())
     }
 
     @Test
@@ -77,12 +80,12 @@ class DefaultWordsRepositoryTest {
 
         repository.synchronizeWords(
             WordsRepository.SynchronizationRequest(
-                com.example.words.data.fixture.widgetIdFixture,
-                com.example.words.data.fixture.sheetSpreadsheetIdFixture
+                WIDGET_ID,
+                SHEET_SPREADSHEET_ID
             )
         )
 
-        assertEquals(listOf(com.example.words.data.fixture.wordPairFixture), words.single())
+        assertEquals(listOf(WORD_PAIR), words.single())
     }
 
     @Test
@@ -92,35 +95,31 @@ class DefaultWordsRepositoryTest {
 
         backgroundScope.launch {
             repository.synchronizeWords(
-                WordsRepository.SynchronizationRequest(
-                    com.example.words.data.fixture.widgetIdFixture,
-                    com.example.words.data.fixture.sheetSpreadsheetIdFixture
-                )
+                WordsRepository.SynchronizationRequest(WIDGET_ID, SHEET_SPREADSHEET_ID)
             )
         }
 
-        coVerify { fakeLocalDataSource.storeWords(com.example.words.data.fixture.widgetIdFixture, TEST_CSV_LINES) }
+        coVerify { fakeLocalDataSource.storeWords(WIDGET_ID, TEST_CSV_LINES) }
     }
-
 
     @Test
     fun `when words are deleted_they are deleted from the local data source`() = runTest(dispatcher) {
         localWordsAreDeleted()
 
-        repository.deleteCachedWords(com.example.words.data.fixture.widgetIdFixture)
+        repository.deleteCachedWords(WIDGET_ID)
 
-        coVerify { fakeLocalDataSource.deleteWords(com.example.words.data.fixture.widgetIdFixture) }
+        coVerify { fakeLocalDataSource.deleteWords(WIDGET_ID) }
     }
 
     private fun TestScope.collectWords(): List<List<WordPair>?> =
-        collectToListInBackground(repository.observeWords(com.example.words.data.fixture.widgetIdFixture))
+        collectToListInBackground(repository.observeWords(WIDGET_ID))
 
     private fun noLocalWordsAreReturned() = everyGetLocalWords returns null
     private fun localWordsAreReturned() = everyGetLocalWords returns TEST_CSV_LINES
     private fun remoteWordsAreReturned() = everyGetRemoteWords returns TEST_CSV_LINES
     private fun wordsAreStored() = everyStoreLocalWords just runs
     private fun wordsStorageIsSuspended() = everyStoreLocalWords just awaits
-    private fun mapperReturnsWordPair() = everyMapWordPair returns com.example.words.data.fixture.wordPairFixture
+    private fun mapperReturnsWordPair() = everyMapWordPair returns WORD_PAIR
     private fun localWordsAreDeleted() = everyDeleteLocalWords just runs
 
     companion object {

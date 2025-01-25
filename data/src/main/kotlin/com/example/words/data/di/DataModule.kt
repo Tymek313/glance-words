@@ -1,6 +1,5 @@
 package com.example.words.data.di
 
-
 import com.example.domain.repository.SheetRepository
 import com.example.domain.repository.SpreadsheetRepository
 import com.example.domain.repository.WidgetRepository
@@ -47,4 +46,3 @@ val dataModule = module {
 }
 
 val QUALIFIER_SPREADSHEETS_DIRECTORY = named("spreadsheets_directory")
-
