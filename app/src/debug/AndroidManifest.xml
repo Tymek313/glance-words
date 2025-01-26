@@ -6,7 +6,7 @@
 
     <application tools:ignore="MissingApplicationIcon">
         <activity
-            android:name="com.example.words.DebugActivity"
+            android:name="com.pt.glancewords.DebugActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.GlanceWords">

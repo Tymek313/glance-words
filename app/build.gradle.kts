@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.glancewords"
+    namespace = "com.pt.glancewords"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.glancewords"
+        applicationId = "com.pt.glancewords"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
