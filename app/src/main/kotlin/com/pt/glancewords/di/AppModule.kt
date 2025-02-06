@@ -7,11 +7,13 @@ import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.pt.glancewords.data.database.createDatabase
 import com.pt.glancewords.data.di.QUALIFIER_SPREADSHEETS_DIRECTORY
 import com.pt.glancewords.database.Database
-import com.pt.glancewords.domain.model.Widget
+import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.synchronization.DefaultWordsSynchronizationStateNotifier
 import com.pt.glancewords.domain.synchronization.DefaultWordsSynchronizer
 import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifier
 import com.pt.glancewords.domain.synchronization.WordsSynchronizer
+import com.pt.glancewords.domain.usecase.AddWidget
+import com.pt.glancewords.domain.usecase.DefaultAddWidget
 import com.pt.glancewords.logging.DefaultLogger
 import com.pt.glancewords.logging.Logger
 import com.pt.glancewords.widget.DefaultReshuffleNotifier
@@ -33,7 +35,7 @@ val appModule = module {
     singleOf<ReshuffleNotifier>(::DefaultReshuffleNotifier)
     factory { (widgetId: GlanceId) ->
         WordsWidgetViewModel(
-            Widget.WidgetId(GlanceAppWidgetManager(get()).getAppWidgetId(widgetId)),
+            WidgetId(GlanceAppWidgetManager(get()).getAppWidgetId(widgetId)),
             get(),
             get(),
             get(),
@@ -72,4 +74,5 @@ val appModule = module {
         )
     }
     factory(QUALIFIER_SPREADSHEETS_DIRECTORY) { androidContext().filesDir }
+    factory<AddWidget> { DefaultAddWidget(get(), get()) }
 }

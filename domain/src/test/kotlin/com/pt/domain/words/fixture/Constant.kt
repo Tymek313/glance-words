@@ -9,7 +9,7 @@ import com.pt.testcommon.fixture.randomString
 
 val instantFixture = randomInstant()
 val widgetIdFixture = randomWidgetId()
-val existingSheetFixture = Sheet.createExisting(
+val existingSheetFixture = Sheet(
     id = randomSheetId(),
     sheetSpreadsheetId = SheetSpreadsheetId(randomString(), randomInt()),
     name = randomString(),

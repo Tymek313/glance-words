@@ -1,13 +1,15 @@
 package com.pt.glancewords.widget.configuration
 
+import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.model.SpreadsheetSheet
 import com.pt.glancewords.domain.model.Widget
+import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SpreadsheetRepository
-import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.synchronization.WordsSynchronizer
+import com.pt.glancewords.domain.usecase.AddWidget
 import com.pt.glancewords.logging.Logger
 import com.pt.glancewords.widget.coroutines.MainDispatcherRule
 import com.pt.testcommon.coroutines.collectToListInBackground
@@ -44,11 +46,11 @@ class WidgetConfigurationViewModelTest {
 
     private lateinit var viewModel: WidgetConfigurationViewModel
     private lateinit var fakeSpreadsheetRepository: SpreadsheetRepository
-    private lateinit var fakeWidgetRepository: WidgetRepository
+    private lateinit var fakeAddWidget: AddWidget
     private lateinit var fakeWordsSynchronizer: WordsSynchronizer
     private lateinit var fakeLogger: Logger
 
-    private val everyAddWidget get() = coEvery { fakeWidgetRepository.addWidget(any()) }
+    private val everyAddWidget get() = coEvery { fakeAddWidget.invoke(any()) }
     private val everySynchronizeWords get() = coEvery { fakeWordsSynchronizer.synchronizeWords(STORED_WIDGET.id) }
     private fun everyFetchSpreadsheetSheets(spreadsheetId: String = SPREADSHEET_ID) = coEvery {
         fakeSpreadsheetRepository.fetchSpreadsheetSheets(spreadsheetId)
@@ -59,19 +61,19 @@ class WidgetConfigurationViewModelTest {
     private fun spreadsheetsFetchFails() = everyFetchSpreadsheetSheets() throws Exception(FETCH_EXCEPTION_MESSAGE)
     private fun addWidgetIsSuspended() = everyAddWidget just awaits
     private fun addWidgetFails() = everyAddWidget throws Exception(ADD_WIDGET_EXCEPTION_MESSAGE)
-    private fun widgetIsAdded() = everyAddWidget returns STORED_WIDGET
+    private fun widgetIsAdded() = everyAddWidget returns STORED_WIDGET.id
     private fun wordsAreSynchronized() = everySynchronizeWords just runs
 
     @Before
     fun setup() {
         fakeSpreadsheetRepository = mockk()
-        fakeWidgetRepository = mockk()
+        fakeAddWidget = mockk()
         fakeWordsSynchronizer = mockk()
         fakeLogger = mockk()
         viewModel = WidgetConfigurationViewModel(
             fakeSpreadsheetRepository,
-            fakeWidgetRepository,
             fakeWordsSynchronizer,
+            fakeAddWidget,
             fakeLogger
         )
         every { fakeLogger.e(any(), any(), any()) } just runs
@@ -248,11 +250,9 @@ class WidgetConfigurationViewModelTest {
         wordsAreSynchronized()
         setSpreadsheetIdAndSheet()
 
-        viewModel.saveWidgetConfiguration(WIDGET_TO_STORE.id.value)
+        viewModel.saveWidgetConfiguration(WIDGET_TO_ADD.widgetId.value)
 
-        coVerify {
-            fakeWidgetRepository.addWidget(WIDGET_TO_STORE)
-        }
+        coVerify { fakeAddWidget.invoke(WIDGET_TO_ADD) }
     }
 
     @Test
@@ -330,8 +330,8 @@ class WidgetConfigurationViewModelTest {
         val FETCH_EXCEPTION_MESSAGE = randomString()
         val ADD_WIDGET_EXCEPTION_MESSAGE = randomString()
         val STORED_WIDGET = Widget(
-            id = Widget.WidgetId(randomInt()),
-            sheet = Sheet.createExisting(
+            id = WidgetId(randomInt()),
+            sheet = Sheet(
                 id = SheetId(randomInt()),
                 sheetSpreadsheetId = SheetSpreadsheetId(randomString(), randomInt()),
                 name = randomString(),
@@ -342,9 +342,9 @@ class WidgetConfigurationViewModelTest {
         val SHEETS = listOf(
             WidgetConfigurationState.Sheet(id = FETCHED_SPREADSHEET_SHEET.id, name = FETCHED_SPREADSHEET_SHEET.name)
         )
-        val WIDGET_TO_STORE = Widget(
-            id = Widget.WidgetId(randomInt()),
-            sheet = Sheet.createNew(
+        val WIDGET_TO_ADD = AddWidget.WidgetToAdd(
+            widgetId = WidgetId(randomInt()),
+            sheet = NewSheet(
                 sheetSpreadsheetId = SheetSpreadsheetId(SPREADSHEET_ID, FETCHED_SPREADSHEET_SHEET.id),
                 name = FETCHED_SPREADSHEET_SHEET.name
             )

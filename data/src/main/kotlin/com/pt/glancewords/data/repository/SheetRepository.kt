@@ -2,6 +2,7 @@ package com.pt.glancewords.data.repository
 
 import com.pt.glancewords.data.mapper.SheetMapper
 import com.pt.glancewords.database.DbSheetQueries
+import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
@@ -20,12 +21,12 @@ internal class DefaultSheetRepository(
         database.getAll().executeAsList().map(sheetMapper::mapToDomain)
     }
 
-    override suspend fun addSheet(sheet: Sheet) = withContext(ioDispatcher) {
+    override suspend fun addSheet(sheet: NewSheet) = withContext(ioDispatcher) {
         val sheetId = database.transactionWithResult {
             database.insert(sheetMapper.mapToDb(sheet))
             database.getLastId().executeAsOne().toInt()
         }
-        sheet.copy(id = SheetId(sheetId))
+        sheetMapper.mapToDomain(sheet, sheetId)
     }
 
     override suspend fun getBySheetSpreadsheetId(sheetSpreadsheetId: SheetSpreadsheetId) = withContext(ioDispatcher) {

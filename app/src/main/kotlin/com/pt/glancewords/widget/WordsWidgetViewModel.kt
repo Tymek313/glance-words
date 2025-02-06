@@ -1,6 +1,7 @@
 package com.pt.glancewords.widget
 
 import com.pt.glancewords.domain.model.Widget
+import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.model.WordPair
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
@@ -25,7 +26,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 class WordsWidgetViewModel(
-    private val widgetId: Widget.WidgetId,
+    private val widgetId: WidgetId,
     private val widgetRepository: WidgetRepository,
     private val wordsRepository: WordsRepository,
     wordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier,

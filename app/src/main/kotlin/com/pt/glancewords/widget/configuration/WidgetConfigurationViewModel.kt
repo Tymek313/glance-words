@@ -2,12 +2,12 @@ package com.pt.glancewords.widget.configuration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pt.glancewords.domain.model.Sheet
+import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
-import com.pt.glancewords.domain.model.Widget
+import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SpreadsheetRepository
-import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.synchronization.WordsSynchronizer
+import com.pt.glancewords.domain.usecase.AddWidget
 import com.pt.glancewords.logging.Logger
 import com.pt.glancewords.logging.e
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -20,8 +20,8 @@ import kotlinx.coroutines.launch
 
 class WidgetConfigurationViewModel(
     private val spreadsheetRepository: SpreadsheetRepository,
-    private val widgetRepository: WidgetRepository,
     private val wordsSynchronizer: WordsSynchronizer,
+    private val addWidget: AddWidget,
     private val logger: Logger
 ) : ViewModel() {
 
@@ -80,19 +80,19 @@ class WidgetConfigurationViewModel(
         }
         _state.update { it.copy(isSavingWidget = true, generalError = null) }
         viewModelScope.launch(generalCoroutineHandler) {
-            val storedWidget = widgetRepository.addWidget(createWidget(widgetId, selectedSheetId))
-            wordsSynchronizer.synchronizeWords(storedWidget.id)
+            val storedWidgetId = addWidget(createWidgetToAdd(widgetId, selectedSheetId))
+            wordsSynchronizer.synchronizeWords(storedWidgetId)
             _state.update { it.copy(widgetConfigurationSaved = true) }
         }
     }
 
-    private fun createWidget(widgetId: Int, selectedSheetId: Int): Widget {
+    private fun createWidgetToAdd(widgetId: Int, selectedSheetId: Int): AddWidget.WidgetToAdd {
         val state = state.value
-        return Widget(
-            id = Widget.WidgetId(widgetId),
-            sheet = Sheet.createNew(
+        return AddWidget.WidgetToAdd(
+            widgetId = WidgetId(widgetId),
+            sheet = NewSheet(
                 sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = state.spreadsheetId, sheetId = selectedSheetId),
-                name = state.sheets.first { it.id == selectedSheetId }.name,
+                name = state.sheets.first { it.id == selectedSheetId }.name
             )
         )
     }

@@ -4,16 +4,16 @@ import com.pt.glancewords.data.fixture.DB_SHEET
 import com.pt.glancewords.data.fixture.DB_WIDGET
 import com.pt.glancewords.data.fixture.WIDGET_WITH_EXISTING_SHEET
 import com.pt.glancewords.data.fixture.randomDbSheet
-import com.pt.glancewords.data.fixture.randomExistingSheet
 import com.pt.glancewords.data.fixture.randomWidgetId
-import com.pt.glancewords.data.fixture.randomWidgetWithNewSheet
+import com.pt.glancewords.data.mapper.WidgetMapper
+import com.pt.glancewords.data.utility.createTestDatabase
 import com.pt.glancewords.database.Database
 import com.pt.glancewords.database.DbWidget
+import com.pt.glancewords.database.GetById
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.Widget
-import com.pt.glancewords.domain.repository.SheetRepository
 import com.pt.testcommon.coroutines.collectToListInBackground
-import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -30,16 +30,16 @@ class DefaultWidgetRepositoryTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     private val dispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: DefaultWidgetRepository
-    private lateinit var fakeSheetRepository: SheetRepository
+    private lateinit var fakeWidgetMapper: WidgetMapper
     private lateinit var database: Database
     private var storedSheetCount: Int by Delegates.notNull()
     private val nextStoredSheetId get() = storedSheetCount + 1
 
     @Before
     fun setUp() {
-        database = com.pt.glancewords.data.utility.createTestDatabase()
-        fakeSheetRepository = mockk()
-        repository = DefaultWidgetRepository(database.dbWidgetQueries, fakeSheetRepository, dispatcher)
+        database = createTestDatabase()
+        fakeWidgetMapper = mockk()
+        repository = DefaultWidgetRepository(database.dbWidgetQueries, fakeWidgetMapper, dispatcher)
         storedSheetCount = insertSheetsToDb()
     }
 
@@ -60,64 +60,35 @@ class DefaultWidgetRepositoryTest {
     fun `when widget is observed_given widget has been updated_then widget is emitted`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(DB_SHEET)
         database.dbWidgetQueries.insert(DB_WIDGET.copy(sheet_id = nextStoredSheetId))
+        every {
+            fakeWidgetMapper.mapToDomain(
+                GetById(
+                    id = DB_WIDGET.id,
+                    sheet_id = nextStoredSheetId,
+                    s_spreadsheet_id = DB_SHEET.spreadsheet_id,
+                    s_sheet_id = DB_SHEET.sheet_id,
+                    s_name = DB_SHEET.name,
+                    s_last_updated_at = DB_SHEET.last_updated_at
+                )
+            )
+        } returns WIDGET_WITH_EXISTING_SHEET
 
         val widgetEmissions = collectToListInBackground(repository.observeWidget(WIDGET_WITH_EXISTING_SHEET.id))
 
-        assertEquals(
-            WIDGET_WITH_EXISTING_SHEET.withSheetId(nextStoredSheetId),
-            widgetEmissions.single()
-        )
+        assertEquals(WIDGET_WITH_EXISTING_SHEET, widgetEmissions.single())
     }
 
     @Test
-    fun `when widget is observed_given widget has never been updated_then widget containing no last updated date is emitted`() = runTest(dispatcher) {
-        database.dbSheetQueries.insert(randomDbSheet().copy(last_updated_at = null))
-        database.dbWidgetQueries.insert(DB_WIDGET.copy(sheet_id = nextStoredSheetId))
+    fun `when widget is added_then existing widget is stored in the database`() = runTest(dispatcher) {
+        val widgetId = randomWidgetId()
+        val sheetId = SheetId(storedSheetCount)
+        every { fakeWidgetMapper.mapToDb(widgetId, sheetId) } returns DbWidget(widgetId.value, sheetId.value)
 
-        val widgetEmissions = collectToListInBackground(repository.observeWidget(WIDGET_WITH_EXISTING_SHEET.id))
+        repository.addWidget(widgetId, sheetId)
 
-        assertNull(widgetEmissions.single()!!.sheet.lastUpdatedAt)
-    }
-
-    @Test
-    fun `when widget is added_given sheet does not exist_then newly added widget is stored in the database`() = runTest(dispatcher) {
-        val widget = randomWidgetWithNewSheet()
-        coEvery { fakeSheetRepository.getBySheetSpreadsheetId(widget.sheet.sheetSpreadsheetId) } returns null
-        coEvery { fakeSheetRepository.addSheet(widget.sheet) } returns randomExistingSheet().copy(id = SheetId(storedSheetCount))
-
-        repository.addWidget(widget)
-
-        val storedWidget = database.dbWidgetQueries.getById(widget.id.value).executeAsOne()
-        assertEquals(widget.id.value, storedWidget.id, "id")
-        assertEquals(storedSheetCount, storedWidget.sheet_id, "sheet_id")
-    }
-
-    @Test
-    fun `when widget is added_given sheet exists_then existing widget is stored in the database`() = runTest(dispatcher) {
-        val widget = randomWidgetWithNewSheet()
-        coEvery { fakeSheetRepository.getBySheetSpreadsheetId(widget.sheet.sheetSpreadsheetId) } answers {
-            randomExistingSheet().copy(id = SheetId(storedSheetCount))
-        }
-
-        repository.addWidget(widget)
-
-        val storedWidget = database.dbWidgetQueries.getById(widget.id.value).executeAsOne()
-        assertEquals(widget.id.value, storedWidget.id)
+        val storedWidget = database.dbWidgetQueries.getById(widgetId.value).executeAsOne()
+        assertEquals(widgetId.value, storedWidget.id)
         assertEquals(storedSheetCount, storedWidget.sheet_id)
-    }
-
-    @Test
-    fun `when widget is added_then widget with updated sheet is returned`() = runTest(dispatcher) {
-        val widget = randomWidgetWithNewSheet()
-            .copy(sheet = randomExistingSheet().copy(id = SheetId(storedSheetCount)))
-        coEvery { fakeSheetRepository.getBySheetSpreadsheetId(widget.sheet.sheetSpreadsheetId) } answers {
-            if (Random.nextBoolean()) widget.sheet else null
-        }
-        coEvery { fakeSheetRepository.addSheet(widget.sheet) } returns widget.sheet
-
-        val updatedWidget = repository.addWidget(widget)
-
-        assertEquals(widget, updatedWidget)
     }
 
     @Test

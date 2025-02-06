@@ -1,8 +1,10 @@
 package com.pt.glancewords.widget
 
 import com.pt.glancewords.domain.model.Sheet
+import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.model.Widget
+import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.model.WordPair
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
@@ -212,10 +214,12 @@ class WordsWidgetViewModelTest {
         fun getRandomWords(size: Int = 10) = List(size) { WordPair(randomString(), randomString()) }
         val WORDS = getRandomWords()
         val WIDGET = Widget(
-            id = Widget.WidgetId(randomInt()),
-            sheet = Sheet.createNew(
+            id = WidgetId(randomInt()),
+            sheet = Sheet(
+                id = SheetId(randomInt()),
                 sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = randomString(), sheetId = randomInt()),
                 name = randomString(),
+                lastUpdatedAt = null
             )
         )
     }

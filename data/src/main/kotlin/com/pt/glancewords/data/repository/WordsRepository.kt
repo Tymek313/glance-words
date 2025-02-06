@@ -3,7 +3,7 @@ package com.pt.glancewords.data.repository
 import com.pt.glancewords.data.datasource.WordsLocalDataSource
 import com.pt.glancewords.data.datasource.WordsRemoteDataSource
 import com.pt.glancewords.data.mapper.WordPairMapper
-import com.pt.glancewords.domain.model.Widget
+import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.model.WordPair
 import com.pt.glancewords.domain.repository.WordsRepository
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +21,7 @@ internal class DefaultWordsRepository(
 
     private val synchronizationUpdates = MutableSharedFlow<SpreadsheetUpdate>()
 
-    override fun observeWords(widgetId: Widget.WidgetId): Flow<List<WordPair>> = flow {
+    override fun observeWords(widgetId: WidgetId): Flow<List<WordPair>> = flow {
         localDataSource.getWords(widgetId)?.let { words ->
             emit(words.map(wordPairMapper::map))
         }
@@ -36,9 +36,9 @@ internal class DefaultWordsRepository(
         )
     }
 
-    override suspend fun deleteCachedWords(widgetId: Widget.WidgetId) {
+    override suspend fun deleteCachedWords(widgetId: WidgetId) {
         localDataSource.deleteWords(widgetId)
     }
 
-    private class SpreadsheetUpdate(val widgetId: Widget.WidgetId, val words: List<WordPair>)
+    private class SpreadsheetUpdate(val widgetId: WidgetId, val words: List<WordPair>)
 }

@@ -1,6 +1,7 @@
 package com.pt.glancewords.data.mapper
 
 import com.pt.glancewords.database.DbSheet
+import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
@@ -8,12 +9,13 @@ import java.time.Instant
 
 internal interface SheetMapper {
     fun mapToDomain(dbSheet: DbSheet): Sheet
-    fun mapToDb(sheet: Sheet): DbSheet
+    fun mapToDomain(newSheet: NewSheet, sheetId: Int): Sheet
+    fun mapToDb(sheet: NewSheet): DbSheet
 }
 
 internal class DefaultSheetMapper : SheetMapper {
     override fun mapToDomain(dbSheet: DbSheet): Sheet = with(dbSheet) {
-        Sheet.createExisting(
+        Sheet(
             id = SheetId(id),
             sheetSpreadsheetId = SheetSpreadsheetId(spreadsheet_id, sheet_id),
             name = name,
@@ -21,13 +23,22 @@ internal class DefaultSheetMapper : SheetMapper {
         )
     }
 
-    override fun mapToDb(sheet: Sheet): DbSheet = with(sheet) {
+    override fun mapToDomain(newSheet: NewSheet, sheetId: Int): Sheet = with(newSheet) {
+        Sheet(
+            id = SheetId(sheetId),
+            sheetSpreadsheetId = sheetSpreadsheetId,
+            name = name,
+            lastUpdatedAt = null,
+        )
+    }
+
+    override fun mapToDb(sheet: NewSheet): DbSheet = with(sheet) {
         DbSheet(
-            id = id.value,
+            id = -1,
             spreadsheet_id = sheetSpreadsheetId.spreadsheetId,
             sheet_id = sheetSpreadsheetId.sheetId,
             name = name,
-            last_updated_at = lastUpdatedAt?.epochSecond
+            last_updated_at = null
         )
     }
 }

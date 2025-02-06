@@ -4,7 +4,7 @@ import com.pt.domain.words.fixture.existingSheetFixture
 import com.pt.domain.words.fixture.instantFixture
 import com.pt.domain.words.fixture.widgetIdFixture
 import com.pt.domain.words.fixture.widgetWithExistingSheetFixture
-import com.pt.glancewords.domain.model.Widget
+import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SheetRepository
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
@@ -35,7 +35,7 @@ class DefaultWordsSynchronizerTest {
     private lateinit var fakeSheetRepository: SheetRepository
     private lateinit var fakeGetNowInstant: () -> Instant
     private lateinit var fakeWordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier
-    private lateinit var fakeRefreshWidget: suspend (Widget.WidgetId) -> Unit
+    private lateinit var fakeRefreshWidget: suspend (WidgetId) -> Unit
 
     private val everyObserveWidget get() = coEvery { fakeWidgetRepository.observeWidget(widgetIdFixture) }
     private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(any()) }

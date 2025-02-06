@@ -6,6 +6,7 @@ import com.pt.glancewords.data.datasource.GoogleWordsRemoteDataSource
 import com.pt.glancewords.data.googlesheets.CachingGoogleSheetsProvider
 import com.pt.glancewords.data.googlesheets.GoogleSheetsProvider
 import com.pt.glancewords.data.mapper.DefaultSheetMapper
+import com.pt.glancewords.data.mapper.DefaultWidgetMapper
 import com.pt.glancewords.data.mapper.DefaultWordPairMapper
 import com.pt.glancewords.data.repository.DefaultSheetRepository
 import com.pt.glancewords.data.repository.DefaultWidgetRepository
@@ -37,7 +38,7 @@ val dataModule = module {
             DefaultWordPairMapper()
         )
     }
-    factory<WidgetRepository> { DefaultWidgetRepository(get<Database>().dbWidgetQueries, get(), Dispatchers.IO) }
+    factory<WidgetRepository> { DefaultWidgetRepository(get<Database>().dbWidgetQueries, DefaultWidgetMapper(), Dispatchers.IO) }
     factory<SpreadsheetRepository> {
         GoogleSpreadsheetRepository(
             DefaultGoogleSpreadsheetDataSource(get(), Dispatchers.IO)
