@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":logging"))
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(platform(libs.koin.bom))

@@ -7,8 +7,9 @@ kotlin {
 }
 
 dependencies {
-    testImplementation(project(":testCommon"))
+    implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
+    testImplementation(project(":testCommon"))
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
