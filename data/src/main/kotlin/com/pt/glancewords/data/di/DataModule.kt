@@ -30,7 +30,15 @@ import java.io.File
 
 val dataModule = module {
     single<GoogleSheetsProvider> { CachingGoogleSheetsProvider(Dispatchers.IO) }
-    single { HttpClient(AndroidClientEngine(AndroidEngineConfig())) }
+    single {
+        HttpClient(AndroidClientEngine(AndroidEngineConfig())) {
+            install(HttpTimeout) {
+                connectTimeoutMillis = 15000
+                requestTimeoutMillis = 15000
+                socketTimeoutMillis = 15000
+            }
+        }
+    }
     factory<SheetRepository> { DefaultSheetRepository(get<Database>().dbSheetQueries, DefaultSheetMapper(), Dispatchers.IO) }
     single<WordsRepository> {
         DefaultWordsRepository(
