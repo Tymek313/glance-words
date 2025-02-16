@@ -10,6 +10,7 @@ import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
 import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifier
 import com.pt.testcommon.coroutines.collectToListInBackground
+import com.pt.testcommon.fixture.randomInstant
 import com.pt.testcommon.fixture.randomInt
 import com.pt.testcommon.fixture.randomString
 import io.mockk.coEvery
@@ -26,9 +27,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import java.time.Instant
-import java.time.ZoneId
-import java.util.Locale
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -49,7 +47,8 @@ class WordsWidgetViewModelTest {
     private val everyObserveAreWordsSynchronized get() = every { fakeWordsSynchronizationStateNotifier.observeAreWordsSynchronized(WIDGET.id) }
     private val everyReshuffleEvents get() = every { fakeReshuffleNotifier.reshuffleEvents }
 
-    private fun widgetIsEmitted(widget: Widget = WIDGET) = everyObserveWidget returns flowOf(widget)
+    private fun widgetIsEmitted() = everyObserveWidget returns flowOf(WIDGET)
+    private fun unUpdatedWidgetAtIsEmitted() = everyObserveWidget returns flowOf(WIDGET.withoutLastUpdatedAt())
     private fun noWordsAreEmitted() = everyObserveWords returns flowOf(emptyList())
     private fun wordsAreEmitted() = everyObserveWords returns flowOf(WORDS)
     private fun multipleWordListsAreEmitted(first: List<WordPair>, second: List<WordPair>) = everyObserveWords returns flowOf(first) andThen flowOf(second)
@@ -68,24 +67,6 @@ class WordsWidgetViewModelTest {
 
     @Test
     fun `when widget is received_given widget has ever been updated_then correct state is emitted`() = runTest(dispatcher) {
-        widgetIsEmitted(WIDGET.withLastUpdatedAt("2024-04-21T19:00:00.00Z"))
-        noWordsAreEmitted()
-        wordsAreNotLoading()
-        shouldReshuffleIsDeferred()
-
-        val states = collectToListInBackground(createViewModel().uiState)
-
-        assertEquals(
-            WidgetUiState(
-                sheetName = WIDGET.sheet.name,
-                lastUpdatedAt = "Apr 21, 2024, 7:00 PM",
-            ),
-            states.single()
-        )
-    }
-
-    @Test
-    fun `when widget is received_given widget has never been updated_then correct state containing empty last updated date is emitted`() = runTest(dispatcher) {
         widgetIsEmitted()
         noWordsAreEmitted()
         wordsAreNotLoading()
@@ -96,7 +77,25 @@ class WordsWidgetViewModelTest {
         assertEquals(
             WidgetUiState(
                 sheetName = WIDGET.sheet.name,
-                lastUpdatedAt = ""
+                lastUpdatedAt = WIDGET.sheet.lastUpdatedAt!!,
+            ),
+            states.single()
+        )
+    }
+
+    @Test
+    fun `when widget is received_given widget has never been updated_then correct state containing empty last updated date is emitted`() = runTest(dispatcher) {
+        unUpdatedWidgetAtIsEmitted()
+        noWordsAreEmitted()
+        wordsAreNotLoading()
+        shouldReshuffleIsDeferred()
+
+        val states = collectToListInBackground(createViewModel().uiState)
+
+        assertEquals(
+            WidgetUiState(
+                sheetName = WIDGET.sheet.name,
+                lastUpdatedAt = null
             ),
             states.single()
         )
@@ -194,15 +193,13 @@ class WordsWidgetViewModelTest {
         coVerify { fakeWidgetRepository.deleteWidget(WIDGET.id) }
     }
 
-    private fun Widget.withLastUpdatedAt(isoLastUpdatedAt: String) = copy(sheet = sheet.copy(lastUpdatedAt = Instant.parse(isoLastUpdatedAt)))
+    private fun Widget.withoutLastUpdatedAt() = copy(sheet = sheet.copy(lastUpdatedAt = null))
 
     private fun createViewModel() = WordsWidgetViewModel(
         widgetId = WIDGET.id,
         widgetRepository = fakeWidgetRepository,
         wordsSynchronizationStateNotifier = fakeWordsSynchronizationStateNotifier,
         wordsRepository = fakeWordsRepository,
-        locale = Locale.US,
-        zoneId = ZoneId.of("UTC"),
         logger = mockk(relaxed = true),
         reshuffleNotifier = fakeReshuffleNotifier
     )
@@ -216,7 +213,7 @@ class WordsWidgetViewModelTest {
                 id = SheetId(randomInt()),
                 sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = randomString(), sheetId = randomInt()),
                 name = randomString(),
-                lastUpdatedAt = null
+                lastUpdatedAt = randomInstant()
             )
         )
     }

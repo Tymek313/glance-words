@@ -1,6 +1,7 @@
 package com.pt.glancewords.widget.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
@@ -40,6 +41,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 
 @Composable
 fun WordsWidgetContent(uiState: WidgetUiState) {
@@ -88,12 +90,20 @@ private fun WordList(words: List<WordPair>, modifier: GlanceModifier = GlanceMod
 @Composable
 private fun Footer(widgetUiState: WidgetUiState) {
     val isWidgetLarge = LocalSize.current == WordsWidgetSizes.LARGE
+    val lastUpdatedAt = remember(widgetUiState.lastUpdatedAt) {
+        widgetUiState.lastUpdatedAt?.let { lastUpdatedAt ->
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+                .withLocale(Locale.getDefault())
+                .withZone(ZoneId.systemDefault())
+                .format(lastUpdatedAt)
+        }.orEmpty()
+    }
+
     Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-        val modifier = GlanceModifier.defaultWeight()
         Row(
             horizontalAlignment = Alignment.Start,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = modifier.clickable(actionRunCallback<LaunchWidgetSynchronizationWorkAction>())
+            modifier = GlanceModifier.defaultWeight().clickable(actionRunCallback<LaunchWidgetSynchronizationWorkAction>())
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_refresh),
@@ -102,7 +112,7 @@ private fun Footer(widgetUiState: WidgetUiState) {
                 colorFilter = ColorFilter.tint(GlanceTheme.colors.onBackground)
             )
             WidgetText(
-                text = widgetUiState.lastUpdatedAt,
+                text = lastUpdatedAt,
                 style = smallTextStyle,
                 maxLines = 1,
                 modifier = GlanceModifier.run {
@@ -111,7 +121,7 @@ private fun Footer(widgetUiState: WidgetUiState) {
                 }
             )
         }
-        Box(modifier, contentAlignment = Alignment.CenterEnd) { WidgetText(text = widgetUiState.sheetName, style = smallBoldTextStyle) }
+        Box(contentAlignment = Alignment.CenterEnd) { WidgetText(text = widgetUiState.sheetName, style = smallBoldTextStyle) }
     }
 }
 
@@ -122,9 +132,7 @@ private fun WordsWidgetContentSuccessPreview() {
     WordsWidgetContent(
         uiState = WidgetUiState(
             sheetName = "Sheet name",
-            lastUpdatedAt = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
-                .withZone(ZoneId.systemDefault())
-                .format(Instant.now()),
+            lastUpdatedAt = Instant.now(),
             words = listOf(
                 WordPair(original = "Original item 1", translated = "Translated item 1"),
                 WordPair(original = "Original item 2", translated = "Translated item 2"),
@@ -141,9 +149,7 @@ private fun WordsWidgetContentLoadingPreview() {
     WordsWidgetContent(
         uiState = WidgetUiState(
             sheetName = "Sheet name",
-            lastUpdatedAt = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
-                .withZone(ZoneId.systemDefault())
-                .format(Instant.now()),
+            lastUpdatedAt = Instant.now(),
             isLoading = true
         )
     )

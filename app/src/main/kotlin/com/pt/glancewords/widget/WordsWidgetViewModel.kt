@@ -20,10 +20,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.util.Locale
+import java.time.Instant
 
 class WordsWidgetViewModel(
     private val widgetId: WidgetId,
@@ -31,8 +28,6 @@ class WordsWidgetViewModel(
     private val wordsRepository: WordsRepository,
     wordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier,
     private val logger: Logger,
-    private val locale: Locale,
-    private val zoneId: ZoneId,
     private val reshuffleNotifier: ReshuffleNotifier
 ) {
 
@@ -57,12 +52,7 @@ class WordsWidgetViewModel(
 
     private fun mapUiState(widget: Widget, words: List<WordPair>, isLoading: Boolean) = WidgetUiState(
         sheetName = widget.sheet.name,
-        lastUpdatedAt = widget.sheet.lastUpdatedAt?.let { lastUpdatedAt ->
-            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
-                .withLocale(locale)
-                .withZone(zoneId)
-                .format(lastUpdatedAt)
-        }.orEmpty(),
+        lastUpdatedAt = widget.sheet.lastUpdatedAt,
         words = words,
         isLoading = isLoading
     )
@@ -74,7 +64,7 @@ class WordsWidgetViewModel(
 
 data class WidgetUiState(
     val sheetName: String = "",
-    val lastUpdatedAt: String = "",
+    val lastUpdatedAt: Instant? = null,
     val isLoading: Boolean = false,
     val words: List<WordPair> = emptyList()
 )

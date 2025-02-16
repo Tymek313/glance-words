@@ -2,17 +2,13 @@ package com.pt.glancewords.widget.configuration
 
 import com.pt.glancewords.R
 import com.pt.glancewords.domain.model.NewSheet
-import com.pt.glancewords.domain.model.Sheet
-import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.model.SpreadsheetSheet
-import com.pt.glancewords.domain.model.Widget
 import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SpreadsheetRepository
 import com.pt.glancewords.domain.usecase.AddWidget
 import com.pt.glancewords.widget.coroutines.MainDispatcherRule
 import com.pt.testcommon.coroutines.collectToListInBackground
-import com.pt.testcommon.fixture.randomInstant
 import com.pt.testcommon.fixture.randomInt
 import com.pt.testcommon.fixture.randomString
 import io.mockk.andThenJust
@@ -289,16 +285,6 @@ class WidgetConfigurationViewModelTest {
     private companion object {
         val SPREADSHEET_ID = randomString()
         val VALID_URL = "https://docs.google.com/spreadsheets/d/$SPREADSHEET_ID/"
-        val FETCH_EXCEPTION_MESSAGE = randomString()
-        val STORED_WIDGET = Widget(
-            id = WidgetId(randomInt()),
-            sheet = Sheet(
-                id = SheetId(randomInt()),
-                sheetSpreadsheetId = SheetSpreadsheetId(randomString(), randomInt()),
-                name = randomString(),
-                lastUpdatedAt = randomInstant()
-            )
-        )
         val FETCHED_SPREADSHEET_SHEET = SpreadsheetSheet(id = randomInt(), name = randomString())
         val SHEETS = listOf(
             WidgetConfigurationState.Sheet(id = FETCHED_SPREADSHEET_SHEET.id, name = FETCHED_SPREADSHEET_SHEET.name)
