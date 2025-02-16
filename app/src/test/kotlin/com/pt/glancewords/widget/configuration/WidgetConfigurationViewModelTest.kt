@@ -1,5 +1,6 @@
 package com.pt.glancewords.widget.configuration
 
+import com.pt.glancewords.R
 import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId
@@ -8,9 +9,7 @@ import com.pt.glancewords.domain.model.SpreadsheetSheet
 import com.pt.glancewords.domain.model.Widget
 import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SpreadsheetRepository
-import com.pt.glancewords.domain.synchronization.WordsSynchronizer
 import com.pt.glancewords.domain.usecase.AddWidget
-import com.pt.glancewords.logging.Logger
 import com.pt.glancewords.widget.coroutines.MainDispatcherRule
 import com.pt.testcommon.coroutines.collectToListInBackground
 import com.pt.testcommon.fixture.randomInstant
@@ -20,10 +19,8 @@ import io.mockk.andThenJust
 import io.mockk.awaits
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.runs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -34,7 +31,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WidgetConfigurationViewModelTest {
@@ -47,37 +43,28 @@ class WidgetConfigurationViewModelTest {
     private lateinit var viewModel: WidgetConfigurationViewModel
     private lateinit var fakeSpreadsheetRepository: SpreadsheetRepository
     private lateinit var fakeAddWidget: AddWidget
-    private lateinit var fakeWordsSynchronizer: WordsSynchronizer
-    private lateinit var fakeLogger: Logger
 
-    private val everyAddWidget get() = coEvery { fakeAddWidget.invoke(any()) }
-    private val everySynchronizeWords get() = coEvery { fakeWordsSynchronizer.synchronizeWords(STORED_WIDGET.id) }
+    private val everyAddWidget get() = coEvery { fakeAddWidget(any()) }
     private fun everyFetchSpreadsheetSheets(spreadsheetId: String = SPREADSHEET_ID) = coEvery {
         fakeSpreadsheetRepository.fetchSpreadsheetSheets(spreadsheetId)
     }
 
     private fun spreadsheetsFetchIsSuspended() = everyFetchSpreadsheetSheets() just awaits
     private fun spreadsheetsAreFetched() = everyFetchSpreadsheetSheets() returns listOf(FETCHED_SPREADSHEET_SHEET)
-    private fun spreadsheetsFetchFails() = everyFetchSpreadsheetSheets() throws Exception(FETCH_EXCEPTION_MESSAGE)
+    private fun spreadsheetsFetchFails() = everyFetchSpreadsheetSheets() returns null
     private fun addWidgetIsSuspended() = everyAddWidget just awaits
-    private fun addWidgetFails() = everyAddWidget throws Exception(ADD_WIDGET_EXCEPTION_MESSAGE)
-    private fun widgetIsAdded() = everyAddWidget returns STORED_WIDGET.id
-    private fun wordsAreSynchronized() = everySynchronizeWords just runs
+    private fun widgetIsAdded() = everyAddWidget returns true
+    private fun widgetAddFails() = everyAddWidget returns false
 
     @Before
     fun setup() {
         fakeSpreadsheetRepository = mockk()
         fakeAddWidget = mockk()
-        fakeWordsSynchronizer = mockk()
-        fakeLogger = mockk()
         viewModel = WidgetConfigurationViewModel(
             fakeSpreadsheetRepository,
-            fakeWordsSynchronizer,
             fakeAddWidget,
-            fakeLogger
+            mockk(relaxed = true)
         )
-        every { fakeLogger.e(any(), any(), any()) } just runs
-        every { fakeLogger.e(any(), any()) } just runs
     }
 
     @Test
@@ -123,7 +110,7 @@ class WidgetConfigurationViewModelTest {
         viewModel.setInitialSpreadsheetIdIfApplicable(VALID_URL)
 
         assertEquals(
-            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = false, spreadsheetError = FETCH_EXCEPTION_MESSAGE),
+            WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = false, spreadsheetError = R.string.could_not_download_sheets),
             viewModel.state.value
         )
     }
@@ -172,7 +159,7 @@ class WidgetConfigurationViewModelTest {
             advanceUntilIdle()
 
             assertEquals(
-                WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = false, spreadsheetError = FETCH_EXCEPTION_MESSAGE),
+                WidgetConfigurationState(spreadsheetId = SPREADSHEET_ID, isLoading = false, spreadsheetError = R.string.could_not_download_sheets),
                 viewModel.state.value
             )
         }
@@ -213,6 +200,23 @@ class WidgetConfigurationViewModelTest {
     }
 
     @Test
+    fun `when saving widget configuration_given previous widget addition failed_state error is cleared`() = runTest(dispatcher) {
+        spreadsheetsAreFetched()
+        widgetIsAdded()
+        widgetAddFails() andThenJust awaits
+        setSpreadsheetIdAndSheet()
+        val states = collectToListInBackground(viewModel.state)
+        viewModel.saveWidgetConfiguration(randomInt())
+
+        viewModel.saveWidgetConfiguration(randomInt())
+
+        assertEquals(
+            STATE_AFTER_SHEET_SELECTION.copy(generalError = null, isSavingWidget = true),
+            states.last()
+        )
+    }
+
+    @Test
     fun `when saving widget configuration_given selected sheet and saving is in progress_state indicates saving`() = runTest(dispatcher) {
         spreadsheetsAreFetched()
         addWidgetIsSuspended()
@@ -228,26 +232,9 @@ class WidgetConfigurationViewModelTest {
     }
 
     @Test
-    fun `when saving widget configuration_given selected sheet_state error is cleared`() = runTest(dispatcher) {
-        spreadsheetsAreFetched()
-        addWidgetFails() andThenJust awaits
-        setSpreadsheetIdAndSheet()
-        val states = collectToListInBackground(viewModel.state)
-        viewModel.saveWidgetConfiguration(randomInt())
-
-        viewModel.saveWidgetConfiguration(randomInt())
-
-        assertEquals(
-            STATE_AFTER_SHEET_SELECTION.copy(generalError = null, isSavingWidget = true),
-            states.last()
-        )
-    }
-
-    @Test
-    fun `when saving widget configuration_given it succeeds_widget is stored in the repository`() = runTest(dispatcher) {
+    fun `when saving widget configuration_given widget addition succeeds_widget is stored in the repository`() = runTest(dispatcher) {
         spreadsheetsAreFetched()
         widgetIsAdded()
-        wordsAreSynchronized()
         setSpreadsheetIdAndSheet()
 
         viewModel.saveWidgetConfiguration(WIDGET_TO_ADD.widgetId.value)
@@ -256,22 +243,9 @@ class WidgetConfigurationViewModelTest {
     }
 
     @Test
-    fun `when saving widget configuration_given it succeeds_words are synchronized`() = runTest(dispatcher) {
+    fun `when saving widget configuration_given widget addition succeeds_state indicates success`() = runTest(dispatcher) {
         spreadsheetsAreFetched()
         widgetIsAdded()
-        wordsAreSynchronized()
-        setSpreadsheetIdAndSheet()
-
-        viewModel.saveWidgetConfiguration(randomInt())
-
-        coVerify { fakeWordsSynchronizer.synchronizeWords(STORED_WIDGET.id) }
-    }
-
-    @Test
-    fun `when saving widget configuration_given it succeeds_state indicates success`() = runTest(dispatcher) {
-        spreadsheetsAreFetched()
-        widgetIsAdded()
-        wordsAreSynchronized()
         val states = collectToListInBackground(viewModel.state)
         setSpreadsheetIdAndSheet()
 
@@ -287,9 +261,9 @@ class WidgetConfigurationViewModelTest {
     }
 
     @Test
-    fun `when saving widget configuration_given adding widget fails_state does not indicate saving and contains error`() = runTest(dispatcher) {
+    fun `when saving widget configuration_given widget addition fails_state does not indicate saving and contains an error`() = runTest(dispatcher) {
         spreadsheetsAreFetched()
-        addWidgetFails()
+        widgetAddFails()
         val states = collectToListInBackground(viewModel.state)
         setSpreadsheetIdAndSheet()
 
@@ -298,22 +272,10 @@ class WidgetConfigurationViewModelTest {
         assertEquals(
             STATE_AFTER_SHEET_SELECTION.copy(
                 isSavingWidget = false,
-                generalError = ADD_WIDGET_EXCEPTION_MESSAGE,
+                generalError = R.string.could_not_synchronize_words,
             ),
             states.last()
         )
-    }
-
-    @Test
-    fun `when saving widget configuration_given cannot find selected sheet in state_state does not indicate saving and contains error`() = runTest(dispatcher) {
-        spreadsheetsAreFetched()
-        val states = collectToListInBackground(viewModel.state)
-        setSpreadsheetIdAndSheet()
-
-        viewModel.saveWidgetConfiguration(randomInt())
-
-        assertFalse(states.last().generalError!!.isEmpty(), "contains error")
-        assertFalse(states.last().isSavingWidget, "indicates saving")
     }
 
     private fun TestScope.setSpreadsheetIdAndSheet() {
@@ -328,7 +290,6 @@ class WidgetConfigurationViewModelTest {
         val SPREADSHEET_ID = randomString()
         val VALID_URL = "https://docs.google.com/spreadsheets/d/$SPREADSHEET_ID/"
         val FETCH_EXCEPTION_MESSAGE = randomString()
-        val ADD_WIDGET_EXCEPTION_MESSAGE = randomString()
         val STORED_WIDGET = Widget(
             id = WidgetId(randomInt()),
             sheet = Sheet(

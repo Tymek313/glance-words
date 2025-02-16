@@ -28,12 +28,17 @@ internal class DefaultWordsRepository(
         emitAll(synchronizationUpdates.filter { it.widgetId == widgetId }.map { it.words })
     }
 
-    override suspend fun synchronizeWords(request: WordsRepository.SynchronizationRequest) {
+    override suspend fun synchronizeWords(request: WordsRepository.SynchronizationRequest): Boolean {
         val remoteCSV = remoteDataSource.getWords(request.sheetSpreadsheetId)
-        localDataSource.storeWords(request.widgetId, remoteCSV)
-        synchronizationUpdates.emit(
-            SpreadsheetUpdate(request.widgetId, remoteCSV.map(wordPairMapper::map))
-        )
+        return if (remoteCSV == null) {
+            false
+        } else {
+            localDataSource.storeWords(request.widgetId, remoteCSV)
+            synchronizationUpdates.emit(
+                SpreadsheetUpdate(request.widgetId, remoteCSV.map(wordPairMapper::map))
+            )
+            true
+        }
     }
 
     override suspend fun deleteCachedWords(widgetId: WidgetId) {

@@ -6,12 +6,15 @@ import com.pt.glancewords.data.fixture.randomSheetSpreadsheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
+import io.ktor.client.engine.mock.respondOk
 import io.ktor.http.Url
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GoogleWordsRemoteDataSourceTest {
@@ -20,61 +23,79 @@ class GoogleWordsRemoteDataSourceTest {
     private lateinit var httpClient: HttpClient
     private lateinit var sheetSpreadsheetId: SheetSpreadsheetId
     private lateinit var response: String
+    private var requestFails = false
 
     @Before
     fun setUp() {
         sheetSpreadsheetId = randomSheetSpreadsheetId()
+        requestFails = false
         httpClient = HttpClient(
             MockEngine { request ->
-                if (request.url == Url("https://docs.google.com/spreadsheets/d/${sheetSpreadsheetId.spreadsheetId}/export?format=csv&gid=${sheetSpreadsheetId.sheetId}")) {
-                    respond(response)
-                } else {
-                    error("Unexpected request url")
+                when {
+                    requestFails -> throw IOException("network error")
+                    request.url == Url("https://docs.google.com/spreadsheets/d/${sheetSpreadsheetId.spreadsheetId}/export?format=csv&gid=${sheetSpreadsheetId.sheetId}") -> {
+                        respondOk(response)
+                    }
+
+                    else -> error("Unexpected request url")
                 }
             }
         )
-        dataSource = GoogleWordsRemoteDataSource(httpClient)
+        dataSource = GoogleWordsRemoteDataSource(
+            client = httpClient,
+            logger = mockk(relaxed = true)
+        )
+    }
+
+    @Test
+    fun `when words are requested_given request fails_null is returned`() = runTest {
+        requestFails = true
+
+        val result = dataSource.getWords(sheetSpreadsheetId)
+
+        assertNull(result)
     }
 
     @Test
     fun `when words are requested_given response is empty_empty list is returned`() = runTest {
         response = ""
 
-        val csvLines = dataSource.getWords(sheetSpreadsheetId)
+        val result = dataSource.getWords(sheetSpreadsheetId)
 
-        assertTrue(csvLines.isEmpty())
+        assertTrue(result!!.isEmpty())
     }
 
     @Test
     fun `when words are requested_given response contains words_csv lines are returned`() = runTest {
         response = "a,b\r\nc,d"
 
-        val csvLines = dataSource.getWords(sheetSpreadsheetId)
+        val result = dataSource.getWords(sheetSpreadsheetId)
 
-        assertEquals(listOf(CSVLine("a,b"), CSVLine("c,d")), csvLines)
+        assertEquals(listOf(CSVLine("a,b"), CSVLine("c,d")), result)
     }
 
     @Test
     fun `when words are requested_given csv contains trailing empty values_they are removed`() = runTest {
         response = "a,b\r\n#VALUE!,#VALUE!\r\n#VALUE!,#VALUE!"
 
-        val csvLines = dataSource.getWords(sheetSpreadsheetId)
+        val result = dataSource.getWords(sheetSpreadsheetId)
 
-        assertEquals(listOf(CSVLine("a,b")), csvLines)
+        assertEquals(listOf(CSVLine("a,b")), result)
     }
 
     @Test
     fun `when words are requested_given csv contains empty values in the middle_they are not removed`() = runTest {
         response = "a,b\r\n#VALUE!,#VALUE!\r\nc,d"
 
-        val csvLines = dataSource.getWords(sheetSpreadsheetId)
+        val result = dataSource.getWords(sheetSpreadsheetId)
 
         assertEquals(
             listOf(
                 CSVLine("a,b"),
                 CSVLine("#VALUE!,#VALUE!"),
                 CSVLine("c,d")
-            ), csvLines
+            ),
+            result
         )
     }
 
@@ -82,8 +103,8 @@ class GoogleWordsRemoteDataSourceTest {
     fun `when words are requested_given csv contains only empty values_no words are returned`() = runTest {
         response = "#VALUE!,#VALUE!"
 
-        val csvLines = dataSource.getWords(sheetSpreadsheetId)
+        val result = dataSource.getWords(sheetSpreadsheetId)
 
-        assertEquals(emptyList(), csvLines)
+        assertEquals(emptyList(), result)
     }
 }

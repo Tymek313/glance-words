@@ -1,16 +1,15 @@
 package com.pt.glancewords.widget.configuration
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pt.glancewords.R
 import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SpreadsheetRepository
-import com.pt.glancewords.domain.synchronization.WordsSynchronizer
 import com.pt.glancewords.domain.usecase.AddWidget
 import com.pt.glancewords.logging.Logger
-import com.pt.glancewords.logging.e
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,23 +19,12 @@ import kotlinx.coroutines.launch
 
 class WidgetConfigurationViewModel(
     private val spreadsheetRepository: SpreadsheetRepository,
-    private val wordsSynchronizer: WordsSynchronizer,
     private val addWidget: AddWidget,
     private val logger: Logger
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WidgetConfigurationState())
     val state: StateFlow<WidgetConfigurationState> = _state
-
-    private val loadSheetsExceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        logger.e(this, throwable)
-        _state.update { it.copy(spreadsheetError = throwable.localizedMessage, isLoading = false) }
-    }
-
-    private val generalCoroutineHandler = CoroutineExceptionHandler { _, throwable ->
-        logger.e(this, throwable)
-        _state.update { it.copy(isSavingWidget = false, generalError = throwable.localizedMessage) }
-    }
 
     private var loadSheetsJob: Job? = null
 
@@ -57,15 +45,18 @@ class WidgetConfigurationViewModel(
 
     private fun loadSheetsForSpreadsheet(withDebounce: Boolean) {
         loadSheetsJob?.cancel()
-        loadSheetsJob = viewModelScope.launch(loadSheetsExceptionHandler) {
-            if (withDebounce) delay(SHEET_LOAD_DEBOUNCE)
+        loadSheetsJob = viewModelScope.launch {
+            if (withDebounce) {
+                delay(SHEET_LOAD_DEBOUNCE)
+            }
             _state.update { it.copy(isLoading = true, sheets = emptyList(), selectedSheetId = null) }
             val sheets = spreadsheetRepository.fetchSpreadsheetSheets(_state.value.spreadsheetId)
             _state.update { state ->
-                state.copy(
-                    isLoading = false,
-                    sheets = sheets.map { WidgetConfigurationState.Sheet(it.id, it.name) }
-                )
+                if (sheets == null) {
+                    state.copy(isLoading = false, spreadsheetError = R.string.could_not_download_sheets)
+                } else {
+                    state.copy(isLoading = false, sheets = sheets.map { WidgetConfigurationState.Sheet(it.id, it.name) })
+                }
             }
         }
     }
@@ -79,10 +70,13 @@ class WidgetConfigurationViewModel(
             logger.e(tag = javaClass.name, message = "Unknown selected sheet id")
         }
         _state.update { it.copy(isSavingWidget = true, generalError = null) }
-        viewModelScope.launch(generalCoroutineHandler) {
-            val storedWidgetId = addWidget(createWidgetToAdd(widgetId, selectedSheetId))
-            wordsSynchronizer.synchronizeWords(storedWidgetId)
-            _state.update { it.copy(widgetConfigurationSaved = true) }
+        viewModelScope.launch {
+            val widgetAdded = addWidget(createWidgetToAdd(widgetId, selectedSheetId))
+            if (widgetAdded) {
+                _state.update { it.copy(widgetConfigurationSaved = true) }
+            } else {
+                _state.update { it.copy(isSavingWidget = false, generalError = R.string.could_not_synchronize_words) }
+            }
         }
     }
 
@@ -107,8 +101,8 @@ data class WidgetConfigurationState(
     val spreadsheetId: String = "",
     val isLoading: Boolean = false,
     val isSavingWidget: Boolean = false,
-    val spreadsheetError: String? = null,
-    val generalError: String? = null,
+    @StringRes val spreadsheetError: Int? = null,
+    @StringRes val generalError: Int? = null,
     val sheets: List<Sheet> = emptyList(),
     val selectedSheetId: Int? = null,
     val widgetConfigurationSaved: Boolean = false

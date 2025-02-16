@@ -2,6 +2,7 @@
     <string name="app_name">GlanceWords</string>
     <string name="appwidget_text">EXAMPLE</string>
     <string name="app_widget_description">View word pairs from a selected spreadsheet</string>
-    <string name="could_not_load_words">Could not load words</string>
     <string name="widget_synchronization">Synchronizing widget</string>
+    <string name="could_not_synchronize_words">Could not synchronize words</string>
+    <string name="could_not_download_sheets">Could not download sheets</string>
 </resources>

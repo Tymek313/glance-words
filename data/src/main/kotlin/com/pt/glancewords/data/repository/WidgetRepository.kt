@@ -19,6 +19,10 @@ internal class DefaultWidgetRepository(
     private val ioDispatcher: CoroutineDispatcher
 ) : WidgetRepository {
 
+    override suspend fun getWidget(widgetId: WidgetId): Widget? = withContext(ioDispatcher) {
+        database.getById(widgetId.value).executeAsOneOrNull()?.let(widgetMapper::mapToDomain)
+    }
+
     override fun observeWidget(widgetId: WidgetId): Flow<Widget?> {
         return database.getById(widgetId.value)
             .asFlow()

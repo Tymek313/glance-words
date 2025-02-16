@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.update
 
 interface WordsSynchronizationStateNotifier {
     fun observeAreWordsSynchronized(widgetId: WidgetId): Flow<Boolean>
-    suspend fun notifyWordsSynchronizationForAction(widgetId: WidgetId, action: suspend () -> Unit)
+    suspend fun <T> notifyWordsSynchronizationForAction(widgetId: WidgetId, action: suspend () -> T): T
 }
 
 class DefaultWordsSynchronizationStateNotifier : WordsSynchronizationStateNotifier {
@@ -18,9 +18,10 @@ class DefaultWordsSynchronizationStateNotifier : WordsSynchronizationStateNotifi
         return widgetToLoadFlow.map { it.contains(widgetId) }
     }
 
-    override suspend fun notifyWordsSynchronizationForAction(widgetId: WidgetId, action: suspend () -> Unit) {
+    override suspend fun <T> notifyWordsSynchronizationForAction(widgetId: WidgetId, action: suspend () -> T): T {
         widgetToLoadFlow.update { it + widgetId }
-        action()
+        val result = action()
         widgetToLoadFlow.update { it - widgetId }
+        return result
     }
 }

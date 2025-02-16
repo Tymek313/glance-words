@@ -20,6 +20,7 @@ import com.pt.glancewords.domain.repository.WordsRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.AndroidClientEngine
 import io.ktor.client.engine.android.AndroidEngineConfig
+import io.ktor.client.plugins.HttpTimeout
 import kotlinx.coroutines.Dispatchers
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
@@ -33,7 +34,7 @@ val dataModule = module {
     factory<SheetRepository> { DefaultSheetRepository(get<Database>().dbSheetQueries, DefaultSheetMapper(), Dispatchers.IO) }
     single<WordsRepository> {
         DefaultWordsRepository(
-            GoogleWordsRemoteDataSource(get()),
+            GoogleWordsRemoteDataSource(get(), get()),
             FileWordsLocalDataSource(FileSystem.SYSTEM, get<File>(QUALIFIER_SPREADSHEETS_DIRECTORY).toOkioPath(), Dispatchers.IO),
             DefaultWordPairMapper()
         )
@@ -41,7 +42,7 @@ val dataModule = module {
     factory<WidgetRepository> { DefaultWidgetRepository(get<Database>().dbWidgetQueries, DefaultWidgetMapper(), Dispatchers.IO) }
     factory<SpreadsheetRepository> {
         GoogleSpreadsheetRepository(
-            DefaultGoogleSpreadsheetDataSource(get(), Dispatchers.IO)
+            DefaultGoogleSpreadsheetDataSource(get(), get(), Dispatchers.IO)
         )
     }
 }

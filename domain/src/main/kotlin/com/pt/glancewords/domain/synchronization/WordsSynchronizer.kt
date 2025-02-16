@@ -4,11 +4,13 @@ import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SheetRepository
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
-import kotlinx.coroutines.flow.first
+import com.pt.glancewords.logging.Logger
+import com.pt.glancewords.logging.e
+import kotlinx.coroutines.flow.firstOrNull
 import java.time.Instant
 
 interface WordsSynchronizer {
-    suspend fun synchronizeWords(widgetId: WidgetId)
+    suspend fun synchronizeWords(widgetId: WidgetId): Boolean
 }
 
 class DefaultWordsSynchronizer(
@@ -17,19 +19,29 @@ class DefaultWordsSynchronizer(
     private val sheetRepository: SheetRepository,
     private val wordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier,
     private val refreshWidget: suspend (widgetId: WidgetId) -> Unit,
+    private val logger: Logger,
     private val getNowInstant: () -> Instant
 ) : WordsSynchronizer {
 
-    override suspend fun synchronizeWords(widgetId: WidgetId) {
-        // Delete cached words to avoid loading them when widget restarts to prevent blinking
-        wordsRepository.deleteCachedWords(widgetId)
-        val widget = widgetRepository.observeWidget(widgetId).first().let(::checkNotNull)
-        refreshWidget(widgetId)
-        wordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widgetId) {
-            wordsRepository.synchronizeWords(
-                WordsRepository.SynchronizationRequest(widget.id, widget.sheet.sheetSpreadsheetId)
-            )
-            sheetRepository.updateLastUpdatedAt(widget.sheet.id, getNowInstant())
+    override suspend fun synchronizeWords(widgetId: WidgetId): Boolean {
+        val widget = widgetRepository.observeWidget(widgetId).firstOrNull()
+
+        return if (widget == null) {
+            logger.e(this, "Widget is null")
+            false
+        } else {
+            // Delete cached words to avoid loading them when widget restarts to prevent blinking
+            wordsRepository.deleteCachedWords(widgetId)
+            refreshWidget(widget.id)
+            wordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widget.id) {
+                val syncSucceeded = wordsRepository.synchronizeWords(
+                    WordsRepository.SynchronizationRequest(widget.id, widget.sheet.sheetSpreadsheetId)
+                )
+                if (syncSucceeded) {
+                    sheetRepository.updateLastUpdatedAt(widget.sheet.id, getNowInstant())
+                }
+                syncSucceeded
+            }
         }
     }
 }

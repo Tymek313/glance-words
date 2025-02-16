@@ -30,6 +30,7 @@ class DefaultSheetRepositoryTest {
     private lateinit var fakeSheetMapper: SheetMapper
 
     private val everyMapToDomain get() = every { fakeSheetMapper.mapToDomain(DB_SHEET.copy(id = 1)) }
+    private val everyMapToDomainFromNewSheet get() = every { fakeSheetMapper.mapToDomain(newSheet = NEW_SHEET, sheetId = 2) }
     private val everyMapToDb get() = every { fakeSheetMapper.mapToDb(NEW_SHEET) }
 
     private val mappedDomainSheet = EXISTING_SHEET.copy(id = SheetId(1))
@@ -66,6 +67,7 @@ class DefaultSheetRepositoryTest {
     fun `when sheet is added_then it is stored in database`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
         everyMapToDb returns mappedDbSheet
+        everyMapToDomainFromNewSheet returns EXISTING_SHEET
 
         repository.addSheet(NEW_SHEET)
 
@@ -78,10 +80,11 @@ class DefaultSheetRepositoryTest {
     fun `when sheet is added_then sheet with updated id is returned`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
         everyMapToDb returns mappedDbSheet
+        everyMapToDomainFromNewSheet returns EXISTING_SHEET
 
         val updatedSheet = repository.addSheet(NEW_SHEET)
 
-        assertEquals(2, updatedSheet.id.value)
+        assertEquals(EXISTING_SHEET.id, updatedSheet.id)
     }
 
     @Test

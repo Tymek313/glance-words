@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface WordsRepository {
     fun observeWords(widgetId: WidgetId): Flow<List<WordPair>>
-    suspend fun synchronizeWords(request: SynchronizationRequest)
+    suspend fun synchronizeWords(request: SynchronizationRequest): Boolean
     suspend fun deleteCachedWords(widgetId: WidgetId)
     data class SynchronizationRequest(val widgetId: WidgetId, val sheetSpreadsheetId: SheetSpreadsheetId)
 }

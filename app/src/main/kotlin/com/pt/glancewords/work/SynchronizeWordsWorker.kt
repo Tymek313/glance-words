@@ -9,6 +9,8 @@ import androidx.work.WorkerParameters
 import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.synchronization.WordsSynchronizer
 import com.pt.glancewords.logging.Logger
+import com.pt.glancewords.logging.d
+import com.pt.glancewords.logging.e
 import com.pt.glancewords.notification.NotificationChannel
 import com.pt.glancewords.notification.NotificationIds
 
@@ -22,13 +24,16 @@ class SynchronizeWordsWorker(
     override suspend fun doWork(): Result {
         val widgetId = inputData.getInt(INPUT_WIDGET_ID, -1).takeIf { it != -1 }?.let(::WidgetId)
         return if (widgetId == null) {
-            logger.e(javaClass.name, "No widget id passed to the worker")
+            logger.e(this, "No widget id passed to the worker")
             Result.failure()
-        } else try {
-            wordsSynchronizer.synchronizeWords(widgetId)
-            Result.success()
-        } catch (e: Exception) {
-            Result.failure()
+        } else {
+            val syncSucceeded = wordsSynchronizer.synchronizeWords(widgetId)
+            if (syncSucceeded) {
+                Result.success()
+            } else {
+                logger.d(this, "Words synchronization failed")
+                Result.failure()
+            }
         }
     }
 

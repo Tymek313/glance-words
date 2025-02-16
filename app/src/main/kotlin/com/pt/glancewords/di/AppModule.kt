@@ -53,7 +53,8 @@ val appModule = module {
             get(),
             get(),
             refreshWidget = { refreshWidget(context = androidContext(), widgetId = it) },
-            Instant::now
+            logger = get(),
+            getNowInstant = Instant::now
         )
     }
     singleOf<Logger>(::DefaultLogger)
@@ -74,5 +75,5 @@ val appModule = module {
         )
     }
     factory(QUALIFIER_SPREADSHEETS_DIRECTORY) { androidContext().filesDir }
-    factory<AddWidget> { DefaultAddWidget(get(), get()) }
+    factory<AddWidget> { DefaultAddWidget(get(), get(), get()) }
 }

@@ -1,15 +1,19 @@
 package com.pt.domain.words.synchronization
 
-import com.pt.domain.words.fixture.existingSheetFixture
-import com.pt.domain.words.fixture.instantFixture
-import com.pt.domain.words.fixture.widgetIdFixture
-import com.pt.domain.words.fixture.widgetWithExistingSheetFixture
+import com.pt.domain.words.fixture.randomSheetId
+import com.pt.domain.words.fixture.randomWidgetId
+import com.pt.glancewords.domain.model.Sheet
+import com.pt.glancewords.domain.model.SheetSpreadsheetId
+import com.pt.glancewords.domain.model.Widget
 import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SheetRepository
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
 import com.pt.glancewords.domain.synchronization.DefaultWordsSynchronizer
 import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifier
+import com.pt.testcommon.fixture.randomInstant
+import com.pt.testcommon.fixture.randomInt
+import com.pt.testcommon.fixture.randomString
 import io.mockk.awaits
 import io.mockk.coEvery
 import io.mockk.coInvoke
@@ -19,6 +23,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -26,6 +31,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class DefaultWordsSynchronizerTest {
 
@@ -37,15 +44,15 @@ class DefaultWordsSynchronizerTest {
     private lateinit var fakeWordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier
     private lateinit var fakeRefreshWidget: suspend (WidgetId) -> Unit
 
-    private val everyObserveWidget get() = coEvery { fakeWidgetRepository.observeWidget(widgetIdFixture) }
-    private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(any()) }
-    private val everyUpdateLastUpdatedAt get() = coEvery { fakeSheetRepository.updateLastUpdatedAt(existingSheetFixture.id, instantFixture) }
+    private val everyObserveWidget get() = coEvery { fakeWidgetRepository.observeWidget(WIDGET_ID_TO_SYNCHRONIZE) }
+    private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(SYNC_REQUEST) }
+    private val everyUpdateLastUpdatedAt get() = coEvery { fakeSheetRepository.updateLastUpdatedAt(STORED_SHEET.id, NOW) }
     private val everyNotifyWordsSynchronizationForAction get() = coEvery {
-        fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widgetIdFixture, captureLambda())
+        fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction<Any>(STORED_WIDGET.id, captureLambda())
     }
     private val everyGetNowInstant get() = every { fakeGetNowInstant() }
-    private val everyRefreshWidget get() = coEvery { fakeRefreshWidget(widgetIdFixture) }
-    private val everyDeleteCachedWords get() = coEvery { fakeWordsRepository.deleteCachedWords(widgetIdFixture) }
+    private val everyRefreshWidget get() = coEvery { fakeRefreshWidget(STORED_WIDGET.id) }
+    private val everyDeleteCachedWords get() = coEvery { fakeWordsRepository.deleteCachedWords(WIDGET_ID_TO_SYNCHRONIZE) }
 
     @Before
     fun setUp() {
@@ -61,16 +68,19 @@ class DefaultWordsSynchronizerTest {
             sheetRepository = fakeSheetRepository,
             getNowInstant = fakeGetNowInstant,
             wordsSynchronizationStateNotifier = fakeWordsSynchronizationStateNotifier,
-            refreshWidget = fakeRefreshWidget
+            refreshWidget = fakeRefreshWidget,
+            logger = mockk(relaxed = true)
         )
     }
 
-    @Test(expected = IllegalStateException::class)
-    fun `when words are synchronized_given widget do not exist_then exception is thrown`() = runTest {
+    @Test
+    fun `when words are synchronized_given widget do not exist_then false is returned`() = runTest {
         cachedWordsAreDeleted()
         noWidgetIsEmitted()
 
-        synchronizer.synchronizeWords(widgetIdFixture)
+        val syncSucceeded = synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
+
+        assertFalse(syncSucceeded)
     }
 
     @Test
@@ -83,32 +93,34 @@ class DefaultWordsSynchronizerTest {
         lastUpdatedPropertyIsUpdated()
         instantIsReturned()
 
-        synchronizer.synchronizeWords(widgetIdFixture)
+        synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
 
         coVerifySequence {
-            fakeWordsRepository.deleteCachedWords(widgetIdFixture)
-            fakeWidgetRepository.observeWidget(widgetIdFixture)
-            fakeRefreshWidget(widgetIdFixture)
-            fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widgetIdFixture, any())
+            fakeWidgetRepository.observeWidget(any())
+            fakeWordsRepository.deleteCachedWords(any())
+            fakeRefreshWidget(any())
+            fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction<Any>(any(), any())
             fakeWordsRepository.synchronizeWords(any())
-            fakeSheetRepository.updateLastUpdatedAt(existingSheetFixture.id, instantFixture)
+            fakeSheetRepository.updateLastUpdatedAt(any(), any())
         }
     }
 
     @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun `when words are synchronized_given widget exists_then widget is refreshed`() = runTest(UnconfinedTestDispatcher()) {
         cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshedSuspended()
 
         backgroundScope.launch {
-            synchronizer.synchronizeWords(widgetIdFixture)
+            synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
         }
 
-        coVerify { fakeRefreshWidget(widgetIdFixture) }
+        coVerify { fakeRefreshWidget(STORED_WIDGET.id) }
     }
 
     @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun `when words are synchronized_given widget exists_then widget loading state is triggered`() = runTest(UnconfinedTestDispatcher()) {
         cachedWordsAreDeleted()
         widgetIsEmitted()
@@ -116,10 +128,10 @@ class DefaultWordsSynchronizerTest {
         notifyWordsSynchronizationSuspended()
 
         backgroundScope.launch {
-            synchronizer.synchronizeWords(widgetIdFixture)
+            synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
         }
 
-        coVerify { fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widgetIdFixture, any()) }
+        coVerify { fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(STORED_WIDGET.id, any()) }
     }
 
     @Test
@@ -132,11 +144,11 @@ class DefaultWordsSynchronizerTest {
         wordsAreSynchronized()
         instantIsReturned()
 
-        synchronizer.synchronizeWords(widgetIdFixture)
+        synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
 
         coVerify {
             fakeWordsRepository.synchronizeWords(
-                widgetWithExistingSheetFixture.run { WordsRepository.SynchronizationRequest(id, sheet.sheetSpreadsheetId) }
+                STORED_WIDGET.run { WordsRepository.SynchronizationRequest(id, sheet.sheetSpreadsheetId) }
             )
         }
     }
@@ -151,20 +163,50 @@ class DefaultWordsSynchronizerTest {
         lastUpdatedPropertyIsUpdated()
         instantIsReturned()
 
-        synchronizer.synchronizeWords(widgetIdFixture)
+        synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
 
-        coVerify { fakeSheetRepository.updateLastUpdatedAt(widgetWithExistingSheetFixture.sheet.id, instantFixture) }
+        coVerify { fakeSheetRepository.updateLastUpdatedAt(STORED_WIDGET.sheet.id, NOW) }
     }
 
-    private fun widgetIsEmitted() = everyObserveWidget returns flowOf(widgetWithExistingSheetFixture)
+    @Test
+    fun `when words are synchronized_given synchronization fails_then false is returned`() = runTest {
+        cachedWordsAreDeleted()
+        widgetIsEmitted()
+        widgetIsRefreshed()
+        notifyWordsSynchronization()
+        wordsSynchronizationFails()
+
+        val syncSucceeded = synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
+
+        assertFalse(syncSucceeded)
+    }
+
+    @Test
+    fun `when words are synchronized_given synchronization succeeds_then true is returned`() = runTest {
+        cachedWordsAreDeleted()
+        widgetIsEmitted()
+        widgetIsRefreshed()
+        notifyWordsSynchronization()
+        wordsAreSynchronized()
+        lastUpdatedPropertyIsUpdated()
+        instantIsReturned()
+
+        val syncSucceeded = synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
+
+        assertTrue(syncSucceeded)
+    }
+
+    private fun widgetIsEmitted() = everyObserveWidget returns flowOf(STORED_WIDGET)
 
     private fun noWidgetIsEmitted() = everyObserveWidget returns flowOf(null)
 
-    private fun wordsAreSynchronized() = everySynchronizeWords just runs
+    private fun wordsAreSynchronized() = everySynchronizeWords returns true
+
+    private fun wordsSynchronizationFails() = everySynchronizeWords returns false
 
     private fun lastUpdatedPropertyIsUpdated() = everyUpdateLastUpdatedAt just runs
 
-    private fun notifyWordsSynchronization() = everyNotifyWordsSynchronizationForAction coAnswers { lambda<suspend () -> Unit>().coInvoke() }
+    private fun notifyWordsSynchronization() = everyNotifyWordsSynchronizationForAction coAnswers { lambda<suspend () -> Boolean>().coInvoke() }
 
     private fun notifyWordsSynchronizationSuspended() = everyNotifyWordsSynchronizationForAction just awaits
 
@@ -174,6 +216,18 @@ class DefaultWordsSynchronizerTest {
 
     private fun widgetIsRefreshedSuspended() = everyRefreshWidget just awaits
 
-    private fun instantIsReturned() = everyGetNowInstant returns instantFixture
+    private fun instantIsReturned() = everyGetNowInstant returns NOW
 
+    private companion object {
+        val NOW = randomInstant()
+        val WIDGET_ID_TO_SYNCHRONIZE = randomWidgetId()
+        val STORED_SHEET = Sheet(
+            id = randomSheetId(),
+            sheetSpreadsheetId = SheetSpreadsheetId(randomString(), randomInt()),
+            name = randomString(),
+            lastUpdatedAt = NOW
+        )
+        val STORED_WIDGET = Widget(id = randomWidgetId(), sheet = STORED_SHEET)
+        val SYNC_REQUEST = WordsRepository.SynchronizationRequest(STORED_WIDGET.id, STORED_SHEET.sheetSpreadsheetId)
+    }
 }

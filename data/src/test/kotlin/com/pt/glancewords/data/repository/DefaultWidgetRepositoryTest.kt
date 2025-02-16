@@ -50,7 +50,36 @@ class DefaultWidgetRepositoryTest {
     }
 
     @Test
-    fun `when widget is observed_given widget does not exist_then null is returned`() = runTest(dispatcher) {
+    fun `when widget is requested_given widget does not exist_then null is returned`() = runTest(dispatcher) {
+        val widget = repository.getWidget(randomWidgetId())
+
+        assertNull(widget)
+    }
+
+    @Test
+    fun `when widget is requested_given widget does not exist_then widget is returned`() = runTest(dispatcher) {
+        database.dbSheetQueries.insert(DB_SHEET)
+        database.dbWidgetQueries.insert(DB_WIDGET.copy(sheet_id = nextStoredSheetId))
+        every {
+            fakeWidgetMapper.mapToDomain(
+                GetById(
+                    id = DB_WIDGET.id,
+                    sheet_id = nextStoredSheetId,
+                    s_spreadsheet_id = DB_SHEET.spreadsheet_id,
+                    s_sheet_id = DB_SHEET.sheet_id,
+                    s_name = DB_SHEET.name,
+                    s_last_updated_at = DB_SHEET.last_updated_at
+                )
+            )
+        } returns WIDGET_WITH_EXISTING_SHEET
+
+        val widget = repository.getWidget(WIDGET_WITH_EXISTING_SHEET.id)
+
+        assertEquals(WIDGET_WITH_EXISTING_SHEET, widget)
+    }
+
+    @Test
+    fun `when widget is observed_given widget does not exist_then null is emitted`() = runTest(dispatcher) {
         val widgetEmissions = collectToListInBackground(repository.observeWidget(randomWidgetId()))
 
         assertNull(widgetEmissions.single())

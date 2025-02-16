@@ -9,7 +9,6 @@ import com.pt.glancewords.domain.model.WordPair
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
 import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifier
-import com.pt.glancewords.logging.Logger
 import com.pt.testcommon.coroutines.collectToListInBackground
 import com.pt.testcommon.fixture.randomInt
 import com.pt.testcommon.fixture.randomString
@@ -43,7 +42,6 @@ class WordsWidgetViewModelTest {
     private lateinit var fakeWidgetRepository: WidgetRepository
     private lateinit var fakeWordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier
     private lateinit var fakeWordsRepository: WordsRepository
-    private lateinit var fakeLogger: Logger
     private lateinit var fakeReshuffleNotifier: ReshuffleNotifier
 
     private val everyObserveWidget get() = every { fakeWidgetRepository.observeWidget(WIDGET.id) }
@@ -65,7 +63,6 @@ class WordsWidgetViewModelTest {
         fakeWidgetRepository = mockk()
         fakeWordsSynchronizationStateNotifier = mockk()
         fakeWordsRepository = mockk()
-        fakeLogger = mockk()
         fakeReshuffleNotifier = mockk()
     }
 
@@ -206,7 +203,7 @@ class WordsWidgetViewModelTest {
         wordsRepository = fakeWordsRepository,
         locale = Locale.US,
         zoneId = ZoneId.of("UTC"),
-        logger = fakeLogger,
+        logger = mockk(relaxed = true),
         reshuffleNotifier = fakeReshuffleNotifier
     )
 

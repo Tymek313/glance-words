@@ -36,8 +36,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.pt.glancewords.R
 import com.pt.glancewords.ui.theme.GlanceWordsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNot
@@ -79,7 +81,7 @@ fun WidgetConfigurationScreen(
                     label = { Text(text = "Spreadsheet ID") },
                     trailingIcon = { if (state.isLoading) CircularProgressIndicator(Modifier.padding(8.dp)) },
                     isError = state.spreadsheetError != null,
-                    supportingText = state.spreadsheetError?.let { { Text(it) } },
+                    supportingText = state.spreadsheetError?.let { { Text(stringResource(it)) } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
@@ -88,7 +90,7 @@ fun WidgetConfigurationScreen(
                     SheetList(sheets = state.sheets, selectedSheetId = state.selectedSheetId, onSheetSelect = onSheetSelect)
                 }
                 AnimatedVisibility(visible = state.generalError != null) {
-                    Text(text = state.generalError.orEmpty(), color = MaterialTheme.colorScheme.error)
+                    Text(text = state.generalError?.let { stringResource(it) }.orEmpty(), color = MaterialTheme.colorScheme.error)
                 }
                 Button(
                     onClick = onCreateWidgetClick,
@@ -158,11 +160,11 @@ private fun ConfigureScreenPreview() {
                     WidgetConfigurationState.Sheet(id = 2, name = "Sheet 2"),
                 ),
                 selectedSheetId = null,
-                spreadsheetError = "Error",
+                spreadsheetError = R.string.could_not_download_sheets,
                 isLoading = true,
                 isSavingWidget = true,
                 widgetConfigurationSaved = false,
-                generalError = "General error"
+                generalError = R.string.could_not_synchronize_words
             ),
             onCreateWidgetClick = {},
             onDismiss = {},
