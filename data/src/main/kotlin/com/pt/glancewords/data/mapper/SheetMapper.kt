@@ -13,7 +13,7 @@ internal interface SheetMapper {
     fun mapToDb(sheet: NewSheet): DbSheet
 }
 
-internal class DefaultSheetMapper : SheetMapper {
+internal class DefaultSheetMapper(private val getNowInstant: () -> Instant) : SheetMapper {
     override fun mapToDomain(dbSheet: DbSheet): Sheet = with(dbSheet) {
         Sheet(
             id = SheetId(id),
@@ -38,7 +38,7 @@ internal class DefaultSheetMapper : SheetMapper {
             spreadsheet_id = sheetSpreadsheetId.spreadsheetId,
             sheet_id = sheetSpreadsheetId.sheetId,
             name = name,
-            last_updated_at = null
+            last_updated_at = getNowInstant().epochSecond
         )
     }
 }

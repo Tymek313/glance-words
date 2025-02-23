@@ -24,7 +24,6 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -44,7 +43,7 @@ class DefaultWordsSynchronizerTest {
     private lateinit var fakeWordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier
     private lateinit var fakeRefreshWidget: suspend (WidgetId) -> Unit
 
-    private val everyObserveWidget get() = coEvery { fakeWidgetRepository.observeWidget(WIDGET_ID_TO_SYNCHRONIZE) }
+    private val everyGetWidget get() = coEvery { fakeWidgetRepository.getWidget(WIDGET_ID_TO_SYNCHRONIZE) }
     private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(SYNC_REQUEST) }
     private val everyUpdateLastUpdatedAt get() = coEvery { fakeSheetRepository.updateLastUpdatedAt(STORED_SHEET.id, NOW) }
     private val everyNotifyWordsSynchronizationForAction get() = coEvery {
@@ -96,7 +95,7 @@ class DefaultWordsSynchronizerTest {
         synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
 
         coVerifySequence {
-            fakeWidgetRepository.observeWidget(any())
+            fakeWidgetRepository.getWidget(any())
             fakeWordsRepository.deleteCachedWords(any())
             fakeRefreshWidget(any())
             fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction<Any>(any(), any())
@@ -196,9 +195,9 @@ class DefaultWordsSynchronizerTest {
         assertTrue(syncSucceeded)
     }
 
-    private fun widgetIsEmitted() = everyObserveWidget returns flowOf(STORED_WIDGET)
+    private fun widgetIsEmitted() = everyGetWidget returns STORED_WIDGET
 
-    private fun noWidgetIsEmitted() = everyObserveWidget returns flowOf(null)
+    private fun noWidgetIsEmitted() = everyGetWidget returns null
 
     private fun wordsAreSynchronized() = everySynchronizeWords returns true
 

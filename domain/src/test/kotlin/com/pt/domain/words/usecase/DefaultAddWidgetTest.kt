@@ -7,7 +7,7 @@ import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SheetRepository
 import com.pt.glancewords.domain.repository.WidgetRepository
-import com.pt.glancewords.domain.synchronization.WordsSynchronizer
+import com.pt.glancewords.domain.repository.WordsRepository
 import com.pt.glancewords.domain.usecase.AddWidget
 import com.pt.glancewords.domain.usecase.DefaultAddWidget
 import com.pt.testcommon.fixture.randomInt
@@ -28,13 +28,12 @@ class DefaultAddWidgetTest {
     private lateinit var addWidget: DefaultAddWidget
     private lateinit var fakeWidgetRepository: WidgetRepository
     private lateinit var fakeSheetRepository: SheetRepository
-    private lateinit var fakeWordsSynchronizer: WordsSynchronizer
+    private lateinit var fakeWordsRepository: WordsRepository
 
     private val everyGetSheet get() = coEvery { fakeSheetRepository.getBySheetSpreadsheetId(WIDGET_TO_ADD.sheet.sheetSpreadsheetId) }
     private val everyAddSheet get() = coEvery { fakeSheetRepository.addSheet(WIDGET_TO_ADD.sheet) }
     private val everyAddWidget get() = coEvery { fakeWidgetRepository.addWidget(WIDGET_TO_ADD.widgetId, any()) }
-    private val everyDeleteWidget get() = coEvery { fakeWidgetRepository.deleteWidget(WIDGET_TO_ADD.widgetId) }
-    private val everySynchronizeWords get() = coEvery { fakeWordsSynchronizer.synchronizeWords(WIDGET_TO_ADD.widgetId) }
+    private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(WORDS_SYNCHRONIZATION_REQUEST) }
 
     private fun wordsAreSynchronized() = everySynchronizeWords returns true
     private fun wordsSynchronizationFails() = everySynchronizeWords returns false
@@ -42,37 +41,13 @@ class DefaultAddWidgetTest {
     private fun sheetDoesNotExist() = everyGetSheet returns null
     private fun sheetIsAdded() = everyAddSheet returns ADDED_SHEET
     private fun widgetIsAdded() = everyAddWidget just runs
-    private fun widgetIsDeleted() = everyDeleteWidget just runs
 
     @Before
     fun setup() {
         fakeWidgetRepository = mockk()
         fakeSheetRepository = mockk()
-        fakeWordsSynchronizer = mockk()
-        addWidget = DefaultAddWidget(fakeWidgetRepository, fakeSheetRepository, fakeWordsSynchronizer)
-    }
-
-    @Test
-    fun `when invoked_given sheet exists_then widget with the existing sheet id is added`() = runTest {
-        sheetIsRetrieved()
-        widgetIsAdded()
-        wordsAreSynchronized()
-
-        addWidget(WIDGET_TO_ADD)
-
-        coVerify { fakeWidgetRepository.addWidget(WIDGET_TO_ADD.widgetId, STORED_SHEET.id) }
-    }
-
-    @Test
-    fun `when invoked_given sheet does not exist_then widget with the newly stored sheet id is added`() = runTest {
-        sheetDoesNotExist()
-        sheetIsAdded()
-        widgetIsAdded()
-        wordsAreSynchronized()
-
-        addWidget(WIDGET_TO_ADD)
-
-        coVerify { fakeWidgetRepository.addWidget(WIDGET_TO_ADD.widgetId, ADDED_SHEET.id) }
+        fakeWordsRepository = mockk()
+        addWidget = DefaultAddWidget(fakeWidgetRepository, fakeSheetRepository, fakeWordsRepository)
     }
 
     @Test
@@ -87,11 +62,33 @@ class DefaultAddWidgetTest {
     }
 
     @Test
+    fun `when invoked_given words synchronization succeeds and sheet exists_then widget with the existing sheet id is added`() = runTest {
+        sheetIsRetrieved()
+        widgetIsAdded()
+        wordsAreSynchronized()
+
+        addWidget(WIDGET_TO_ADD)
+
+        coVerify { fakeWidgetRepository.addWidget(WIDGET_TO_ADD.widgetId, STORED_SHEET.id) }
+    }
+
+    @Test
+    fun `when invoked_given words synchronization succeeds and sheet does not exist_then widget with the newly stored sheet id is added`() = runTest {
+        sheetDoesNotExist()
+        sheetIsAdded()
+        widgetIsAdded()
+        wordsAreSynchronized()
+
+        addWidget(WIDGET_TO_ADD)
+
+        coVerify { fakeWidgetRepository.addWidget(WIDGET_TO_ADD.widgetId, ADDED_SHEET.id) }
+    }
+
+    @Test
     fun `when invoked_given words synchronization fails_then false is returned`() = runTest {
         sheetIsRetrieved()
         widgetIsAdded()
         wordsSynchronizationFails()
-        widgetIsDeleted()
 
         val syncSucceeded = addWidget(WIDGET_TO_ADD)
 
@@ -99,15 +96,21 @@ class DefaultAddWidgetTest {
     }
 
     @Test
-    fun `when invoked_given words synchronization fails_then widget is deleted`() = runTest {
-        sheetIsRetrieved()
-        widgetIsAdded()
+    fun `when invoked_given words synchronization fails_then sheet is not added`() = runTest {
         wordsSynchronizationFails()
-        widgetIsDeleted()
 
         addWidget(WIDGET_TO_ADD)
 
-        coVerify { fakeWidgetRepository.deleteWidget(WIDGET_TO_ADD.widgetId) }
+        coVerify(inverse = true) { fakeSheetRepository.addSheet(any()) }
+    }
+
+    @Test
+    fun `when invoked_given words synchronization fails_then widget is not added`() = runTest {
+        wordsSynchronizationFails()
+
+        addWidget(WIDGET_TO_ADD)
+
+        coVerify(inverse = true) { fakeWidgetRepository.addWidget(any(), any()) }
     }
 
     private companion object {
@@ -120,7 +123,7 @@ class DefaultAddWidgetTest {
         )
         val STORED_SHEET = randomSheet()
         val ADDED_SHEET = randomSheet()
-
+        val WORDS_SYNCHRONIZATION_REQUEST = WordsRepository.SynchronizationRequest(WIDGET_TO_ADD.widgetId, WIDGET_TO_ADD.sheet.sheetSpreadsheetId)
         fun randomSheet() = Sheet(
             id = SheetId(randomInt()),
             sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = randomString(), sheetId = randomInt()),

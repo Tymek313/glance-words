@@ -6,7 +6,6 @@ import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
 import com.pt.glancewords.logging.Logger
 import com.pt.glancewords.logging.e
-import kotlinx.coroutines.flow.firstOrNull
 import java.time.Instant
 
 interface WordsSynchronizer {
@@ -24,7 +23,7 @@ class DefaultWordsSynchronizer(
 ) : WordsSynchronizer {
 
     override suspend fun synchronizeWords(widgetId: WidgetId): Boolean {
-        val widget = widgetRepository.observeWidget(widgetId).firstOrNull()
+        val widget = widgetRepository.getWidget(widgetId)
 
         return if (widget == null) {
             logger.e(this, "Widget is null")

@@ -4,7 +4,7 @@ import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SheetRepository
 import com.pt.glancewords.domain.repository.WidgetRepository
-import com.pt.glancewords.domain.synchronization.WordsSynchronizer
+import com.pt.glancewords.domain.repository.WordsRepository
 import com.pt.glancewords.domain.usecase.AddWidget.WidgetToAdd
 
 interface AddWidget {
@@ -16,17 +16,18 @@ interface AddWidget {
 class DefaultAddWidget(
     private val widgetRepository: WidgetRepository,
     private val sheetRepository: SheetRepository,
-    private val wordsSynchronizer: WordsSynchronizer
+    private val wordsRepository: WordsRepository,
 ) : AddWidget {
 
     override suspend fun invoke(widgetToAdd: WidgetToAdd): Boolean {
-        val sheet = sheetRepository.getBySheetSpreadsheetId(widgetToAdd.sheet.sheetSpreadsheetId) ?: sheetRepository.addSheet(widgetToAdd.sheet)
-        widgetRepository.addWidget(widgetToAdd.widgetId, sheet.id)
-        val syncSucceeded = wordsSynchronizer.synchronizeWords(widgetToAdd.widgetId)
-        if (!syncSucceeded) {
-            widgetRepository.deleteWidget(widgetToAdd.widgetId)
-            // No need to delete sheet. It's handled by the trigger in the database
+        // Sync words before storing widget and sheet id database since it can fail
+        val wordsSyncSucceeded = wordsRepository.synchronizeWords(
+            WordsRepository.SynchronizationRequest(widgetToAdd.widgetId, widgetToAdd.sheet.sheetSpreadsheetId)
+        )
+        if (wordsSyncSucceeded) {
+            val sheet = sheetRepository.getBySheetSpreadsheetId(widgetToAdd.sheet.sheetSpreadsheetId) ?: sheetRepository.addSheet(widgetToAdd.sheet)
+            widgetRepository.addWidget(widgetToAdd.widgetId, sheet.id)
         }
-        return syncSucceeded
+        return wordsSyncSucceeded
     }
 }

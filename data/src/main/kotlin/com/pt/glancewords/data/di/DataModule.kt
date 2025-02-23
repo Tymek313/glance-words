@@ -27,6 +27,7 @@ import okio.Path.Companion.toOkioPath
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import java.io.File
+import java.time.Instant
 
 val dataModule = module {
     single<GoogleSheetsProvider> { CachingGoogleSheetsProvider(Dispatchers.IO) }
@@ -39,7 +40,7 @@ val dataModule = module {
             }
         }
     }
-    factory<SheetRepository> { DefaultSheetRepository(get<Database>().dbSheetQueries, DefaultSheetMapper(), Dispatchers.IO) }
+    factory<SheetRepository> { DefaultSheetRepository(get<Database>().dbSheetQueries, DefaultSheetMapper(Instant::now), Dispatchers.IO) }
     single<WordsRepository> {
         DefaultWordsRepository(
             GoogleWordsRemoteDataSource(get(), get()),
