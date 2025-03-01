@@ -9,6 +9,7 @@ import java.time.Instant
 interface SheetRepository {
     suspend fun getSheets(): List<Sheet>
     suspend fun getBySheetSpreadsheetId(sheetSpreadsheetId: SheetSpreadsheetId): Sheet?
-    suspend fun addSheet(sheet: NewSheet): Sheet
+    suspend fun exists(sheetId: SheetId): Boolean
+    suspend fun addSheetInTransaction(sheet: NewSheet, actionInTransaction: suspend (determinedId: SheetId) -> Boolean): Sheet?
     suspend fun updateLastUpdatedAt(sheetId: SheetId, lastUpdatedAt: Instant)
 }

@@ -40,7 +40,7 @@ class WidgetConfigurationViewModelTest {
     private lateinit var fakeSpreadsheetRepository: SpreadsheetRepository
     private lateinit var fakeAddWidget: AddWidget
 
-    private val everyAddWidget get() = coEvery { fakeAddWidget(any()) }
+    private val everyAddWidget get() = coEvery { fakeAddWidget(any(), any()) }
     private fun everyFetchSpreadsheetSheets(spreadsheetId: String = SPREADSHEET_ID) = coEvery {
         fakeSpreadsheetRepository.fetchSpreadsheetSheets(spreadsheetId)
     }
@@ -233,9 +233,9 @@ class WidgetConfigurationViewModelTest {
         widgetIsAdded()
         setSpreadsheetIdAndSheet()
 
-        viewModel.saveWidgetConfiguration(WIDGET_TO_ADD.widgetId.value)
+        viewModel.saveWidgetConfiguration(WIDGET_TO_ADD_ID.value)
 
-        coVerify { fakeAddWidget.invoke(WIDGET_TO_ADD) }
+        coVerify { fakeAddWidget.invoke(WIDGET_TO_ADD_ID, NEW_SHEET_TO_ADD) }
     }
 
     @Test
@@ -289,12 +289,10 @@ class WidgetConfigurationViewModelTest {
         val SHEETS = listOf(
             WidgetConfigurationState.Sheet(id = FETCHED_SPREADSHEET_SHEET.id, name = FETCHED_SPREADSHEET_SHEET.name)
         )
-        val WIDGET_TO_ADD = AddWidget.WidgetToAdd(
-            widgetId = WidgetId(randomInt()),
-            sheet = NewSheet(
-                sheetSpreadsheetId = SheetSpreadsheetId(SPREADSHEET_ID, FETCHED_SPREADSHEET_SHEET.id),
-                name = FETCHED_SPREADSHEET_SHEET.name
-            )
+        val WIDGET_TO_ADD_ID = WidgetId(randomInt())
+        val NEW_SHEET_TO_ADD = NewSheet(
+            sheetSpreadsheetId = SheetSpreadsheetId(SPREADSHEET_ID, FETCHED_SPREADSHEET_SHEET.id),
+            name = FETCHED_SPREADSHEET_SHEET.name
         )
         val STATE_AFTER_SHEET_SELECTION = WidgetConfigurationState(
             spreadsheetId = SPREADSHEET_ID,

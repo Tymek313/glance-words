@@ -8,6 +8,7 @@ import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.repository.SheetRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.time.Instant
 
@@ -21,12 +22,19 @@ internal class DefaultSheetRepository(
         database.getAll().executeAsList().map(sheetMapper::mapToDomain)
     }
 
-    override suspend fun addSheet(sheet: NewSheet) = withContext(ioDispatcher) {
+    override suspend fun addSheetInTransaction(sheet: NewSheet, actionInTransaction: suspend (determinedId: SheetId) -> Boolean) = withContext(ioDispatcher) {
         val sheetId = database.transactionWithResult {
             database.insert(sheetMapper.mapToDb(sheet))
-            database.getLastId().executeAsOne().toInt()
+            val sheetId = database.getLastId().executeAsOne().toInt().let(::SheetId)
+            val actionSucceeded = runBlocking(coroutineContext) { // Pass coroutine context to support coroutine cancellation
+                actionInTransaction(sheetId)
+            }
+            if (!actionSucceeded) {
+                rollback(null)
+            }
+            sheetId
         }
-        sheetMapper.mapToDomain(sheet, sheetId)
+        sheetId?.let { sheetMapper.mapToDomain(sheet, it) }
     }
 
     override suspend fun getBySheetSpreadsheetId(sheetSpreadsheetId: SheetSpreadsheetId) = withContext(ioDispatcher) {
@@ -34,6 +42,10 @@ internal class DefaultSheetRepository(
             sheetSpreadsheetId.spreadsheetId,
             sheetSpreadsheetId.sheetId
         ).executeAsOneOrNull()?.let(sheetMapper::mapToDomain)
+    }
+
+    override suspend fun exists(sheetId: SheetId) = withContext(ioDispatcher) {
+        database.exists(sheetId.value).executeAsOne()
     }
 
     override suspend fun updateLastUpdatedAt(sheetId: SheetId, lastUpdatedAt: Instant) = withContext(ioDispatcher) {

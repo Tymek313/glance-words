@@ -9,7 +9,7 @@ import java.time.Instant
 
 internal interface SheetMapper {
     fun mapToDomain(dbSheet: DbSheet): Sheet
-    fun mapToDomain(newSheet: NewSheet, sheetId: Int): Sheet
+    fun mapToDomain(newSheet: NewSheet, sheetId: SheetId): Sheet
     fun mapToDb(sheet: NewSheet): DbSheet
 }
 
@@ -23,9 +23,9 @@ internal class DefaultSheetMapper(private val getNowInstant: () -> Instant) : Sh
         )
     }
 
-    override fun mapToDomain(newSheet: NewSheet, sheetId: Int): Sheet = with(newSheet) {
+    override fun mapToDomain(newSheet: NewSheet, sheetId: SheetId): Sheet = with(newSheet) {
         Sheet(
-            id = SheetId(sheetId),
+            id = sheetId,
             sheetSpreadsheetId = sheetSpreadsheetId,
             name = name,
             lastUpdatedAt = null,

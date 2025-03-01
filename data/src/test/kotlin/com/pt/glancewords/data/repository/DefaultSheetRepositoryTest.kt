@@ -30,7 +30,7 @@ class DefaultSheetRepositoryTest {
     private lateinit var fakeSheetMapper: SheetMapper
 
     private val everyMapToDomain get() = every { fakeSheetMapper.mapToDomain(DB_SHEET.copy(id = 1)) }
-    private val everyMapToDomainFromNewSheet get() = every { fakeSheetMapper.mapToDomain(newSheet = NEW_SHEET, sheetId = 2) }
+    private val everyMapToDomainFromNewSheet get() = every { fakeSheetMapper.mapToDomain(newSheet = NEW_SHEET, sheetId = SheetId(2)) }
     private val everyMapToDb get() = every { fakeSheetMapper.mapToDb(NEW_SHEET) }
 
     private val mappedDomainSheet = EXISTING_SHEET.copy(id = SheetId(1))
@@ -64,12 +64,12 @@ class DefaultSheetRepositoryTest {
     }
 
     @Test
-    fun `when sheet is added_then it is stored in database`() = runTest(dispatcher) {
+    fun `when sheet is added_given transaction succeeds_then it is stored in database`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
         everyMapToDb returns mappedDbSheet
         everyMapToDomainFromNewSheet returns EXISTING_SHEET
 
-        repository.addSheet(NEW_SHEET)
+        repository.addSheetInTransaction(NEW_SHEET) { true }
 
         val sheets = database.dbSheetQueries.getAll().executeAsList()
         assertEquals(2, sheets.size)
@@ -77,14 +77,38 @@ class DefaultSheetRepositoryTest {
     }
 
     @Test
-    fun `when sheet is added_then sheet with updated id is returned`() = runTest(dispatcher) {
+    fun `when sheet is added_given transaction fails_then it is not stored in database`() = runTest(dispatcher) {
+        val dbSheet = randomDbSheet().copy(id = 1)
+        database.dbSheetQueries.insert(dbSheet)
+        everyMapToDb returns mappedDbSheet
+        everyMapToDomainFromNewSheet returns EXISTING_SHEET
+
+        repository.addSheetInTransaction(NEW_SHEET) { false }
+
+        val sheets = database.dbSheetQueries.getAll().executeAsList()
+        assertEquals(listOf(dbSheet), sheets)
+    }
+
+    @Test
+    fun `when sheet is added_given transaction succeeded_then sheet with updated id is returned`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
         everyMapToDb returns mappedDbSheet
         everyMapToDomainFromNewSheet returns EXISTING_SHEET
 
-        val updatedSheet = repository.addSheet(NEW_SHEET)
+        val updatedSheet = repository.addSheetInTransaction(NEW_SHEET) { true }
 
-        assertEquals(EXISTING_SHEET.id, updatedSheet.id)
+        assertEquals(EXISTING_SHEET.id, updatedSheet!!.id)
+    }
+
+    @Test
+    fun `when sheet is added_given transaction failed_then null is returned`() = runTest(dispatcher) {
+        database.dbSheetQueries.insert(randomDbSheet())
+        everyMapToDb returns mappedDbSheet
+        everyMapToDomainFromNewSheet returns EXISTING_SHEET
+
+        val updatedSheet = repository.addSheetInTransaction(NEW_SHEET) { false }
+
+        assertNull(updatedSheet)
     }
 
     @Test

@@ -71,7 +71,7 @@ class WidgetConfigurationViewModel(
         }
         _state.update { it.copy(isSavingWidget = true, generalError = null) }
         viewModelScope.launch {
-            val widgetAdded = addWidget(createWidgetToAdd(widgetId, selectedSheetId))
+            val widgetAdded = addWidget(WidgetId(widgetId), createSheetToAdd(selectedSheetId))
             if (widgetAdded) {
                 _state.update { it.copy(widgetConfigurationSaved = true) }
             } else {
@@ -80,14 +80,11 @@ class WidgetConfigurationViewModel(
         }
     }
 
-    private fun createWidgetToAdd(widgetId: Int, selectedSheetId: Int): AddWidget.WidgetToAdd {
+    private fun createSheetToAdd(selectedSheetId: Int): NewSheet {
         val state = state.value
-        return AddWidget.WidgetToAdd(
-            widgetId = WidgetId(widgetId),
-            sheet = NewSheet(
-                sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = state.spreadsheetId, sheetId = selectedSheetId),
-                name = state.sheets.first { it.id == selectedSheetId }.name
-            )
+        return NewSheet(
+            sheetSpreadsheetId = SheetSpreadsheetId(spreadsheetId = state.spreadsheetId, sheetId = selectedSheetId),
+            name = state.sheets.first { it.id == selectedSheetId }.name
         )
     }
 
