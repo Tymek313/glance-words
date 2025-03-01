@@ -30,12 +30,10 @@ class DefaultWordsSynchronizer(
             false
         } else {
             // Delete cached words to avoid loading them when widget restarts to prevent blinking
-            wordsRepository.deleteCachedWords(widgetId)
+            wordsRepository.deleteWords(widget.sheet.id)
             refreshWidget(widget.id)
             wordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction(widget.id) {
-                val syncSucceeded = wordsRepository.synchronizeWords(
-                    WordsRepository.SynchronizationRequest(widget.id, widget.sheet.sheetSpreadsheetId)
-                )
+                val syncSucceeded = wordsRepository.synchronizeWords(widget.sheet.id, widget.sheet.sheetSpreadsheetId)
                 if (syncSucceeded) {
                     sheetRepository.updateLastUpdatedAt(widget.sheet.id, getNowInstant())
                 }

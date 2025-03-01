@@ -1,7 +1,7 @@
-package com.pt.domain.words.synchronization
+package com.pt.glancewords.domain.synchronization
 
-import com.pt.domain.words.fixture.randomSheetId
-import com.pt.domain.words.fixture.randomWidgetId
+import com.pt.glancewords.domain.fixture.randomSheetId
+import com.pt.glancewords.domain.fixture.randomWidgetId
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.model.Widget
@@ -9,8 +9,6 @@ import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.repository.SheetRepository
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
-import com.pt.glancewords.domain.synchronization.DefaultWordsSynchronizer
-import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifier
 import com.pt.testcommon.fixture.randomInstant
 import com.pt.testcommon.fixture.randomInt
 import com.pt.testcommon.fixture.randomString
@@ -44,14 +42,14 @@ class DefaultWordsSynchronizerTest {
     private lateinit var fakeRefreshWidget: suspend (WidgetId) -> Unit
 
     private val everyGetWidget get() = coEvery { fakeWidgetRepository.getWidget(WIDGET_ID_TO_SYNCHRONIZE) }
-    private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(SYNC_REQUEST) }
+    private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(STORED_WIDGET.sheet.id, STORED_SHEET.sheetSpreadsheetId) }
     private val everyUpdateLastUpdatedAt get() = coEvery { fakeSheetRepository.updateLastUpdatedAt(STORED_SHEET.id, NOW) }
     private val everyNotifyWordsSynchronizationForAction get() = coEvery {
         fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction<Any>(STORED_WIDGET.id, captureLambda())
     }
     private val everyGetNowInstant get() = every { fakeGetNowInstant() }
     private val everyRefreshWidget get() = coEvery { fakeRefreshWidget(STORED_WIDGET.id) }
-    private val everyDeleteCachedWords get() = coEvery { fakeWordsRepository.deleteCachedWords(WIDGET_ID_TO_SYNCHRONIZE) }
+    private val everyDeleteCachedWords get() = coEvery { fakeWordsRepository.deleteWords(STORED_WIDGET.sheet.id) }
 
     @Before
     fun setUp() {
@@ -96,10 +94,10 @@ class DefaultWordsSynchronizerTest {
 
         coVerifySequence {
             fakeWidgetRepository.getWidget(any())
-            fakeWordsRepository.deleteCachedWords(any())
+            fakeWordsRepository.deleteWords(any())
             fakeRefreshWidget(any())
             fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction<Any>(any(), any())
-            fakeWordsRepository.synchronizeWords(any())
+            fakeWordsRepository.synchronizeWords(any(), any())
             fakeSheetRepository.updateLastUpdatedAt(any(), any())
         }
     }
@@ -146,9 +144,7 @@ class DefaultWordsSynchronizerTest {
         synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
 
         coVerify {
-            fakeWordsRepository.synchronizeWords(
-                STORED_WIDGET.run { WordsRepository.SynchronizationRequest(id, sheet.sheetSpreadsheetId) }
-            )
+            fakeWordsRepository.synchronizeWords(STORED_WIDGET.sheet.id, STORED_WIDGET.sheet.sheetSpreadsheetId)
         }
     }
 
@@ -227,6 +223,5 @@ class DefaultWordsSynchronizerTest {
             lastUpdatedAt = NOW
         )
         val STORED_WIDGET = Widget(id = randomWidgetId(), sheet = STORED_SHEET)
-        val SYNC_REQUEST = WordsRepository.SynchronizationRequest(STORED_WIDGET.id, STORED_SHEET.sheetSpreadsheetId)
     }
 }

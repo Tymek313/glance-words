@@ -43,7 +43,7 @@ class WordsWidgetViewModelTest {
     private lateinit var fakeReshuffleNotifier: ReshuffleNotifier
 
     private val everyObserveWidget get() = every { fakeWidgetRepository.observeWidget(WIDGET.id) }
-    private val everyObserveWords get() = every { fakeWordsRepository.observeWords(WIDGET.id) }
+    private val everyObserveWords get() = every { fakeWordsRepository.observeWords(WIDGET.sheet.id) }
     private val everyObserveAreWordsSynchronized get() = every { fakeWordsSynchronizationStateNotifier.observeAreWordsSynchronized(WIDGET.id) }
     private val everyReshuffleEvents get() = every { fakeReshuffleNotifier.reshuffleEvents }
 

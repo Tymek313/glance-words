@@ -1,4 +1,4 @@
-package com.pt.domain.words.fixture
+package com.pt.glancewords.domain.fixture
 
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.WidgetId

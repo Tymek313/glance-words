@@ -2,7 +2,7 @@ package com.pt.glancewords.data.repository
 
 import com.pt.glancewords.data.datasource.CSVLine
 import com.pt.glancewords.data.datasource.FileWordsLocalDataSource
-import com.pt.glancewords.data.fixture.WIDGET_ID
+import com.pt.glancewords.data.fixture.randomSheetId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -33,14 +33,14 @@ class FileWordsLocalDataSourceTest {
     fun `when words are requested_given file exists_word lines are returned`() = runTest(dispatcher) {
         createFilledCSVFile()
 
-        val words = dataSource.getWords(WIDGET_ID)
+        val words = dataSource.getWords(SHEET_ID)
 
         assertEquals(TEST_CSV_LINES, words)
     }
 
     @Test
     fun `when words are requested_given file does not exist_null is returned`() = runTest(dispatcher) {
-        val words = dataSource.getWords(WIDGET_ID)
+        val words = dataSource.getWords(SHEET_ID)
 
         assertNull(words)
     }
@@ -49,7 +49,7 @@ class FileWordsLocalDataSourceTest {
     fun `when words are stored_given file exists_words should be written to the file`() = runTest(dispatcher) {
         createEmptyCSVFile()
 
-        dataSource.storeWords(WIDGET_ID, TEST_CSV_LINES)
+        dataSource.storeWords(SHEET_ID, TEST_CSV_LINES)
 
         val fileContent = fakeFileSystem.read(TARGET_FILE_PATH, BufferedSource::readUtf8)
         assertEquals(TEST_CSV, fileContent)
@@ -57,7 +57,7 @@ class FileWordsLocalDataSourceTest {
 
     @Test
     fun `when words are stored_given file does not exist_file should be created and words written to it`() = runTest(dispatcher) {
-        dataSource.storeWords(WIDGET_ID, TEST_CSV_LINES)
+        dataSource.storeWords(SHEET_ID, TEST_CSV_LINES)
 
         val fileContent = fakeFileSystem.read(TARGET_FILE_PATH, BufferedSource::readUtf8)
         assertEquals(TEST_CSV, fileContent)
@@ -67,7 +67,7 @@ class FileWordsLocalDataSourceTest {
     fun `when words are deleted_words should be deleted from the filesystem`() = runTest(dispatcher) {
         createEmptyCSVFile()
 
-        dataSource.deleteWords(WIDGET_ID)
+        dataSource.deleteWords(SHEET_ID)
 
         val fileExists = fakeFileSystem.exists(TARGET_FILE_PATH)
         assertFalse(fileExists)
@@ -83,10 +83,11 @@ class FileWordsLocalDataSourceTest {
         fakeFileSystem.write(TARGET_FILE_PATH, mustCreate = true) { emit() }
     }
 
-    companion object {
-        private const val TEST_CSV = "a,b\r\nc,d"
-        private val TEST_CSV_LINES = listOf(CSVLine("a,b"), CSVLine("c,d"))
-        private val SPREADSHEETS_DIRECTORY = "spreadsheets".toPath()
-        private val TARGET_FILE_PATH = SPREADSHEETS_DIRECTORY / "${WIDGET_ID.value}.csv"
+    private companion object {
+        const val TEST_CSV = "a,b\r\nc,d"
+        val TEST_CSV_LINES = listOf(CSVLine("a,b"), CSVLine("c,d"))
+        val SPREADSHEETS_DIRECTORY = "spreadsheets".toPath()
+        val SHEET_ID = randomSheetId()
+        val TARGET_FILE_PATH = SPREADSHEETS_DIRECTORY / "${SHEET_ID.value}.csv"
     }
 }

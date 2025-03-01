@@ -1,7 +1,6 @@
-package com.pt.domain.words.synchronization
+package com.pt.glancewords.domain.synchronization
 
-import com.pt.domain.words.fixture.randomWidgetId
-import com.pt.glancewords.domain.synchronization.DefaultWordsSynchronizationStateNotifier
+import com.pt.glancewords.domain.fixture.randomWidgetId
 import com.pt.testcommon.coroutines.collectToListInBackground
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.drop
