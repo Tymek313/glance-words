@@ -14,6 +14,8 @@ import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifi
 import com.pt.glancewords.domain.synchronization.WordsSynchronizer
 import com.pt.glancewords.domain.usecase.AddWidget
 import com.pt.glancewords.domain.usecase.DefaultAddWidget
+import com.pt.glancewords.domain.usecase.DefaultDeleteWidget
+import com.pt.glancewords.domain.usecase.DeleteWidget
 import com.pt.glancewords.logging.DefaultLogger
 import com.pt.glancewords.logging.Logger
 import com.pt.glancewords.widget.DefaultReshuffleNotifier
@@ -34,6 +36,7 @@ val appModule = module {
     factory { (widgetId: GlanceId) ->
         WordsWidgetViewModel(
             WidgetId(GlanceAppWidgetManager(get()).getAppWidgetId(widgetId)),
+            get(),
             get(),
             get(),
             get(),
@@ -72,4 +75,5 @@ val appModule = module {
     }
     factory(QUALIFIER_SPREADSHEETS_DIRECTORY) { androidContext().filesDir }
     factory<AddWidget> { DefaultAddWidget(get(), get(), get()) }
+    factory<DeleteWidget> { DefaultDeleteWidget(get(), get(), get(), get()) }
 }
