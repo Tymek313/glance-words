@@ -1,0 +1,63 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@android:id/background"
+    android:orientation="vertical"
+    android:theme="@style/Theme.Material3.DynamicColors.DayNight"
+    style="@style/WidgetPreviewContainer">
+
+    <include layout="@layout/widget_preview_list_item" />
+
+    <include
+        layout="@layout/widget_preview_list_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" />
+
+    <include
+        layout="@layout/widget_preview_list_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginVertical="4dp">
+
+        <!-- Suppress UseCompoundDrawables: Compound drawable cannot be resized.  -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:gravity="center_vertical"
+            android:layout_toStartOf="@id/sheet_name"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                app:tint="?attr/colorOnSecondaryContainer"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_refresh" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:textColor="?attr/colorOnSecondaryContainer"
+                android:text="@string/widget_preview_date" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/sheet_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:textColor="?attr/colorOnSecondaryContainer"
+            android:text="@string/widget_preview_sheet_name" />
+    </RelativeLayout>
+</LinearLayout>

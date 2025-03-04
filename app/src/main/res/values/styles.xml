@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="WidgetPreviewListItem">
+        <item name="android:layout_weight">1</item>
+        <item name="android:paddingHorizontal">12dp</item>
+        <item name="android:paddingVertical">10dp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="WidgetPreviewContainer">
+        <item name="android:background">?attr/colorSecondaryContainer</item>
+        <item name="android:paddingHorizontal">6dp</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">2dp</item>
+    </style>
+</resources>
