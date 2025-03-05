@@ -1,7 +1,7 @@
 package com.pt.glancewords.data.repository
 
+import com.pt.glancewords.data.database.DbSheetQueries
 import com.pt.glancewords.data.mapper.SheetMapper
-import com.pt.glancewords.database.DbSheetQueries
 import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId

@@ -1,5 +1,8 @@
 package com.pt.glancewords.data.repository
 
+import com.pt.glancewords.data.database.Database
+import com.pt.glancewords.data.database.DbWidget
+import com.pt.glancewords.data.database.GetById
 import com.pt.glancewords.data.fixture.DB_SHEET
 import com.pt.glancewords.data.fixture.DB_WIDGET
 import com.pt.glancewords.data.fixture.WIDGET_WITH_EXISTING_SHEET
@@ -7,9 +10,6 @@ import com.pt.glancewords.data.fixture.randomDbSheet
 import com.pt.glancewords.data.fixture.randomWidgetId
 import com.pt.glancewords.data.mapper.WidgetMapper
 import com.pt.glancewords.data.utility.createTestDatabase
-import com.pt.glancewords.database.Database
-import com.pt.glancewords.database.DbWidget
-import com.pt.glancewords.database.GetById
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.Widget
 import com.pt.testcommon.coroutines.collectToListInBackground

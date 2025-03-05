@@ -1,6 +1,6 @@
 package com.pt.glancewords.data.mapper
 
-import com.pt.glancewords.database.DbSheet
+import com.pt.glancewords.data.database.DbSheet
 import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId

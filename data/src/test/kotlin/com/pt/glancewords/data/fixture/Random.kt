@@ -1,7 +1,7 @@
 package com.pt.glancewords.data.fixture
 
-import com.pt.glancewords.database.DbSheet
-import com.pt.glancewords.database.DbWidget
+import com.pt.glancewords.data.database.DbSheet
+import com.pt.glancewords.data.database.DbWidget
 import com.pt.glancewords.domain.model.NewSheet
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId

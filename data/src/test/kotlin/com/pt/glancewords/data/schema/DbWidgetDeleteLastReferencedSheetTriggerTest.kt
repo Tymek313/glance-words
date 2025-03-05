@@ -1,8 +1,8 @@
 package com.pt.glancewords.data.schema
 
+import com.pt.glancewords.data.database.DbWidget
 import com.pt.glancewords.data.fixture.randomDbSheet
 import com.pt.glancewords.data.utility.createTestDatabase
-import com.pt.glancewords.database.DbWidget
 import com.pt.testcommon.fixture.randomInt
 import kotlin.test.Test
 import kotlin.test.assertFalse

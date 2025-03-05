@@ -1,5 +1,6 @@
 package com.pt.glancewords.data.repository
 
+import com.pt.glancewords.data.database.Database
 import com.pt.glancewords.data.fixture.DB_SHEET
 import com.pt.glancewords.data.fixture.EXISTING_SHEET
 import com.pt.glancewords.data.fixture.NEW_SHEET
@@ -7,7 +8,6 @@ import com.pt.glancewords.data.fixture.SHEET_SPREADSHEET_ID
 import com.pt.glancewords.data.fixture.randomDbSheet
 import com.pt.glancewords.data.mapper.SheetMapper
 import com.pt.glancewords.data.utility.createTestDatabase
-import com.pt.glancewords.database.Database
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.testcommon.fixture.randomInstant
 import io.mockk.every

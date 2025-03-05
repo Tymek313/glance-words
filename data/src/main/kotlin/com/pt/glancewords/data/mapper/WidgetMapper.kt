@@ -1,7 +1,7 @@
 package com.pt.glancewords.data.mapper
 
-import com.pt.glancewords.database.DbWidget
-import com.pt.glancewords.database.GetById
+import com.pt.glancewords.data.database.DbWidget
+import com.pt.glancewords.data.database.GetById
 import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId

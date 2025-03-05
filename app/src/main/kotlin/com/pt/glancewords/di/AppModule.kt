@@ -4,9 +4,9 @@ import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.sqlite.db.SupportSQLiteDatabase
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import com.pt.glancewords.data.database.Database
 import com.pt.glancewords.data.database.createDatabase
 import com.pt.glancewords.data.di.QUALIFIER_SPREADSHEETS_DIRECTORY
-import com.pt.glancewords.database.Database
 import com.pt.glancewords.domain.model.WidgetId
 import com.pt.glancewords.domain.synchronization.DefaultWordsSynchronizationStateNotifier
 import com.pt.glancewords.domain.synchronization.DefaultWordsSynchronizer

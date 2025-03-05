@@ -10,7 +10,7 @@ kotlin {
 sqldelight {
     databases {
         create("Database") {
-            packageName.set("com.pt.glancewords.database")
+            packageName.set("com.pt.glancewords.data.database")
         }
     }
 }

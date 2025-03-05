@@ -2,8 +2,8 @@ package com.pt.glancewords.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
+import com.pt.glancewords.data.database.DbWidgetQueries
 import com.pt.glancewords.data.mapper.WidgetMapper
-import com.pt.glancewords.database.DbWidgetQueries
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.Widget
 import com.pt.glancewords.domain.model.WidgetId

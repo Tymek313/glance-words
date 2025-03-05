@@ -1,5 +1,6 @@
 package com.pt.glancewords.data.di
 
+import com.pt.glancewords.data.database.Database
 import com.pt.glancewords.data.datasource.DefaultGoogleSpreadsheetDataSource
 import com.pt.glancewords.data.datasource.FileWordsLocalDataSource
 import com.pt.glancewords.data.datasource.GoogleWordsRemoteDataSource
@@ -12,7 +13,6 @@ import com.pt.glancewords.data.repository.DefaultSheetRepository
 import com.pt.glancewords.data.repository.DefaultWidgetRepository
 import com.pt.glancewords.data.repository.DefaultWordsRepository
 import com.pt.glancewords.data.repository.GoogleSpreadsheetRepository
-import com.pt.glancewords.database.Database
 import com.pt.glancewords.domain.repository.SheetRepository
 import com.pt.glancewords.domain.repository.SpreadsheetRepository
 import com.pt.glancewords.domain.repository.WidgetRepository
