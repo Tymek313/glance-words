@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.sqldelight)
+    jacoco
 }
 
 kotlin {
@@ -13,6 +14,10 @@ sqldelight {
             packageName.set("com.pt.glancewords.data.database")
         }
     }
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test) // tests are required to run before generating the report
 }
 
 dependencies {
