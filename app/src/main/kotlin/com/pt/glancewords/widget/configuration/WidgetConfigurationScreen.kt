@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
@@ -78,10 +79,10 @@ fun WidgetConfigurationScreen(
                     value = state.spreadsheetId,
                     onValueChange = onSpreadsheetIdChange,
                     readOnly = state.isLoading,
-                    label = { Text(text = "Spreadsheet ID") },
+                    label = { Text(text = stringResource(R.string.spreadsheet_id)) },
                     trailingIcon = { if (state.isLoading) CircularProgressIndicator(Modifier.padding(8.dp)) },
                     isError = state.spreadsheetError != null,
-                    supportingText = state.spreadsheetError?.let { { Text(stringResource(it)) } },
+                    supportingText = state.spreadsheetError?.let { { Text(text = stringResource(it)) } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)
@@ -98,11 +99,14 @@ fun WidgetConfigurationScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(modifier = Modifier.fillMaxWidth()) {
-                        Text(text = "Create widget", modifier = Modifier.align(Alignment.Center))
+                        Text(
+                            text = stringResource(R.string.create_widget),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                         if (state.isSavingWidget) {
                             CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                strokeWidth = 2.dp,
+                                color = LocalContentColor.current,
+                                strokeWidth = 3.dp,
                                 modifier = Modifier
                                     .size(24.dp)
                                     .align(Alignment.CenterEnd)
@@ -188,7 +192,7 @@ private fun ConfigureScreenSelectedSheetPreview() {
                 selectedSheetId = 1,
                 spreadsheetError = null,
                 isLoading = false,
-                isSavingWidget = true,
+                isSavingWidget = false,
                 widgetConfigurationSaved = false,
                 generalError = null
             ),

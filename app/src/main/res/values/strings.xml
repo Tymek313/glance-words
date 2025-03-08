@@ -4,6 +4,8 @@
     <string name="widget_synchronization">Synchronizing widget</string>
     <string name="could_not_synchronize_words">Could not synchronize words</string>
     <string name="could_not_download_sheets">Could not download sheets</string>
+    <string name="spreadsheet_id">Spreadsheet ID</string>
+    <string name="create_widget">Create widget</string>
     <!-- Widget preview -->
     <string name="widget_preview_date">Jan, 1 2025, 10:15 AM</string>
     <string name="widget_preview_sheet_name">Sheet name</string>
