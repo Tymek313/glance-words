@@ -91,7 +91,11 @@ fun WidgetConfigurationScreen(
                     SheetList(sheets = state.sheets, selectedSheetId = state.selectedSheetId, onSheetSelect = onSheetSelect)
                 }
                 AnimatedVisibility(visible = state.generalError != null) {
-                    Text(text = state.generalError?.let { stringResource(it) }.orEmpty(), color = MaterialTheme.colorScheme.error)
+                    Text(
+                        text = state.generalError?.let { stringResource(it) }.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
                 Button(
                     onClick = onCreateWidgetClick,
