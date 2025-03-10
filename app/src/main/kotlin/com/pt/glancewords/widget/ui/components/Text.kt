@@ -1,28 +1,38 @@
 package com.pt.glancewords.widget.ui.components
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.glance.GlanceModifier
-import androidx.glance.GlanceTheme
+import androidx.glance.text.FontFamily
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
-import androidx.glance.text.TextDefaults
 import androidx.glance.text.TextStyle
 
 @Composable
-fun WidgetText(text: String, modifier: GlanceModifier = GlanceModifier, style: TextStyle = defaultTextStyle, maxLines: Int = Int.MAX_VALUE) {
+fun WidgetText(text: String, modifier: GlanceModifier = GlanceModifier, style: TextStyle = bodyLargeTextStyle, maxLines: Int = Int.MAX_VALUE) {
     Text(text, modifier, style, maxLines)
 }
 
-val defaultTextStyle
+val bodyLargeTextStyle
     @Composable
-    get() = TextDefaults.defaultTextStyle.copy(fontSize = TextUnit(18f, TextUnitType.Sp), color = GlanceTheme.colors.onBackground)
+    get() = TextStyle(
+        fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+        fontWeight = FontWeight.Normal,
+        fontFamily = FontFamily.SansSerif
+    )
 
-val smallTextStyle
+val labelSmallTextStyle
     @Composable
-    get() = defaultTextStyle.copy(fontSize = TextUnit(13f, TextUnitType.Sp))
+    get() = TextStyle(
+        fontSize = MaterialTheme.typography.labelSmall.fontSize,
+        fontWeight = FontWeight.Medium,
+        fontFamily = FontFamily.SansSerif
+    )
 
-val smallBoldTextStyle
+val labelSmallBoldTextStyle
     @Composable
-    get() = smallTextStyle.copy(fontWeight = FontWeight.Bold)
+    get() = TextStyle(
+        fontSize = MaterialTheme.typography.labelSmall.fontSize,
+        fontWeight = FontWeight.Bold,
+        fontFamily = FontFamily.SansSerif
+    )

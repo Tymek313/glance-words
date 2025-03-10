@@ -37,9 +37,9 @@ import com.pt.glancewords.widget.WidgetUiState
 import com.pt.glancewords.widget.ui.actions.LaunchWidgetSynchronizationWorkAction
 import com.pt.glancewords.widget.ui.actions.ReshuffleAction
 import com.pt.glancewords.widget.ui.components.WidgetText
-import com.pt.glancewords.widget.ui.components.defaultTextStyle
-import com.pt.glancewords.widget.ui.components.smallBoldTextStyle
-import com.pt.glancewords.widget.ui.components.smallTextStyle
+import com.pt.glancewords.widget.ui.components.bodyLargeTextStyle
+import com.pt.glancewords.widget.ui.components.labelSmallBoldTextStyle
+import com.pt.glancewords.widget.ui.components.labelSmallTextStyle
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -91,7 +91,7 @@ private fun WordList(words: List<WordPair>, modifier: GlanceModifier = GlanceMod
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val rowModifier = GlanceModifier.defaultWeight()
-                val style = defaultTextStyle.copy(color = GlanceTheme.colors.onSecondaryContainer)
+                val style = bodyLargeTextStyle.copy(color = GlanceTheme.colors.onSecondaryContainer)
                 WidgetText(text = originalWord, rowModifier, style)
                 Spacer(GlanceModifier.width(R.dimen.widget_list_item_margin))
                 WidgetText(text = translatedWord, rowModifier, style)
@@ -128,7 +128,7 @@ private fun Footer(widgetUiState: WidgetUiState) {
             )
             WidgetText(
                 text = lastUpdatedAt,
-                style = smallTextStyle.copy(color = GlanceTheme.colors.onSurface),
+                style = labelSmallTextStyle.copy(color = GlanceTheme.colors.onSurface),
                 maxLines = 1,
                 modifier = GlanceModifier.padding(start = R.dimen.widget_refresh_icon_margin)
             )
@@ -136,7 +136,7 @@ private fun Footer(widgetUiState: WidgetUiState) {
         Box(contentAlignment = Alignment.CenterEnd) {
             WidgetText(
                 text = widgetUiState.sheetName,
-                style = smallBoldTextStyle.copy(color = GlanceTheme.colors.onSurface)
+                style = labelSmallBoldTextStyle.copy(color = GlanceTheme.colors.onSurface)
             )
         }
     }

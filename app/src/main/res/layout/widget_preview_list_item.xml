@@ -13,7 +13,7 @@
         android:layout_marginEnd="@dimen/widget_list_item_margin"
         android:layout_weight="1"
         android:text="?attr/widgetPreviewListItemOriginal"
-        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
         android:textColor="?attr/colorOnSecondaryContainer" />
 
     <TextView
@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="?attr/widgetPreviewListItemTranslated"
-        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
         android:textColor="?attr/colorOnSecondaryContainer" />
 
 </LinearLayout>
