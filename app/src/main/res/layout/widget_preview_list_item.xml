@@ -2,20 +2,26 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/widget_preview_list_item_background">
+    android:background="@drawable/widget_background_list_item"
+    android:paddingHorizontal="@dimen/widget_list_item_padding_horizontal"
+    android:paddingTop="@dimen/widget_list_item_padding_top"
+    android:paddingBottom="@dimen/widget_list_item_padding_bottom">
 
     <TextView
-        style="@style/WidgetPreviewListItem"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/widget_list_item_margin"
+        android:layout_weight="1"
+        android:text="?attr/widgetPreviewListItemOriginal"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textColor="?attr/colorOnSecondaryContainer" />
+
+    <TextView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="@string/widget_preview_word_original" />
-
-    <TextView
-        style="@style/WidgetPreviewListItem"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="@string/widget_preview_word_translated" />
+        android:text="?attr/widgetPreviewListItemTranslated"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textColor="?attr/colorOnSecondaryContainer" />
 
 </LinearLayout>

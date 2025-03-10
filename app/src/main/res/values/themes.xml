@@ -1,11 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.GlanceWords" parent="Theme.Material3.Light.NoActionBar" />
-    <style name="Theme.Transparent" parent="Theme.Material3.Light.NoActionBar">
+
+    <style name="Theme.GlanceWords" parent="Theme.Material3.DynamicColors.DayNight" />
+
+    <style name="Theme.Transparent" parent="Theme.GlanceWords">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
+    <style name="Theme.AppWidget" parent="Theme.GlanceWords">
+        <item name="widgetContainerRadius">16dp</item>
+    </style>
+
+    <style name="AppWidgetPreviewListItem1" parent="@style/Theme.AppWidget">
+        <item name="widgetPreviewListItemOriginal">Apple</item>
+        <item name="widgetPreviewListItemTranslated">Jabłko</item>
+    </style>
+
+    <style name="AppWidgetPreviewListItem2" parent="@style/Theme.AppWidget">
+        <item name="widgetPreviewListItemOriginal">Car</item>
+        <item name="widgetPreviewListItemTranslated">Samochód</item>
+    </style>
+
+    <style name="AppWidgetPreviewListItem3" parent="@style/Theme.AppWidget">
+        <item name="widgetPreviewListItemOriginal">Tree</item>
+        <item name="widgetPreviewListItemTranslated">Drzewo</item>
     </style>
 </resources>

@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="WidgetPreviewListItem">
-        <item name="android:layout_weight">1</item>
-        <item name="android:paddingHorizontal">12dp</item>
-        <item name="android:paddingVertical">10dp</item>
-        <item name="android:textColor">?attr/colorOnSurface</item>
+    <style name="BaseWidgetPreviewContainer">
+        <item name="android:background">@drawable/widget_preview_background_container</item>
+        <item name="android:paddingHorizontal">@dimen/widget_container_padding</item>
+        <item name="android:paddingTop">@dimen/widget_container_padding</item>
     </style>
 
-    <style name="WidgetPreviewContainer">
-        <item name="android:background">?attr/colorSecondaryContainer</item>
-        <item name="android:paddingHorizontal">6dp</item>
-        <item name="android:paddingTop">6dp</item>
-        <item name="android:paddingBottom">2dp</item>
-    </style>
+    <style name="WidgetPreviewContainer" parent="BaseWidgetPreviewContainer" />
 </resources>

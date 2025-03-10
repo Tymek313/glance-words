@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="widget_container_padding">8dp</dimen>
+    <dimen name="widget_refresh_icon_size">16dp</dimen>
+    <dimen name="widget_refresh_icon_margin">4dp</dimen>
+    <dimen name="widget_footer_padding">8dp</dimen>
+    <dimen name="widget_list_item_padding_top">8dp</dimen>
+    <dimen name="widget_list_item_padding_horizontal">12dp</dimen>
+    <dimen name="widget_list_item_padding_bottom">12dp</dimen>
+    <dimen name="widget_list_item_margin">4dp</dimen>
+</resources>

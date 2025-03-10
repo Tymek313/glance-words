@@ -1,18 +1,21 @@
 package com.pt.glancewords.widget.ui
 
+import android.os.Build
+import androidx.annotation.DimenRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
-import androidx.glance.LocalSize
+import androidx.glance.LocalContext
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.action.actionRunCallback
-import androidx.glance.appwidget.appWidgetBackground
+import androidx.glance.appwidget.components.Scaffold
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.background
@@ -46,41 +49,51 @@ import java.util.Locale
 @Composable
 fun WordsWidgetContent(uiState: WidgetUiState) {
     GlanceTheme {
-        Column(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .appWidgetBackground()
-                .background(GlanceTheme.colors.widgetBackground)
-                .padding(top = 6.dp, start = 6.dp, end = 6.dp, bottom = 2.dp)
+        Scaffold(
+            horizontalPadding = glanceDimensionResource(R.dimen.widget_container_padding),
+            modifier = GlanceModifier.padding(
+                top = glanceDimensionResource(R.dimen.widget_container_padding)
+            )
         ) {
-            Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.defaultWeight().fillMaxWidth()) {
-                if(uiState.isLoading) {
-                    CircularProgressIndicator()
-                } else {
-                    WordList(words = uiState.words)
+            Column(modifier = GlanceModifier.fillMaxSize()) {
+                Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.defaultWeight().fillMaxWidth()) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        WordList(words = uiState.words)
+                    }
                 }
+                Footer(uiState)
             }
-            Footer(uiState)
         }
     }
 }
 
 @Composable
 private fun WordList(words: List<WordPair>, modifier: GlanceModifier = GlanceModifier) {
-    LazyColumn(modifier) {
+    LazyColumn(modifier.listCornerRadius()) {
         items(words) { (originalWord, translatedWord) ->
             Row(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .clickable(actionRunCallback<ReshuffleAction>(), R.drawable.no_ripple)
-                    .background(imageProvider = ImageProvider(R.drawable.rounded_background), colorFilter = ColorFilter.tint(GlanceTheme.colors.surface))
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .clickable(actionRunCallback<ReshuffleAction>(), R.drawable.widget_background_no_ripple)
+                    .background(
+                        imageProvider = ImageProvider(R.drawable.widget_background_list_item),
+                        // Color filter is required. Attribute inside the drawable is not applied for some reason.
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.secondaryContainer)
+                    )
+                    .padding(
+                        top = R.dimen.widget_list_item_padding_top,
+                        start = R.dimen.widget_list_item_padding_horizontal,
+                        end = R.dimen.widget_list_item_padding_horizontal,
+                        bottom = R.dimen.widget_list_item_padding_bottom
+                    ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val rowModifier = GlanceModifier.defaultWeight()
-                val style = defaultTextStyle.copy(color = GlanceTheme.colors.onSurface)
+                val style = defaultTextStyle.copy(color = GlanceTheme.colors.onSecondaryContainer)
                 WidgetText(text = originalWord, rowModifier, style)
-                Spacer(GlanceModifier.width(4.dp))
+                Spacer(GlanceModifier.width(R.dimen.widget_list_item_margin))
                 WidgetText(text = translatedWord, rowModifier, style)
             }
         }
@@ -89,7 +102,6 @@ private fun WordList(words: List<WordPair>, modifier: GlanceModifier = GlanceMod
 
 @Composable
 private fun Footer(widgetUiState: WidgetUiState) {
-    val isWidgetLarge = LocalSize.current == WordsWidgetSizes.LARGE
     val lastUpdatedAt = remember(widgetUiState.lastUpdatedAt) {
         widgetUiState.lastUpdatedAt?.let { lastUpdatedAt ->
             DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
@@ -99,7 +111,10 @@ private fun Footer(widgetUiState: WidgetUiState) {
         }.orEmpty()
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = GlanceModifier.fillMaxWidth().padding(R.dimen.widget_footer_padding)
+    ) {
         Row(
             horizontalAlignment = Alignment.Start,
             verticalAlignment = Alignment.CenterVertically,
@@ -108,21 +123,39 @@ private fun Footer(widgetUiState: WidgetUiState) {
             Image(
                 provider = ImageProvider(R.drawable.ic_refresh),
                 contentDescription = null,
-                modifier = GlanceModifier.size(16.dp),
-                colorFilter = ColorFilter.tint(GlanceTheme.colors.onBackground)
+                modifier = GlanceModifier.size(R.dimen.widget_refresh_icon_size),
+                colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface)
             )
             WidgetText(
                 text = lastUpdatedAt,
-                style = smallTextStyle,
+                style = smallTextStyle.copy(color = GlanceTheme.colors.onSurface),
                 maxLines = 1,
-                modifier = GlanceModifier.run {
-                    val vertical = if (isWidgetLarge) 8.dp else 4.dp
-                    padding(start = 2.dp, top = vertical, bottom = vertical)
-                }
+                modifier = GlanceModifier.padding(start = R.dimen.widget_refresh_icon_margin)
             )
         }
-        Box(contentAlignment = Alignment.CenterEnd) { WidgetText(text = widgetUiState.sheetName, style = smallBoldTextStyle) }
+        Box(contentAlignment = Alignment.CenterEnd) {
+            WidgetText(
+                text = widgetUiState.sheetName,
+                style = smallBoldTextStyle.copy(color = GlanceTheme.colors.onSurface)
+            )
+        }
     }
+}
+
+@Composable
+private fun GlanceModifier.listCornerRadius(): GlanceModifier {
+    if (Build.VERSION.SDK_INT < 31) {
+        return this
+    }
+
+    return this.cornerRadius(glanceDimensionResource(android.R.dimen.system_app_widget_inner_radius))
+}
+
+@Composable
+private fun glanceDimensionResource(@DimenRes resId: Int): Dp {
+    val resources = LocalContext.current.resources
+    val dimensionInPixels = resources.getDimension(resId)
+    return Dp(dimensionInPixels / resources.displayMetrics.density)
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)

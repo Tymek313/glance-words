@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="AppWidget">
+        <attr name="widgetContainerRadius" format="dimension" />
+    </declare-styleable>
+    <declare-styleable name="AppWidgetPreviewListItem">
+        <attr name="widgetPreviewListItemOriginal" format="string" />
+        <attr name="widgetPreviewListItemTranslated" format="string" />
+    </declare-styleable>
+</resources>

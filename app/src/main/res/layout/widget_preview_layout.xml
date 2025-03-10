@@ -2,31 +2,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@android:id/background"
     android:orientation="vertical"
-    android:theme="@style/Theme.Material3.DynamicColors.DayNight"
+    android:theme="@style/Theme.AppWidget"
     style="@style/WidgetPreviewContainer">
 
-    <include layout="@layout/widget_preview_list_item" />
+    <include
+        android:theme="@style/AppWidgetPreviewListItem1"
+        layout="@layout/widget_preview_list_item" />
 
     <include
-        layout="@layout/widget_preview_list_item"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp" />
+        android:theme="@style/AppWidgetPreviewListItem2"
+        layout="@layout/widget_preview_list_item" />
 
     <include
-        layout="@layout/widget_preview_list_item"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp" />
+        android:theme="@style/AppWidgetPreviewListItem3"
+        layout="@layout/widget_preview_list_item" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="8dp"
-        android:layout_marginVertical="4dp">
+        android:layout_margin="@dimen/widget_footer_padding">
 
         <!-- Suppress UseCompoundDrawables: Compound drawable cannot be resized.  -->
         <LinearLayout
@@ -37,18 +33,21 @@
             android:layout_toStartOf="@id/sheet_name"
             tools:ignore="UseCompoundDrawables">
 
+            <!-- Suppress UseAppTint: app:tint does not work in widgets -->
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                app:tint="?attr/colorOnSecondaryContainer"
+                android:layout_width="@dimen/widget_refresh_icon_size"
+                android:layout_height="@dimen/widget_refresh_icon_size"
+                android:tint="?attr/colorOnSurface"
                 android:contentDescription="@null"
-                android:src="@drawable/ic_refresh" />
+                android:src="@drawable/ic_refresh"
+                tools:ignore="UseAppTint" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="2dp"
-                android:textColor="?attr/colorOnSecondaryContainer"
+                android:layout_marginStart="@dimen/widget_refresh_icon_margin"
+                android:textColor="?attr/colorOnSurface"
+                android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
                 android:text="@string/widget_preview_date" />
         </LinearLayout>
 
@@ -57,7 +56,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:textColor="?attr/colorOnSecondaryContainer"
+            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
             android:text="@string/widget_preview_sheet_name" />
     </RelativeLayout>
 </LinearLayout>
