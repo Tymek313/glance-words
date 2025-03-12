@@ -1,0 +1,47 @@
+image: saschpe/android-sdk:35-jdk21.0.6_7
+
+pipelines:
+  custom:
+    main:
+      - parallel:
+          - step:
+              name: Android lint
+              caches:
+                - gradle
+              script:
+                - ./gradlew lint --continue
+              artifacts:
+                - app/build/reports/**
+          - step:
+              name: Unit tests
+              caches:
+                - gradle
+              artifacts:
+                - 'build/reports/jacoco/jacocoTestReport/html/**'
+              script:
+                - ./gradlew jacocoTestReport --continue
+          - step:
+              name: Ktlint check
+              caches:
+                - gradle
+              artifacts:
+                - '*/build/reports/ktlint/ktlintMainSourceSetCheck/**'
+              script:
+                - ./gradlew ktlintMainSourceSetCheck --continue
+      - step:
+          name: Build APK
+          caches:
+            - gradle
+          script:
+            - echo $GOOGLE_SERVICE_ACCOUNT_KEY | base64 -d > data/src/main/resources/google_sheets_credentials.json
+            - ./gradlew app:assembleDebug
+          artifacts:
+            - app/build/outputs/**
+      - step:
+          name: Upload APK to repository downloads
+          script:
+            - pipe: atlassian/bitbucket-upload-file:0.7.3
+              variables:
+                BITBUCKET_USERNAME: tymek313
+                BITBUCKET_APP_PASSWORD: $UPLOAD_ARTIFACTS_TO_DOWNLOADS_PASSWORD
+                FILENAME: "app/build/outputs/apk/debug/app-debug.apk"
