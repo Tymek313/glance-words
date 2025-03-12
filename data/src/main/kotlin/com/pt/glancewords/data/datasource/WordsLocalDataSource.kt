@@ -28,7 +28,8 @@ internal class FileWordsLocalDataSource(
     override suspend fun storeWords(sheetId: SheetId, words: List<CSVLine>) {
         withContext(ioDispatcher) {
             val targetPath = getFilePath(sheetId)
-            val parentDirectory = checkNotNull(targetPath.parent) // Should not be null since we're requiring non-null `spreadsheetsDirectory`
+            // Should not be null since we're requiring non-null `spreadsheetsDirectory`
+            val parentDirectory = checkNotNull(targetPath.parent)
             if (!fileSystem.exists(parentDirectory)) {
                 fileSystem.createDirectories(parentDirectory)
             }

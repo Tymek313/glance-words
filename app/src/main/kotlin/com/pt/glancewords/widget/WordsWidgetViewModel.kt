@@ -10,6 +10,7 @@ import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifi
 import com.pt.glancewords.domain.usecase.DeleteWidget
 import com.pt.glancewords.logging.Logger
 import com.pt.glancewords.logging.d
+import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -20,7 +21,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
-import java.time.Instant
 
 class WordsWidgetViewModel(
     private val widgetId: WidgetId,

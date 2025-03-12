@@ -21,13 +21,13 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.AndroidClientEngine
 import io.ktor.client.engine.android.AndroidEngineConfig
 import io.ktor.client.plugins.HttpTimeout
+import java.io.File
+import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
-import java.io.File
-import java.time.Instant
 
 val dataModule = module {
     single<GoogleSheetsProvider> { CachingGoogleSheetsProvider(Dispatchers.IO) }

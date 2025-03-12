@@ -133,7 +133,7 @@ private fun rememberSheetState(onDismiss: () -> Unit): SheetState {
     val state = SheetState(
         skipPartiallyExpanded = true,
         density = density,
-        initialValue = SheetValue.Expanded,
+        initialValue = SheetValue.Expanded
     )
     val currentOnDismiss by rememberUpdatedState(onDismiss)
 
@@ -146,7 +146,8 @@ private fun rememberSheetState(onDismiss: () -> Unit): SheetState {
 @Composable
 private fun SheetList(sheets: List<WidgetConfigurationState.Sheet>, selectedSheetId: Int?, onSheetSelect: (sheetId: Int) -> Unit) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(state = rememberScrollState())
     ) {
@@ -165,7 +166,7 @@ private fun ConfigureScreenPreview() {
                 spreadsheetId = "",
                 sheets = listOf(
                     WidgetConfigurationState.Sheet(id = 1, name = "Sheet 1"),
-                    WidgetConfigurationState.Sheet(id = 2, name = "Sheet 2"),
+                    WidgetConfigurationState.Sheet(id = 2, name = "Sheet 2")
                 ),
                 selectedSheetId = null,
                 spreadsheetError = R.string.could_not_download_sheets,
@@ -191,7 +192,7 @@ private fun ConfigureScreenSelectedSheetPreview() {
                 spreadsheetId = "",
                 sheets = listOf(
                     WidgetConfigurationState.Sheet(id = 1, name = "Sheet 1"),
-                    WidgetConfigurationState.Sheet(id = 2, name = "Sheet 2"),
+                    WidgetConfigurationState.Sheet(id = 2, name = "Sheet 2")
                 ),
                 selectedSheetId = 1,
                 spreadsheetError = null,

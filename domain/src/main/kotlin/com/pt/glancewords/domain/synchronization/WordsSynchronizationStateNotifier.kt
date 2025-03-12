@@ -14,9 +14,7 @@ interface WordsSynchronizationStateNotifier {
 class DefaultWordsSynchronizationStateNotifier : WordsSynchronizationStateNotifier {
     private val widgetToLoadFlow = MutableStateFlow<Set<WidgetId>>(HashSet())
 
-    override fun observeAreWordsSynchronized(widgetId: WidgetId): Flow<Boolean> {
-        return widgetToLoadFlow.map { it.contains(widgetId) }
-    }
+    override fun observeAreWordsSynchronized(widgetId: WidgetId): Flow<Boolean> = widgetToLoadFlow.map { it.contains(widgetId) }
 
     override suspend fun <T> notifyWordsSynchronizationForAction(widgetId: WidgetId, action: suspend () -> T): T {
         widgetToLoadFlow.update { it + widgetId }

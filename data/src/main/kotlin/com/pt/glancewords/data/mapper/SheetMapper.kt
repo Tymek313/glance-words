@@ -28,7 +28,7 @@ internal class DefaultSheetMapper(private val getNowInstant: () -> Instant) : Sh
             id = sheetId,
             sheetSpreadsheetId = sheetSpreadsheetId,
             name = name,
-            lastUpdatedAt = null,
+            lastUpdatedAt = null
         )
     }
 

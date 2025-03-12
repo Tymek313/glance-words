@@ -13,7 +13,7 @@ interface AddWidget {
 class DefaultAddWidget(
     private val widgetRepository: WidgetRepository,
     private val sheetRepository: SheetRepository,
-    private val wordsRepository: WordsRepository,
+    private val wordsRepository: WordsRepository
 ) : AddWidget {
 
     override suspend fun invoke(widgetId: WidgetId, newSheet: NewSheet): Boolean {

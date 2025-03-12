@@ -14,7 +14,7 @@ value class SheetId(val value: Int)
 
 data class NewSheet(
     val sheetSpreadsheetId: SheetSpreadsheetId,
-    val name: String,
+    val name: String
 )
 
 data class SheetSpreadsheetId(val spreadsheetId: String, val sheetId: Int)

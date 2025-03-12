@@ -37,18 +37,14 @@ class SynchronizeWordsWorker(
         }
     }
 
-    override suspend fun getForegroundInfo(): ForegroundInfo {
-        return ForegroundInfo(
-            NotificationIds.WIDGET_SYNCHRONIZATION,
-            Notification.Builder(context, NotificationChannel.WIDGET_SYNCHRONIZATION.id).build()
-        )
-    }
+    override suspend fun getForegroundInfo(): ForegroundInfo = ForegroundInfo(
+        NotificationIds.WIDGET_SYNCHRONIZATION,
+        Notification.Builder(context, NotificationChannel.WIDGET_SYNCHRONIZATION.id).build()
+    )
 
     companion object {
         private const val INPUT_WIDGET_ID = "InputWidgetId"
 
-        fun createInputData(appWidgetId: Int): Data {
-            return Data.Builder().putInt(INPUT_WIDGET_ID, appWidgetId).build()
-        }
+        fun createInputData(appWidgetId: Int): Data = Data.Builder().putInt(INPUT_WIDGET_ID, appWidgetId).build()
     }
 }

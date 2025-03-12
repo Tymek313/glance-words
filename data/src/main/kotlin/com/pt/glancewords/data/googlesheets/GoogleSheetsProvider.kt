@@ -26,7 +26,9 @@ internal class CachingGoogleSheetsProvider(
             Sheets.Builder(
                 NetHttpTransport(),
                 GsonFactory.getDefaultInstance(),
-                HttpCredentialsAdapter(GoogleCredentials.fromStream(javaClass.classLoader.getResourceAsStream("google_sheets_credentials.json")))
+                HttpCredentialsAdapter(
+                    GoogleCredentials.fromStream(javaClass.classLoader.getResourceAsStream("google_sheets_credentials.json"))
+                )
             ).build().also { sheets = it }
         }
     }

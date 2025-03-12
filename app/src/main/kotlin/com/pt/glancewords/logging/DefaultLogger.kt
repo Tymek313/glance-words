@@ -2,7 +2,7 @@ package com.pt.glancewords.logging
 
 import android.util.Log
 
-class DefaultLogger: Logger {
+class DefaultLogger : Logger {
     override fun e(tag: String?, message: String?, throwable: Throwable?) {
         Log.e(tag, message, throwable)
     }
@@ -15,5 +15,3 @@ class DefaultLogger: Logger {
         Log.d(tag, message)
     }
 }
-
-

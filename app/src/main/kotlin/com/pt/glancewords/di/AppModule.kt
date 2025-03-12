@@ -24,12 +24,12 @@ import com.pt.glancewords.widget.WordsWidgetViewModel
 import com.pt.glancewords.widget.configuration.WidgetConfigurationViewModel
 import com.pt.glancewords.widget.refreshWidget
 import com.pt.glancewords.work.SynchronizeWordsWorker
+import java.time.Instant
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
-import java.time.Instant
 
 val appModule = module {
     singleOf<ReshuffleNotifier>(::DefaultReshuffleNotifier)

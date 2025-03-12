@@ -7,10 +7,10 @@ import com.pt.glancewords.domain.model.Sheet
 import com.pt.glancewords.domain.model.SheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.repository.SheetRepository
+import java.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.time.Instant
 
 internal class DefaultSheetRepository(
     private val database: DbSheetQueries,
@@ -22,20 +22,22 @@ internal class DefaultSheetRepository(
         database.getAll().executeAsList().map(sheetMapper::mapToDomain)
     }
 
-    override suspend fun addSheetInTransaction(sheet: NewSheet, actionInTransaction: suspend (determinedId: SheetId) -> Boolean) = withContext(ioDispatcher) {
-        val sheetId = database.transactionWithResult {
-            database.insert(sheetMapper.mapToDb(sheet))
-            val sheetId = database.getLastId().executeAsOne().toInt().let(::SheetId)
-            val actionSucceeded = runBlocking(coroutineContext) { // Pass coroutine context to support coroutine cancellation
-                actionInTransaction(sheetId)
+    override suspend fun addSheetInTransaction(sheet: NewSheet, actionInTransaction: suspend (determinedId: SheetId) -> Boolean) =
+        withContext(ioDispatcher) {
+            val sheetId = database.transactionWithResult {
+                database.insert(sheetMapper.mapToDb(sheet))
+                val sheetId = database.getLastId().executeAsOne().toInt().let(::SheetId)
+                val actionSucceeded = runBlocking(coroutineContext) {
+                    // Pass coroutine context to support coroutine cancellation
+                    actionInTransaction(sheetId)
+                }
+                if (!actionSucceeded) {
+                    rollback(null)
+                }
+                sheetId
             }
-            if (!actionSucceeded) {
-                rollback(null)
-            }
-            sheetId
+            sheetId?.let { sheetMapper.mapToDomain(sheet, it) }
         }
-        sheetId?.let { sheetMapper.mapToDomain(sheet, it) }
-    }
 
     override suspend fun getBySheetSpreadsheetId(sheetSpreadsheetId: SheetSpreadsheetId) = withContext(ioDispatcher) {
         database.getBySheetSpreadsheetId(

@@ -9,7 +9,12 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 
 @Composable
-fun WidgetText(text: String, modifier: GlanceModifier = GlanceModifier, style: TextStyle = bodyLargeTextStyle, maxLines: Int = Int.MAX_VALUE) {
+fun WidgetText(
+    text: String,
+    modifier: GlanceModifier = GlanceModifier,
+    style: TextStyle = bodyLargeTextStyle,
+    maxLines: Int = Int.MAX_VALUE
+) {
     Text(text, modifier, style, maxLines)
 }
 

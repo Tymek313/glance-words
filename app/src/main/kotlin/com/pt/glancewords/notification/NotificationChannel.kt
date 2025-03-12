@@ -8,9 +8,8 @@ import com.pt.glancewords.R
 enum class NotificationChannel(val id: String, @StringRes private val nameResId: Int) {
     WIDGET_SYNCHRONIZATION(id = "SynchronizeWordsWorker", nameResId = R.string.widget_synchronization);
 
-    fun createAndroidChannel(getString: (nameResId: Int) -> String): NotificationChannelCompat {
-        return NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_NONE)
+    fun createAndroidChannel(getString: (nameResId: Int) -> String): NotificationChannelCompat =
+        NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_NONE)
             .setName(getString(nameResId))
             .build()
-    }
 }

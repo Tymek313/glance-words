@@ -23,12 +23,10 @@ internal class DefaultWidgetRepository(
         database.getById(widgetId.value).executeAsOneOrNull()?.let(widgetMapper::mapToDomain)
     }
 
-    override fun observeWidget(widgetId: WidgetId): Flow<Widget?> {
-        return database.getById(widgetId.value)
-            .asFlow()
-            .mapToOneOrNull(ioDispatcher)
-            .map { dbWidget -> dbWidget?.let(widgetMapper::mapToDomain) }
-    }
+    override fun observeWidget(widgetId: WidgetId): Flow<Widget?> = database.getById(widgetId.value)
+        .asFlow()
+        .mapToOneOrNull(ioDispatcher)
+        .map { dbWidget -> dbWidget?.let(widgetMapper::mapToDomain) }
 
     override suspend fun addWidget(widgetId: WidgetId, sheetId: SheetId) = withContext(ioDispatcher) {
         database.insert(widgetMapper.mapToDb(widgetId, sheetId))

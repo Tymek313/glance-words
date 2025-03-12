@@ -169,7 +169,7 @@ private fun WordsWidgetContentSuccessPreview() {
             words = listOf(
                 WordPair(original = "Original item 1", translated = "Translated item 1"),
                 WordPair(original = "Original item 2", translated = "Translated item 2"),
-                WordPair(original = "Very very long original item 3", translated = "Very very long ranslated item 3"),
+                WordPair(original = "Very very long original item 3", translated = "Very very long ranslated item 3")
             )
         )
     )
