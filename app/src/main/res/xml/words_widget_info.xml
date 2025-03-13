@@ -5,7 +5,7 @@
     android:description="@string/app_widget_description"
     android:initialLayout="@layout/glance_default_loading_layout"
     android:minWidth="200dp"
-    android:minHeight="40dp"
+    android:minHeight="100dp"
     android:previewImage="@drawable/widget_preview_image"
     android:previewLayout="@layout/widget_preview_layout"
     android:resizeMode="horizontal|vertical"
