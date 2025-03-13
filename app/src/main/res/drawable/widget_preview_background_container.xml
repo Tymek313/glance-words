@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
+<shape xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <corners android:radius="?attr/widgetContainerRadius" />
-    <solid android:color="?attr/colorOnSecondary" />
+    <!-- Suppress PrivateResource: For some reason glance widget background color is private
+    but it's the only way to reference this color without duplicating it. -->
+    <solid android:color="@color/glance_colorWidgetBackground"
+        tools:ignore="PrivateResource" />
 </shape>
