@@ -28,6 +28,8 @@ class WidgetConfigurationActivity : ComponentActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        clipboardChecked = savedInstanceState?.getBoolean(KEY_CLIPBOARD_CHECKED) ?: false
+
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))
         setResult(RESULT_CANCELED)
 
@@ -69,6 +71,11 @@ class WidgetConfigurationActivity : ComponentActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_CLIPBOARD_CHECKED, clipboardChecked)
+    }
+
     private fun setInitialSpreadsheetIdFromClipboard() {
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.primaryClip?.getItemAt(0)?.text?.let {
@@ -82,5 +89,9 @@ class WidgetConfigurationActivity : ComponentActivity() {
         val resultIntent = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         setResult(RESULT_OK, resultIntent)
         finish()
+    }
+
+    companion object {
+        private const val KEY_CLIPBOARD_CHECKED = "clipboardChecked"
     }
 }
