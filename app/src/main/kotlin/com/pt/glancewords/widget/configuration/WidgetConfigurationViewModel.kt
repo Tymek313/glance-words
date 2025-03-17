@@ -89,7 +89,7 @@ class WidgetConfigurationViewModel(
     }
 
     companion object {
-        private val SPREADSHEET_URL_REGEX = "https://docs.google.com/spreadsheets/d/(.+)/".toRegex()
+        private val SPREADSHEET_URL_REGEX = "https://docs.google.com/spreadsheets/d/([^/]+)".toRegex()
         private const val SHEET_LOAD_DEBOUNCE = 2000L
     }
 }
