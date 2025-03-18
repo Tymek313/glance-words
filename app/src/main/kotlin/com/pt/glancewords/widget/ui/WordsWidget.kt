@@ -51,12 +51,13 @@ fun WordsWidgetContent(uiState: WidgetUiState) {
     GlanceTheme {
         Scaffold(
             horizontalPadding = glanceDimensionResource(R.dimen.widget_container_padding),
-            modifier = GlanceModifier.padding(
-                top = glanceDimensionResource(R.dimen.widget_container_padding)
-            )
+            modifier = GlanceModifier.padding(top = glanceDimensionResource(R.dimen.widget_container_padding))
         ) {
             Column(modifier = GlanceModifier.fillMaxSize()) {
-                Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.defaultWeight().fillMaxWidth()) {
+                Box(
+                    contentAlignment = if (uiState.isLoading) Alignment.Center else Alignment.TopCenter,
+                    modifier = GlanceModifier.defaultWeight().fillMaxWidth()
+                ) {
                     if (uiState.isLoading) {
                         CircularProgressIndicator()
                     } else {
