@@ -3,6 +3,7 @@ import kotlin.Int;
 CREATE TABLE DbWidget (
     id INTEGER AS Int PRIMARY KEY,
     sheet_id INTEGER AS Int NOT NULL,
+
     FOREIGN KEY(sheet_id) REFERENCES DbSheet(id) ON DELETE CASCADE
 );
 

@@ -1,0 +1,17 @@
+import kotlin.Int;
+
+CREATE TABLE DbWordPair(
+    id INTEGER AS Int PRIMARY KEY AUTOINCREMENT,
+    sheet_id INTEGER AS Int NOT NULL,
+    original TEXT NOT NULL,
+    translated TEXT NOT NULL,
+
+    UNIQUE(sheet_id, original, translated),
+    FOREIGN KEY(sheet_id) REFERENCES DbSheet(id) ON DELETE CASCADE
+);
+
+getBySheetId:
+SELECT original, translated FROM DbWordPair WHERE sheet_id = ?;
+
+insertOrIgnore:
+INSERT OR IGNORE INTO DbWordPair (sheet_id, original, translated) VALUES (?, ?, ?);

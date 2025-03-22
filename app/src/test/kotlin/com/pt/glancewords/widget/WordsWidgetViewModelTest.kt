@@ -9,7 +9,6 @@ import com.pt.glancewords.domain.model.WordPair
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
 import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifier
-import com.pt.glancewords.domain.usecase.DeleteWidget
 import com.pt.testcommon.coroutines.collectToListInBackground
 import com.pt.testcommon.fixture.randomInstant
 import com.pt.testcommon.fixture.randomInt
@@ -42,13 +41,12 @@ class WordsWidgetViewModelTest {
     private lateinit var fakeWordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier
     private lateinit var fakeWordsRepository: WordsRepository
     private lateinit var fakeReshuffleNotifier: ReshuffleNotifier
-    private lateinit var fakeDeleteWidget: DeleteWidget
 
     private val everyObserveWidget get() = every { fakeWidgetRepository.observeWidget(WIDGET.id) }
     private val everyObserveWords get() = every { fakeWordsRepository.observeWords(WIDGET.sheet.id) }
     private val everyObserveAreWordsSynchronized get() = every { fakeWordsSynchronizationStateNotifier.observeAreWordsSynchronized(WIDGET.id) }
     private val everyReshuffleEvents get() = every { fakeReshuffleNotifier.reshuffleEvents }
-    private val everyDeleteWidget get() = coEvery { fakeDeleteWidget(WIDGET.id) }
+    private val everyDeleteWidget get() = coEvery { fakeWidgetRepository.deleteWidget(WIDGET.id) }
 
     private fun widgetIsEmitted() = everyObserveWidget returns flowOf(WIDGET)
     private fun unUpdatedWidgetAtIsEmitted() = everyObserveWidget returns flowOf(WIDGET.withoutLastUpdatedAt())
@@ -66,7 +64,6 @@ class WordsWidgetViewModelTest {
         fakeWordsSynchronizationStateNotifier = mockk()
         fakeWordsRepository = mockk()
         fakeReshuffleNotifier = mockk()
-        fakeDeleteWidget = mockk()
     }
 
     @Test
@@ -194,7 +191,7 @@ class WordsWidgetViewModelTest {
 
         viewModel.deleteWidget()
 
-        coVerify { fakeDeleteWidget(WIDGET.id) }
+        coVerify { fakeWidgetRepository.deleteWidget(WIDGET.id) }
     }
 
     private fun Widget.withoutLastUpdatedAt() = copy(sheet = sheet.copy(lastUpdatedAt = null))
@@ -205,8 +202,7 @@ class WordsWidgetViewModelTest {
         wordsSynchronizationStateNotifier = fakeWordsSynchronizationStateNotifier,
         wordsRepository = fakeWordsRepository,
         logger = mockk(relaxed = true),
-        reshuffleNotifier = fakeReshuffleNotifier,
-        deleteWidget = fakeDeleteWidget
+        reshuffleNotifier = fakeReshuffleNotifier
     )
 
     private companion object {

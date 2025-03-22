@@ -49,7 +49,6 @@ class DefaultWordsSynchronizerTest {
     }
     private val everyGetNowInstant get() = every { fakeGetNowInstant() }
     private val everyRefreshWidget get() = coEvery { fakeRefreshWidget(STORED_WIDGET.id) }
-    private val everyDeleteCachedWords get() = coEvery { fakeWordsRepository.deleteWords(STORED_WIDGET.sheet.id) }
 
     @Before
     fun setUp() {
@@ -72,7 +71,6 @@ class DefaultWordsSynchronizerTest {
 
     @Test
     fun `when words are synchronized_given widget do not exist_then false is returned`() = runTest {
-        cachedWordsAreDeleted()
         noWidgetIsEmitted()
 
         val syncSucceeded = synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
@@ -82,7 +80,6 @@ class DefaultWordsSynchronizerTest {
 
     @Test
     fun `when words are synchronized_given widget exists_then all steps are executed in the correct order`() = runTest {
-        cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshed()
         notifyWordsSynchronization()
@@ -94,7 +91,6 @@ class DefaultWordsSynchronizerTest {
 
         coVerifySequence {
             fakeWidgetRepository.getWidget(any())
-            fakeWordsRepository.deleteWords(any())
             fakeRefreshWidget(any())
             fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction<Any>(any(), any())
             fakeWordsRepository.synchronizeWords(any(), any())
@@ -105,7 +101,6 @@ class DefaultWordsSynchronizerTest {
     @Test
     @OptIn(ExperimentalCoroutinesApi::class)
     fun `when words are synchronized_given widget exists_then widget is refreshed`() = runTest(UnconfinedTestDispatcher()) {
-        cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshedSuspended()
 
@@ -119,7 +114,6 @@ class DefaultWordsSynchronizerTest {
     @Test
     @OptIn(ExperimentalCoroutinesApi::class)
     fun `when words are synchronized_given widget exists_then widget loading state is triggered`() = runTest(UnconfinedTestDispatcher()) {
-        cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshed()
         notifyWordsSynchronizationSuspended()
@@ -133,7 +127,6 @@ class DefaultWordsSynchronizerTest {
 
     @Test
     fun `when words are synchronized_given widget exists_then words are synchronized in the repository`() = runTest {
-        cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshed()
         notifyWordsSynchronization()
@@ -149,8 +142,19 @@ class DefaultWordsSynchronizerTest {
     }
 
     @Test
-    fun `when words are synchronized_given widget exists_then last update date of the correct widget is updated`() = runTest {
-        cachedWordsAreDeleted()
+    fun `when words are synchronized_given synchronization fails_then false is returned`() = runTest {
+        widgetIsEmitted()
+        widgetIsRefreshed()
+        notifyWordsSynchronization()
+        wordsSynchronizationFails()
+
+        val syncSucceeded = synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
+
+        assertFalse(syncSucceeded)
+    }
+
+    @Test
+    fun `when words are synchronized_given synchronization succeeds_then last update date of the correct widget is updated`() = runTest {
         widgetIsEmitted()
         widgetIsRefreshed()
         notifyWordsSynchronization()
@@ -164,21 +168,7 @@ class DefaultWordsSynchronizerTest {
     }
 
     @Test
-    fun `when words are synchronized_given synchronization fails_then false is returned`() = runTest {
-        cachedWordsAreDeleted()
-        widgetIsEmitted()
-        widgetIsRefreshed()
-        notifyWordsSynchronization()
-        wordsSynchronizationFails()
-
-        val syncSucceeded = synchronizer.synchronizeWords(WIDGET_ID_TO_SYNCHRONIZE)
-
-        assertFalse(syncSucceeded)
-    }
-
-    @Test
     fun `when words are synchronized_given synchronization succeeds_then true is returned`() = runTest {
-        cachedWordsAreDeleted()
         widgetIsEmitted()
         widgetIsRefreshed()
         notifyWordsSynchronization()
@@ -204,8 +194,6 @@ class DefaultWordsSynchronizerTest {
     private fun notifyWordsSynchronization() = everyNotifyWordsSynchronizationForAction coAnswers { lambda<suspend () -> Boolean>().coInvoke() }
 
     private fun notifyWordsSynchronizationSuspended() = everyNotifyWordsSynchronizationForAction just awaits
-
-    private fun cachedWordsAreDeleted() = everyDeleteCachedWords just runs
 
     private fun widgetIsRefreshed() = everyRefreshWidget just runs
 

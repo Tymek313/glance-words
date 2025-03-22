@@ -1,14 +1,15 @@
 package com.pt.glancewords.data.di
 
+import com.pt.glancewords.data.CSVWordPairMapper
+import com.pt.glancewords.data.DefaultCSVWordPairMapper
 import com.pt.glancewords.data.database.Database
+import com.pt.glancewords.data.datasource.DatabaseWordsLocalDataSource
 import com.pt.glancewords.data.datasource.DefaultGoogleSpreadsheetDataSource
-import com.pt.glancewords.data.datasource.FileWordsLocalDataSource
 import com.pt.glancewords.data.datasource.GoogleWordsRemoteDataSource
 import com.pt.glancewords.data.googlesheets.CachingGoogleSheetsProvider
 import com.pt.glancewords.data.googlesheets.GoogleSheetsProvider
 import com.pt.glancewords.data.mapper.DefaultSheetMapper
 import com.pt.glancewords.data.mapper.DefaultWidgetMapper
-import com.pt.glancewords.data.mapper.DefaultWordPairMapper
 import com.pt.glancewords.data.repository.DefaultSheetRepository
 import com.pt.glancewords.data.repository.DefaultWidgetRepository
 import com.pt.glancewords.data.repository.DefaultWordsRepository
@@ -21,12 +22,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.AndroidClientEngine
 import io.ktor.client.engine.android.AndroidEngineConfig
 import io.ktor.client.plugins.HttpTimeout
-import java.io.File
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
-import okio.FileSystem
-import okio.Path.Companion.toOkioPath
-import org.koin.core.qualifier.named
+import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
 val dataModule = module {
@@ -41,11 +39,11 @@ val dataModule = module {
         }
     }
     factory<SheetRepository> { DefaultSheetRepository(get<Database>().dbSheetQueries, DefaultSheetMapper(Instant::now), Dispatchers.IO) }
+    factoryOf<CSVWordPairMapper>(::DefaultCSVWordPairMapper)
     single<WordsRepository> {
         DefaultWordsRepository(
-            GoogleWordsRemoteDataSource(get(), get()),
-            FileWordsLocalDataSource(FileSystem.SYSTEM, get<File>(QUALIFIER_SPREADSHEETS_DIRECTORY).toOkioPath(), Dispatchers.IO),
-            DefaultWordPairMapper()
+            GoogleWordsRemoteDataSource(get(), get(), get()),
+            DatabaseWordsLocalDataSource(get<Database>().dbWordPairQueries, Dispatchers.IO)
         )
     }
     factory<WidgetRepository> { DefaultWidgetRepository(get<Database>().dbWidgetQueries, DefaultWidgetMapper(), Dispatchers.IO) }
@@ -55,5 +53,3 @@ val dataModule = module {
         )
     }
 }
-
-val QUALIFIER_SPREADSHEETS_DIRECTORY = named("spreadsheets_directory")

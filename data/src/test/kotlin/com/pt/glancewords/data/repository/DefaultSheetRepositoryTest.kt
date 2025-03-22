@@ -64,29 +64,16 @@ class DefaultSheetRepositoryTest {
     }
 
     @Test
-    fun `when sheet is added_given transaction succeeds_then it is stored in database`() = runTest(dispatcher) {
+    fun `when sheet is added_then it is stored in database`() = runTest(dispatcher) {
         database.dbSheetQueries.insert(randomDbSheet())
         everyMapToDb returns mappedDbSheet
         everyMapToDomainFromNewSheet returns EXISTING_SHEET
 
-        repository.addSheetInTransaction(NEW_SHEET) { true }
+        repository.addSheet(NEW_SHEET)
 
         val sheets = database.dbSheetQueries.getAll().executeAsList()
         assertEquals(2, sheets.size)
         assertEquals(mappedDbSheet, sheets.single { it.id == 2 })
-    }
-
-    @Test
-    fun `when sheet is added_given transaction fails_then it is not stored in database`() = runTest(dispatcher) {
-        val dbSheet = randomDbSheet().copy(id = 1)
-        database.dbSheetQueries.insert(dbSheet)
-        everyMapToDb returns mappedDbSheet
-        everyMapToDomainFromNewSheet returns EXISTING_SHEET
-
-        repository.addSheetInTransaction(NEW_SHEET) { false }
-
-        val sheets = database.dbSheetQueries.getAll().executeAsList()
-        assertEquals(listOf(dbSheet), sheets)
     }
 
     @Test
@@ -95,20 +82,9 @@ class DefaultSheetRepositoryTest {
         everyMapToDb returns mappedDbSheet
         everyMapToDomainFromNewSheet returns EXISTING_SHEET
 
-        val updatedSheet = repository.addSheetInTransaction(NEW_SHEET) { true }
+        val updatedSheet = repository.addSheet(NEW_SHEET)
 
-        assertEquals(EXISTING_SHEET.id, updatedSheet!!.id)
-    }
-
-    @Test
-    fun `when sheet is added_given transaction failed_then null is returned`() = runTest(dispatcher) {
-        database.dbSheetQueries.insert(randomDbSheet())
-        everyMapToDb returns mappedDbSheet
-        everyMapToDomainFromNewSheet returns EXISTING_SHEET
-
-        val updatedSheet = repository.addSheetInTransaction(NEW_SHEET) { false }
-
-        assertNull(updatedSheet)
+        assertEquals(EXISTING_SHEET.id, updatedSheet.id)
     }
 
     @Test

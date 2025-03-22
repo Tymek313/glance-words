@@ -1,13 +1,16 @@
 package com.pt.glancewords.data.repository
 
-import com.pt.glancewords.data.datasource.CSVLine
+import com.pt.glancewords.data.CSVWordPairMapper
 import com.pt.glancewords.data.datasource.GoogleWordsRemoteDataSource
 import com.pt.glancewords.data.fixture.randomSheetSpreadsheetId
 import com.pt.glancewords.domain.model.SheetSpreadsheetId
+import com.pt.glancewords.domain.model.WordPair
+import com.pt.testcommon.fixture.randomString
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondOk
 import io.ktor.http.Url
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -15,21 +18,25 @@ import org.junit.Test
 import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class GoogleWordsRemoteDataSourceTest {
 
     private lateinit var dataSource: GoogleWordsRemoteDataSource
-    private lateinit var httpClient: HttpClient
+    private lateinit var fakeHttpClient: HttpClient
+    private lateinit var fakeMapper: CSVWordPairMapper
     private lateinit var sheetSpreadsheetId: SheetSpreadsheetId
     private lateinit var response: String
     private var requestFails = false
+
+    private val everyMap get() = every { fakeMapper.map(CSV_WITH_WORDS_RESPONSE) }
+
+    private fun everyMapReturnsWordPair() = everyMap returns MAPPED_WORD_PAIRS
 
     @Before
     fun setUp() {
         sheetSpreadsheetId = randomSheetSpreadsheetId()
         requestFails = false
-        httpClient = HttpClient(
+        fakeHttpClient = HttpClient(
             MockEngine { request ->
                 when {
                     requestFails -> throw IOException("network error")
@@ -41,14 +48,16 @@ class GoogleWordsRemoteDataSourceTest {
                 }
             }
         )
+        fakeMapper = mockk()
         dataSource = GoogleWordsRemoteDataSource(
-            client = httpClient,
-            logger = mockk(relaxed = true)
+            client = fakeHttpClient,
+            logger = mockk(relaxed = true),
+            mapper = fakeMapper
         )
     }
 
     @Test
-    fun `when words are requested_given request fails_null is returned`() = runTest {
+    fun `when words are requested_given request fails_then null is returned`() = runTest {
         requestFails = true
 
         val result = dataSource.getWords(sheetSpreadsheetId)
@@ -57,54 +66,17 @@ class GoogleWordsRemoteDataSourceTest {
     }
 
     @Test
-    fun `when words are requested_given response is empty_empty list is returned`() = runTest {
-        response = ""
+    fun `when words are requested_given response contains word pairs_then word pairs are returned`() = runTest {
+        response = CSV_WITH_WORDS_RESPONSE
+        everyMapReturnsWordPair()
 
         val result = dataSource.getWords(sheetSpreadsheetId)
 
-        assertTrue(result!!.isEmpty())
+        assertEquals(MAPPED_WORD_PAIRS, result)
     }
 
-    @Test
-    fun `when words are requested_given response contains words_csv lines are returned`() = runTest {
-        response = "a,b\r\nc,d"
-
-        val result = dataSource.getWords(sheetSpreadsheetId)
-
-        assertEquals(listOf(CSVLine("a,b"), CSVLine("c,d")), result)
-    }
-
-    @Test
-    fun `when words are requested_given csv contains trailing empty values_they are removed`() = runTest {
-        response = "a,b\r\n#VALUE!,#VALUE!\r\n#VALUE!,#VALUE!"
-
-        val result = dataSource.getWords(sheetSpreadsheetId)
-
-        assertEquals(listOf(CSVLine("a,b")), result)
-    }
-
-    @Test
-    fun `when words are requested_given csv contains empty values in the middle_they are not removed`() = runTest {
-        response = "a,b\r\n#VALUE!,#VALUE!\r\nc,d"
-
-        val result = dataSource.getWords(sheetSpreadsheetId)
-
-        assertEquals(
-            listOf(
-                CSVLine("a,b"),
-                CSVLine("#VALUE!,#VALUE!"),
-                CSVLine("c,d")
-            ),
-            result
-        )
-    }
-
-    @Test
-    fun `when words are requested_given csv contains only empty values_no words are returned`() = runTest {
-        response = "#VALUE!,#VALUE!"
-
-        val result = dataSource.getWords(sheetSpreadsheetId)
-
-        assertEquals(emptyList(), result)
+    private companion object {
+        val CSV_WITH_WORDS_RESPONSE = randomString()
+        val MAPPED_WORD_PAIRS = listOf(WordPair(original = randomString(), translated = randomString()))
     }
 }

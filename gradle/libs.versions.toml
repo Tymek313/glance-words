@@ -43,8 +43,6 @@ google-api-client = { group = "com.google.api-client", name = "google-api-client
 google-api-services-sheets = { group = "com.google.apis", name = "google-api-services-sheets", version = "v4-rev20240312-2.0.0" }
 google-auth-library-oauth2-http = { group = "com.google.auth", name = "google-auth-library-oauth2-http", version = "1.19.0" }
 mockk = { module = "io.mockk:mockk", version = "1.13.16" }
-okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
 sqldelight-driver-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
 sqldelight-driver-jvm = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }

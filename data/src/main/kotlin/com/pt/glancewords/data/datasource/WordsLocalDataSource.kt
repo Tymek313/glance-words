@@ -1,45 +1,33 @@
 package com.pt.glancewords.data.datasource
 
+import app.cash.sqldelight.coroutines.asFlow
+import com.pt.glancewords.data.database.DbWordPairQueries
 import com.pt.glancewords.domain.model.SheetId
+import com.pt.glancewords.domain.model.WordPair
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import okio.BufferedSource
-import okio.FileSystem
-import okio.Path
 
 internal interface WordsLocalDataSource {
-    suspend fun getWords(sheetId: SheetId): List<CSVLine>?
-    suspend fun storeWords(sheetId: SheetId, words: List<CSVLine>)
-    suspend fun deleteWords(sheetId: SheetId)
+    fun observeWords(sheetId: SheetId): Flow<List<WordPair>>
+    suspend fun storeWords(sheetId: SheetId, words: List<WordPair>)
 }
 
-internal class FileWordsLocalDataSource(
-    private val fileSystem: FileSystem,
-    private val spreadsheetsDirectory: Path,
+internal class DatabaseWordsLocalDataSource(
+    private val database: DbWordPairQueries,
     private val ioDispatcher: CoroutineDispatcher
 ) : WordsLocalDataSource {
 
-    override suspend fun getWords(sheetId: SheetId) = withContext(ioDispatcher) {
-        getFilePath(sheetId)
-            .takeIf(fileSystem::exists)
-            ?.let { path -> fileSystem.read(path, BufferedSource::readUtf8).split("\r\n").map(::CSVLine) }
-    }
+    override fun observeWords(sheetId: SheetId) = database.getBySheetId(sheetId.value, ::WordPair)
+        .asFlow()
+        .map { it.executeAsList() }
 
-    override suspend fun storeWords(sheetId: SheetId, words: List<CSVLine>) {
+    override suspend fun storeWords(sheetId: SheetId, words: List<WordPair>) {
         withContext(ioDispatcher) {
-            val targetPath = getFilePath(sheetId)
-            // Should not be null since we're requiring non-null `spreadsheetsDirectory`
-            val parentDirectory = checkNotNull(targetPath.parent)
-            if (!fileSystem.exists(parentDirectory)) {
-                fileSystem.createDirectories(parentDirectory)
+            database.transaction {
+                words.forEach { wordPair -> database.insertOrIgnore(sheetId.value, wordPair.original, wordPair.translated) }
             }
-            fileSystem.write(targetPath) { writeUtf8(words.joinToString(separator = "\r\n", transform = CSVLine::value)) }
         }
     }
-
-    override suspend fun deleteWords(sheetId: SheetId) {
-        fileSystem.delete(getFilePath(sheetId))
-    }
-
-    private fun getFilePath(sheetId: SheetId) = spreadsheetsDirectory / "${sheetId.value}.csv"
 }

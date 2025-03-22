@@ -7,7 +7,6 @@ import com.pt.glancewords.domain.model.WordPair
 import com.pt.glancewords.domain.repository.WidgetRepository
 import com.pt.glancewords.domain.repository.WordsRepository
 import com.pt.glancewords.domain.synchronization.WordsSynchronizationStateNotifier
-import com.pt.glancewords.domain.usecase.DeleteWidget
 import com.pt.glancewords.logging.Logger
 import com.pt.glancewords.logging.d
 import java.time.Instant
@@ -28,8 +27,7 @@ class WordsWidgetViewModel(
     private val wordsRepository: WordsRepository,
     wordsSynchronizationStateNotifier: WordsSynchronizationStateNotifier,
     private val logger: Logger,
-    private val reshuffleNotifier: ReshuffleNotifier,
-    private val deleteWidget: DeleteWidget
+    private val reshuffleNotifier: ReshuffleNotifier
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -61,7 +59,7 @@ class WordsWidgetViewModel(
     )
 
     suspend fun deleteWidget() {
-        deleteWidget.invoke(widgetId)
+        widgetRepository.deleteWidget(widgetId)
     }
 }
 

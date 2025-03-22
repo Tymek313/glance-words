@@ -5,10 +5,10 @@ CREATE TABLE DbSheet (
     spreadsheet_id TEXT NOT NULL,
     sheet_id INTEGER AS Int NOT NULL,
     name TEXT NOT NULL,
-    last_updated_at INTEGER
-);
+    last_updated_at INTEGER,
 
-CREATE UNIQUE INDEX unique_sheet_and_spreadsheet_ids ON DbSheet (spreadsheet_id, sheet_id);
+    UNIQUE(spreadsheet_id, sheet_id)
+);
 
 getAll:
 SELECT * FROM DbSheet;
@@ -27,3 +27,6 @@ UPDATE DbSheet SET last_updated_at = ? WHERE id = ?;
 
 getLastId:
 SELECT last_insert_rowid();
+
+deleteById:
+DELETE FROM DbSheet WHERE id = ?;

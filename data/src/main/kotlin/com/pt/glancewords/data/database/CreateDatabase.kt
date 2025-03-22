@@ -6,5 +6,6 @@ import app.cash.sqldelight.db.SqlDriver
 fun createDatabase(driver: SqlDriver) = Database(
     driver,
     DbSheetAdapter = DbSheet.Adapter(idAdapter = IntColumnAdapter, sheet_idAdapter = IntColumnAdapter),
-    DbWidgetAdapter = DbWidget.Adapter(idAdapter = IntColumnAdapter, sheet_idAdapter = IntColumnAdapter)
+    DbWidgetAdapter = DbWidget.Adapter(idAdapter = IntColumnAdapter, sheet_idAdapter = IntColumnAdapter),
+    DbWordPairAdapter = DbWordPair.Adapter(idAdapter = IntColumnAdapter, sheet_idAdapter = IntColumnAdapter)
 )
