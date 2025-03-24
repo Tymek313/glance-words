@@ -78,7 +78,6 @@ fun WidgetConfigurationScreen(
                 OutlinedTextField(
                     value = state.spreadsheetId,
                     onValueChange = onSpreadsheetIdChange,
-                    readOnly = state.isLoading,
                     label = { Text(text = stringResource(R.string.spreadsheet_id)) },
                     trailingIcon = { if (state.isLoading) CircularProgressIndicator(Modifier.padding(8.dp)) },
                     isError = state.spreadsheetError != null,
