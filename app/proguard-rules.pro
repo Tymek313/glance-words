@@ -22,4 +22,4 @@
 
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 
--keep public class com.pt.glancewords.work.SynchronizeWordsWorker
+-keep public class com.pt.glancewords.app.work.SynchronizeWordsWorker

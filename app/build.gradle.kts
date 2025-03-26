@@ -10,11 +10,11 @@ tasks.register<JacocoReport>("jacocoTestReport") {
 }
 
 android {
-    namespace = "com.pt.glancewords"
+    namespace = "com.pt.glancewords.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.pt.glancewords"
+        applicationId = "com.pt.glancewords.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

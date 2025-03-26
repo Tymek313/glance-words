@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name="com.pt.glancewords.application.App"
+        android:name="com.pt.glancewords.app.application.App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -22,7 +22,7 @@
         </provider>
 
         <receiver
-            android:name="com.pt.glancewords.widget.WordsWidgetReceiver"
+            android:name="com.pt.glancewords.app.widget.WordsWidgetReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -34,7 +34,7 @@
         </receiver>
 
         <activity
-            android:name="com.pt.glancewords.widget.configuration.WidgetConfigurationActivity"
+            android:name="com.pt.glancewords.app.widget.configuration.WidgetConfigurationActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:theme="@style/Theme.Transparent"

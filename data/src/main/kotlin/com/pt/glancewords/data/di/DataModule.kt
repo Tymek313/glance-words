@@ -1,23 +1,23 @@
 package com.pt.glancewords.data.di
 
-import com.pt.glancewords.data.CSVWordPairMapper
-import com.pt.glancewords.data.DefaultCSVWordPairMapper
 import com.pt.glancewords.data.database.Database
-import com.pt.glancewords.data.datasource.DatabaseWordsLocalDataSource
-import com.pt.glancewords.data.datasource.DefaultGoogleSpreadsheetDataSource
-import com.pt.glancewords.data.datasource.GoogleWordsRemoteDataSource
-import com.pt.glancewords.data.googlesheets.CachingGoogleSheetsProvider
-import com.pt.glancewords.data.googlesheets.GoogleSheetsProvider
-import com.pt.glancewords.data.mapper.DefaultSheetMapper
-import com.pt.glancewords.data.mapper.DefaultWidgetMapper
-import com.pt.glancewords.data.repository.DefaultSheetRepository
-import com.pt.glancewords.data.repository.DefaultWidgetRepository
-import com.pt.glancewords.data.repository.DefaultWordsRepository
-import com.pt.glancewords.data.repository.GoogleSpreadsheetRepository
-import com.pt.glancewords.domain.repository.SheetRepository
-import com.pt.glancewords.domain.repository.SpreadsheetRepository
-import com.pt.glancewords.domain.repository.WidgetRepository
-import com.pt.glancewords.domain.repository.WordsRepository
+import com.pt.glancewords.data.sheet.CachingGoogleSheetsProvider
+import com.pt.glancewords.data.sheet.GoogleSheetsProvider
+import com.pt.glancewords.data.sheet.datasource.DefaultGoogleSpreadsheetDataSource
+import com.pt.glancewords.data.sheet.mapper.DefaultSheetMapper
+import com.pt.glancewords.data.sheet.repository.DatabaseSheetRepository
+import com.pt.glancewords.data.sheet.repository.GoogleSpreadsheetRepository
+import com.pt.glancewords.data.widget.mapper.DefaultWidgetMapper
+import com.pt.glancewords.data.widget.repository.DatabaseWidgetRepository
+import com.pt.glancewords.data.words.datasource.DatabaseWordsLocalDataSource
+import com.pt.glancewords.data.words.datasource.GoogleWordsRemoteDataSource
+import com.pt.glancewords.data.words.mapper.CsvWordPairMapper
+import com.pt.glancewords.data.words.mapper.DefaultCsvWordPairMapper
+import com.pt.glancewords.data.words.repository.DefaultWordsRepository
+import com.pt.glancewords.domain.sheet.repository.SheetRepository
+import com.pt.glancewords.domain.sheet.repository.SpreadsheetRepository
+import com.pt.glancewords.domain.widget.repository.WidgetRepository
+import com.pt.glancewords.domain.words.repository.WordsRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.AndroidClientEngine
 import io.ktor.client.engine.android.AndroidEngineConfig
@@ -38,15 +38,15 @@ val dataModule = module {
             }
         }
     }
-    factory<SheetRepository> { DefaultSheetRepository(get<Database>().dbSheetQueries, DefaultSheetMapper(Instant::now), Dispatchers.IO) }
-    factoryOf<CSVWordPairMapper>(::DefaultCSVWordPairMapper)
+    factory<SheetRepository> { DatabaseSheetRepository(get<Database>().dbSheetQueries, DefaultSheetMapper(Instant::now), Dispatchers.IO) }
+    factoryOf<CsvWordPairMapper>(::DefaultCsvWordPairMapper)
     single<WordsRepository> {
         DefaultWordsRepository(
             GoogleWordsRemoteDataSource(get(), get(), get()),
             DatabaseWordsLocalDataSource(get<Database>().dbWordPairQueries, Dispatchers.IO)
         )
     }
-    factory<WidgetRepository> { DefaultWidgetRepository(get<Database>().dbWidgetQueries, DefaultWidgetMapper(), Dispatchers.IO) }
+    factory<WidgetRepository> { DatabaseWidgetRepository(get<Database>().dbWidgetQueries, DefaultWidgetMapper(), Dispatchers.IO) }
     factory<SpreadsheetRepository> {
         GoogleSpreadsheetRepository(
             DefaultGoogleSpreadsheetDataSource(get(), get(), Dispatchers.IO)

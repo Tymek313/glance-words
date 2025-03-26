@@ -1,11 +1,11 @@
 package com.pt.glancewords.data.fixture
 
-import com.pt.glancewords.domain.model.NewSheet
-import com.pt.glancewords.domain.model.Sheet
-import com.pt.glancewords.domain.model.SheetId
-import com.pt.glancewords.domain.model.SheetSpreadsheetId
-import com.pt.glancewords.domain.model.Widget
-import com.pt.glancewords.domain.model.WidgetId
+import com.pt.glancewords.domain.sheet.model.NewSheet
+import com.pt.glancewords.domain.sheet.model.Sheet
+import com.pt.glancewords.domain.sheet.model.SheetId
+import com.pt.glancewords.domain.sheet.model.SheetSpreadsheetId
+import com.pt.glancewords.domain.widget.model.Widget
+import com.pt.glancewords.domain.widget.model.WidgetId
 import java.time.Instant
 
 val WORD_PAIR = randomWordPair()
