@@ -16,9 +16,6 @@ SELECT * FROM DbSheet;
 getBySheetSpreadsheetId:
 SELECT * FROM DbSheet WHERE spreadsheet_id = ? AND sheet_id = ? LIMIT 1;
 
-exists:
-SELECT EXISTS(SELECT 1 FROM DbSheet WHERE id = ?);
-
 insert:
 INSERT INTO DbSheet(spreadsheet_id, sheet_id, name, last_updated_at) VALUES ?;
 

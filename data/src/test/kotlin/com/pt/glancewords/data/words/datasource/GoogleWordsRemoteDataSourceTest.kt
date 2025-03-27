@@ -65,7 +65,7 @@ class GoogleWordsRemoteDataSourceTest {
     }
 
     @Test
-    fun `when words are requested_given response contains word pairs_then word pairs are returned`() = runTest {
+    fun `when words are requested_given request succeeds_then word pairs are returned`() = runTest {
         response = CSV_WITH_WORDS_RESPONSE
         everyMapReturnsWordPair()
 

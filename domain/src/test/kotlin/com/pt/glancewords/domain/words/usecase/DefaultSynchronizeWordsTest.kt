@@ -43,7 +43,7 @@ class DefaultInvokeTest {
     private lateinit var fakeRefreshWidget: suspend (WidgetId) -> Unit
 
     private val everyGetWidget get() = coEvery { fakeWidgetRepository.getWidget(WIDGET_ID_TO_SYNCHRONIZE) }
-    private val everyInvoke get() = coEvery { fakeWordsRepository.synchronizeWords(STORED_WIDGET.sheet.id, STORED_SHEET.sheetSpreadsheetId) }
+    private val everySynchronizeWords get() = coEvery { fakeWordsRepository.synchronizeWords(STORED_WIDGET.sheet.id, STORED_SHEET.sheetSpreadsheetId) }
     private val everyUpdateLastUpdatedAt get() = coEvery { fakeSheetRepository.updateLastUpdatedAt(STORED_SHEET.id, NOW) }
     private val everyNotifyWordsSynchronizationForAction get() = coEvery {
         fakeWordsSynchronizationStateNotifier.notifyWordsSynchronizationForAction<Any>(STORED_WIDGET.id, captureLambda())
@@ -186,9 +186,9 @@ class DefaultInvokeTest {
 
     private fun noWidgetIsEmitted() = everyGetWidget returns null
 
-    private fun wordsAreSynchronized() = getEveryInvoke returns true
+    private fun wordsAreSynchronized() = everySynchronizeWords returns true
 
-    private fun wordsSynchronizationFails() = getEveryInvoke returns false
+    private fun wordsSynchronizationFails() = everySynchronizeWords returns false
 
     private fun lastUpdatedPropertyIsUpdated() = everyUpdateLastUpdatedAt just runs
 

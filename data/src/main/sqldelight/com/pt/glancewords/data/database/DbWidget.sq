@@ -14,6 +14,9 @@ CREATE TRIGGER delete_last_referenced_sheet AFTER DELETE ON DbWidget
         AND old.sheet_id NOT IN (SELECT sheet_id FROM DbWidget);
     END;
 
+getAll:
+SELECT * FROM DbWidget;
+
 getById:
 SELECT
     W.*,

@@ -31,8 +31,8 @@ class DatabaseWordsLocalDataSourceTest {
     }
 
     @Test
-    fun `when words are observed_given word pairs exist_they are returned`() = runTest(dispatcher) {
-        storeWordPairsInDatabase()
+    fun `when words are observed_given word pairs exist_then they are returned`() = runTest(dispatcher) {
+        storeWordPairInDatabase()
 
         val words = collectToListInBackground(dataSource.observeWords(SHEET_ID))
 
@@ -40,7 +40,7 @@ class DatabaseWordsLocalDataSourceTest {
     }
 
     @Test
-    fun `when words are stored_given word pairs are not stored in database yet_they are stored in database`() = runTest(dispatcher) {
+    fun `when words are stored_given word pairs are not stored in database yet_then they are stored in database`() = runTest(dispatcher) {
         dataSource.storeWords(SHEET_ID, WORD_PAIRS)
 
         assertEquals(
@@ -50,8 +50,8 @@ class DatabaseWordsLocalDataSourceTest {
     }
 
     @Test
-    fun `when words are stored_given word pairs are already stored in database_they are overwritten`() = runTest(dispatcher) {
-        storeWordPairsInDatabase()
+    fun `when words are stored_given word pairs are already stored in database_then database is not updated`() = runTest(dispatcher) {
+        storeWordPairInDatabase()
 
         dataSource.storeWords(SHEET_ID, WORD_PAIRS)
 
@@ -62,7 +62,7 @@ class DatabaseWordsLocalDataSourceTest {
     }
 
     @Test
-    fun `when words are stored_given they are observed_updated word pairs are emitted`() = runTest(dispatcher) {
+    fun `when words are stored_given they are observed_then updated word pairs are emitted`() = runTest(dispatcher) {
         val words = collectToListInBackground(dataSource.observeWords(SHEET_ID))
 
         dataSource.storeWords(SHEET_ID, WORD_PAIRS)
@@ -70,7 +70,7 @@ class DatabaseWordsLocalDataSourceTest {
         assertEquals(WORD_PAIRS, words.last())
     }
 
-    private fun storeWordPairsInDatabase() {
+    private fun storeWordPairInDatabase() {
         fakeDatabase.insertOrIgnore(sheet_id = SHEET_ID.value, original = "a", translated = "b")
     }
 

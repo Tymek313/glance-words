@@ -16,11 +16,6 @@ import com.pt.glancewords.testcommon.fixture.randomString
 
 fun randomWidgetId() = WidgetId(randomInt())
 
-fun randomWidgetWithNewSheet() = Widget(
-    id = randomWidgetId(),
-    sheet = randomSheet()
-)
-
 fun randomDbWidget() = DbWidget(id = randomInt(), sheet_id = randomInt())
 
 fun randomDbSheet() = DbSheet(
@@ -36,11 +31,6 @@ fun randomSheetSpreadsheetId() = SheetSpreadsheetId(
     sheetId = randomInt()
 )
 
-fun randomNewSheet() = NewSheet(
-    sheetSpreadsheetId = randomSheetSpreadsheetId(),
-    name = randomString(),
-)
-
 fun randomSheet() = Sheet(
     id = randomSheetId(),
     sheetSpreadsheetId = randomSheetSpreadsheetId(),
@@ -49,5 +39,3 @@ fun randomSheet() = Sheet(
 )
 
 fun randomSheetId() = SheetId(randomInt())
-
-fun randomWordPair() = WordPair(randomString(), randomString())

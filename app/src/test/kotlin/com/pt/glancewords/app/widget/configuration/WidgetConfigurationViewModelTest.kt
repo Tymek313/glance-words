@@ -1,6 +1,6 @@
 package com.pt.glancewords.app.widget.configuration
 
-import com.pt.glancewords.R
+import com.pt.glancewords.app.R
 import com.pt.glancewords.domain.sheet.model.NewSheet
 import com.pt.glancewords.domain.sheet.model.SheetSpreadsheetId
 import com.pt.glancewords.domain.sheet.model.SpreadsheetSheet

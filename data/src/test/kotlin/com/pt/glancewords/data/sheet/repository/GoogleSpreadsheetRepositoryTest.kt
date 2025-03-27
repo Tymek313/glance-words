@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class GoogleSpreadsheetRepositoryTest {
 
@@ -27,7 +28,7 @@ class GoogleSpreadsheetRepositoryTest {
     }
 
     @Test
-    fun `when spreadsheet sheets are fetched_given there are sheets_they are returned`() = runTest {
+    fun `when spreadsheet sheets are requested_given fetch succeeds_then sheets are returned`() = runTest {
         googleSheetsAreFetched()
 
         val sheets = repository.fetchSpreadsheetSheets(SPREADSHEET_ID_FIXTURE)
@@ -35,9 +36,18 @@ class GoogleSpreadsheetRepositoryTest {
         assertEquals(listOf(SpreadsheetSheet(SHEET_ID_FIXTURE, SHEET_TITLE_FIXTURE)), sheets)
     }
 
-    private fun googleSheetsAreFetched() {
-        everyGetSpreadsheets returns listOf(GOOGLE_SHEET_FIXTURE)
+    @Test
+    fun `when spreadsheet sheets are requested_given fetch fails_then null is returned`() = runTest {
+        googleSheetsFetchFails()
+
+        val sheets = repository.fetchSpreadsheetSheets(SPREADSHEET_ID_FIXTURE)
+
+        assertNull(sheets)
     }
+
+    private fun googleSheetsAreFetched() = everyGetSpreadsheets returns listOf(GOOGLE_SHEET_FIXTURE)
+
+    private fun googleSheetsFetchFails() = everyGetSpreadsheets returns null
 
     private companion object {
         val SPREADSHEET_ID_FIXTURE = randomString()

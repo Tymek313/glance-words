@@ -2,8 +2,8 @@ package com.pt.glancewords.data.words.repository
 
 import com.pt.glancewords.data.words.datasource.WordsLocalDataSource
 import com.pt.glancewords.data.words.datasource.WordsRemoteDataSource
-import com.pt.glancewords.data.fixture.SHEET_SPREADSHEET_ID
 import com.pt.glancewords.data.fixture.randomSheetId
+import com.pt.glancewords.data.fixture.randomSheetSpreadsheetId
 import com.pt.glancewords.domain.words.model.WordPair
 import com.pt.glancewords.testcommon.coroutines.collectToListInBackground
 import com.pt.glancewords.testcommon.fixture.randomString
@@ -36,6 +36,12 @@ class DefaultWordsRepositoryTest {
     private val everyGetLocalWords get() = coEvery { fakeLocalDataSource.observeWords(SHEET_ID) }
     private val everyGetRemoteWords get() = coEvery { fakeRemoteDataSource.getWords(SHEET_SPREADSHEET_ID) }
     private val everyStoreLocalWords get() = coEvery { fakeLocalDataSource.storeWords(SHEET_ID, WORD_PAIRS) }
+
+    private fun localWordsAreReturned() = everyGetLocalWords returns flowOf(WORD_PAIRS)
+    private fun remoteWordsAreFetched() = everyGetRemoteWords returns WORD_PAIRS
+    private fun remoteWordsFetchFails() = everyGetRemoteWords returns null
+    private fun wordsAreStored() = everyStoreLocalWords just runs
+    private fun wordsStorageIsSuspended() = everyStoreLocalWords just awaits
 
     @Before
     fun setUp() {
@@ -93,14 +99,8 @@ class DefaultWordsRepositoryTest {
         coVerify(inverse = true) { fakeLocalDataSource.storeWords(any(), any()) }
     }
 
-
-    private fun localWordsAreReturned() = everyGetLocalWords returns flowOf(WORD_PAIRS)
-    private fun remoteWordsAreFetched() = everyGetRemoteWords returns WORD_PAIRS
-    private fun remoteWordsFetchFails() = everyGetRemoteWords returns null
-    private fun wordsAreStored() = everyStoreLocalWords just runs
-    private fun wordsStorageIsSuspended() = everyStoreLocalWords just awaits
-
     private companion object {
+        val SHEET_SPREADSHEET_ID = randomSheetSpreadsheetId()
         val WORD_PAIRS = listOf(WordPair(original = randomString(), translated = randomString()))
         val SHEET_ID = randomSheetId()
     }
