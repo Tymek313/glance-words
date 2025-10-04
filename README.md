@@ -1,8 +1,10 @@
 # Glance words (a Jetpack Glance widget)
 
-![add_widget_from_clipboard_auto](https://bitbucket.org/tymek313/glance-words/raw/master/previews/add_widget_from_clipboard_auto.gif)
-![add_widget_from_keyboard.gif](https://bitbucket.org/tymek313/glance-words/raw/master/previews/add_widget_from_keyboard.gif)
-![sync.gif](https://bitbucket.org/tymek313/glance-words/raw/master/previews/sync.gif)
+[![Verify and build](https://github.com/Tymek313/glance-words/actions/workflows/build-with-verification.yml/badge.svg)](https://github.com/Tymek313/glance-words/actions/workflows/build-with-verification.yml)
+
+![add_widget_from_clipboard_auto](https://github.com/Tymek313/glance-words/blob/master/previews/add_widget_from_clipboard_auto.gif)
+![add_widget_from_keyboard.gif](https://github.com/Tymek313/glance-words/blob/master/previews/add_widget_from_keyboard.gif)
+![sync.gif](https://github.com/Tymek313/glance-words/blob/master/previews/sync.gif)
 
 
 ## Project goal
@@ -30,12 +32,13 @@ To keep up high code quality, CI pipeline runs:
 ✅ __Android lint__ check. 
 
 ## Authorization
-For simplicity the app uses a Google __service account__ to authorize access to Google API. It's not considered the best method for its risk of credential leakage but it's sufficient for personal use. 
+For simplicity the app uses a Google __service account__ to authorize access to Google API. It's not considered the best method for its risk of credential leakage but it's sufficient for personal use.
+This method has been chosen so that the app doesn't require the user to log in and it's simple to integrate.
 
-This method has been chosen because the app doesn't access user's personal data, it's simple to integrate and doesn't require the user to sign in in order to use the app.
+For demo purposes the [releases](https://github.com/Tymek313/glance-words/releases) in this repository use an endpoint with heavy limits to prevent abuse. 
 
 ### Set up Google Sheets API key
-For the app to work correctly it needs Google API key file. To obtain it [create a new project in Google Cloud Platform](https://console.cloud.google.com/projectcreate) or use an existing one and [enable Google Sheets API](https://console.cloud.google.com/apis/enableflow?apiid=sheets.googleapis.com) for it. Then [create a service account](https://console.cloud.google.com/iam-admin/serviceaccounts), generate a new key under "keys" tab within the service account details, rename it and copy into the resources directory of the data module (`data/src/main/resources/google_sheets_credentials.json`).
+For the app to work correctly it needs a Google API key file. To obtain it [create a new project in Google Cloud Platform](https://console.cloud.google.com/projectcreate) or use an existing one and [enable Google Sheets API](https://console.cloud.google.com/apis/enableflow?apiid=sheets.googleapis.com) for it. Then [create a service account](https://console.cloud.google.com/iam-admin/serviceaccounts), generate a new key under "keys" tab within the service account details, rename it and copy into the resources directory of the data module (`data/src/main/resources/google_sheets_credentials.json`).
 
 ## Used libraries and technologies
 See the [version catalog](https://bitbucket.org/tymek313/glance-words/src/master/gradle/libs.versions.toml).
